@@ -453,55 +453,53 @@ export default function Home() {
                     Selección DescubreSV
                   </p>
                   <h2 style={{
-                    fontSize: 'clamp(1.1rem, 2vw, 1.4rem)',
+                    fontSize: 'clamp(1rem, 1.8vw, 1.25rem)',
                     fontWeight: '700',
                     color: '#111827',
-                    lineHeight: '1.15',
-                    letterSpacing: '-0.02em',
-                    maxWidth: '520px',
+                    lineHeight: '1.2',
+                    letterSpacing: '-0.01em',
+                    whiteSpace: 'nowrap',
                   }}
                   >
-                    Los lugares que no deberías perderte en El Salvador
+                    Descubre El Salvador
                   </h2>
                 </div>
                 <button
                   type="button"
                   onClick={handleVerTodos}
                   style={{
-                    backgroundColor: 'transparent',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '40px',
+                    backgroundColor: '#F5C842',
+                    color: '#111827',
+                    border: 'none',
+                    borderRadius: '50px',
                     padding: '0.55rem 1.25rem',
                     fontSize: '0.82rem',
-                    fontWeight: '600',
-                    color: '#374151',
+                    fontWeight: '700',
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
-                    transition: 'all 0.2s ease',
                     letterSpacing: '0.01em',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 2px 8px rgba(245,200,66,0.35)',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#111827'
-                    e.currentTarget.style.color = '#ffffff'
-                    e.currentTarget.style.borderColor = '#111827'
+                    e.currentTarget.style.backgroundColor = '#e6b800'
+                    e.currentTarget.style.boxShadow = '0 4px 16px rgba(245,200,66,0.5)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                    e.currentTarget.style.color = '#374151'
-                    e.currentTarget.style.borderColor = '#d1d5db'
+                    e.currentTarget.style.backgroundColor = '#F5C842'
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(245,200,66,0.35)'
                   }}
                 >
                   Ver selección →
                 </button>
               </div>
               <p style={{
-                fontSize: '0.88rem',
+                fontSize: '0.82rem',
                 color: '#9ca3af',
-                fontStyle: 'italic',
-                marginTop: '0.5rem',
+                marginTop: '0.35rem',
               }}
               >
-                Lugares mejor valorados por viajeros y experiencias verificadas
+                Lugares imprescindibles según la experiencia de viajeros
               </p>
             </div>
 
