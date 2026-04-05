@@ -165,7 +165,7 @@ export default function Home() {
             style={{
               backgroundImage: "url('/hero-bg.png')",
               backgroundSize: 'cover',
-              backgroundPosition: 'center top',
+              backgroundPosition: 'center 75%',
               backgroundRepeat: 'no-repeat',
             }}
             aria-hidden
@@ -346,7 +346,7 @@ export default function Home() {
               style={{
                 backgroundImage: "url('/hero-bg.png')",
                 backgroundSize: 'cover',
-                backgroundPosition: 'center top',
+                backgroundPosition: 'center 75%',
                 backgroundRepeat: 'no-repeat',
               }}
               aria-hidden
