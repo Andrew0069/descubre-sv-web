@@ -141,15 +141,19 @@ export default function Home() {
 
       <div className="pt-[52px]">
         <section
-          className="px-4 pb-10 pt-20 sm:px-6 sm:pb-12 sm:pt-10"
           style={{
+            paddingTop: '90px',
+            paddingBottom: '60px',
+            paddingLeft: '24px',
+            paddingRight: '24px',
             backgroundColor: '#0EA5E9',
             backgroundImage: HERO_PATTERN,
           }}
         >
           <div className="mx-auto max-w-3xl text-center">
             <h1
-              className="mb-3 text-balance text-[28px] font-extrabold leading-tight tracking-[-0.5px] text-white sm:text-[34px]"
+              className="text-balance"
+              style={{ fontSize: 'clamp(22px, 5vw, 34px)', fontWeight: 800, color: 'white', lineHeight: 1.15, letterSpacing: '-0.5px', marginBottom: '10px' }}
             >
               El Salvador, desde los ojos del viajero
             </h1>
@@ -158,22 +162,23 @@ export default function Home() {
             </p>
 
             <form
-              className="mx-auto mb-8 flex max-w-xl flex-col gap-2 rounded-2xl bg-white p-2 shadow-lg md:flex-row md:items-center md:rounded-full md:p-1.5"
+              style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'white', borderRadius: '16px', padding: '8px', maxWidth: '480px', margin: '0 auto', boxShadow: '0 12px 40px rgba(0,0,0,0.18)' }}
+              className="mb-8"
               onSubmit={(e) => {
                 e.preventDefault()
                 handleExplorar(e)
               }}
             >
-              <div className="flex min-h-[44px] flex-1 items-center gap-2 px-3">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 6px' }}>
                 <svg
                   width={20}
                   height={20}
                   viewBox="0 0 24 24"
                   fill="none"
-                  className="shrink-0 text-[#999999]"
-                  stroke="currentColor"
+                  stroke="#999999"
                   strokeWidth={2}
                   aria-hidden
+                  style={{ flexShrink: 0 }}
                 >
                   <circle cx="11" cy="11" r="8" />
                   <path d="m21 21-4.35-4.35" strokeLinecap="round" />
@@ -187,13 +192,12 @@ export default function Home() {
                   placeholder="¿A dónde querés ir?"
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  className="min-w-0 flex-1 border-0 bg-transparent text-sm text-[#1A1A1A] outline-none placeholder:text-[#999999]"
+                  style={{ border: 'none', outline: 'none', fontSize: '14px', padding: '10px 14px', flex: 1, background: 'transparent' }}
                 />
               </div>
               <button
                 type="submit"
-                className="w-full shrink-0 rounded-xl py-2.5 text-sm font-bold text-[#1A1A1A] transition hover:brightness-95 md:w-auto md:rounded-full md:px-6"
-                style={{ backgroundColor: '#F5C518' }}
+                style={{ background: '#F5C518', color: '#1A1A1A', border: 'none', borderRadius: '10px', padding: '12px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', width: '100%' }}
               >
                 Explorar
               </button>
@@ -217,8 +221,8 @@ export default function Home() {
         </section>
 
         <section className="border-b border-[#EEEEEE] bg-white">
-          <div className="-mx-0 overflow-x-auto">
-            <div className="mx-auto flex w-max max-w-6xl justify-start px-2 sm:px-4">
+          <div style={{ overflowX: 'auto' }}>
+            <div style={{ display: 'flex', overflowX: 'auto', gap: '0px', padding: '0 8px' }}>
               <CategoriaChip
                 label="Todos"
                 isTodos
