@@ -166,13 +166,13 @@ export default function CategoriaChip({ label, active, onClick, isTodos = false 
     <button
       type="button"
       onClick={onClick}
-      className={`flex shrink-0 flex-col items-center border-b-2 bg-transparent px-5 pb-3 pt-4 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0EA5E9] focus-visible:ring-offset-2 ${
+      className={`flex shrink-0 flex-col items-center border-b-2 bg-transparent px-3.5 pb-2.5 pt-3 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0EA5E9] focus-visible:ring-offset-2 ${
         active ? 'border-[#0EA5E9]' : 'border-transparent'
       }`}
     >
       {isTodos ? <IconTodos stroke={stroke} size={22} /> : <CategoriaIconSvg nombre={label} active={active} />}
       <span
-        className={`mt-1 max-w-[4.5rem] text-center text-[11px] leading-tight ${
+        className={`mt-1 whitespace-nowrap text-[11px] leading-tight ${
           active ? 'font-medium text-[#0EA5E9]' : 'text-[#AAAAAA]'
         }`}
       >

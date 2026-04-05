@@ -110,8 +110,8 @@ export default function Home() {
   return (
     <div className="min-h-screen pb-16" style={{ background: 'var(--bg)' }}>
       <header className="fixed left-0 right-0 top-0 z-50 border-b border-[#E8E8E8] bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-          <Link to="/" className="select-none text-lg font-extrabold tracking-tight">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-6 py-3.5">
+          <Link to="/" className="select-none pl-0 text-lg font-extrabold tracking-tight sm:pl-0">
             <span className="text-[#0EA5E9]">Descubre</span>
             <span className="text-[#F5C518]">SV</span>
           </Link>
@@ -141,7 +141,7 @@ export default function Home() {
 
       <div className="pt-[52px]">
         <section
-          className="px-4 pb-10 pt-8 sm:px-6 sm:pb-12 sm:pt-10"
+          className="px-4 pb-10 pt-20 sm:px-6 sm:pb-12 sm:pt-10"
           style={{
             backgroundColor: '#0EA5E9',
             backgroundImage: HERO_PATTERN,
@@ -158,7 +158,7 @@ export default function Home() {
             </p>
 
             <form
-              className="mx-auto mb-8 flex max-w-xl flex-col gap-2 rounded-full bg-white p-1.5 shadow-lg sm:flex-row sm:items-center"
+              className="mx-auto mb-8 flex max-w-xl flex-col gap-2 rounded-2xl bg-white p-2 shadow-lg md:flex-row md:items-center md:rounded-full md:p-1.5"
               onSubmit={(e) => {
                 e.preventDefault()
                 handleExplorar(e)
@@ -192,7 +192,7 @@ export default function Home() {
               </div>
               <button
                 type="submit"
-                className="shrink-0 rounded-full px-6 py-2.5 text-sm font-bold text-[#1A1A1A] transition hover:brightness-95"
+                className="w-full shrink-0 rounded-xl py-2.5 text-sm font-bold text-[#1A1A1A] transition hover:brightness-95 md:w-auto md:rounded-full md:px-6"
                 style={{ backgroundColor: '#F5C518' }}
               >
                 Explorar
@@ -245,8 +245,8 @@ export default function Home() {
           )}
 
           {!loading && destacado && (
-            <section className="mb-10">
-              <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-[#999999]">
+            <section className="mb-10 mt-4">
+              <h2 className="mb-3 text-sm font-semibold text-[#999999]">
                 Destino destacado
               </h2>
               <Link
