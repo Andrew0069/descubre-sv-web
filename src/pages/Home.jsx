@@ -417,150 +417,65 @@ export default function Home() {
             </ul>
           )}
 
-          {/* CTA Banner Premium */}
-          <section
-            style={{
-              backgroundImage: "url('/hero-bg.png')",
-              backgroundSize: 'cover',
-              backgroundPosition: 'center bottom',
-              backgroundRepeat: 'no-repeat',
-              position: 'relative',
-            }}
-            className="w-full"
-          >
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'linear-gradient(to bottom, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.82) 100%)',
-              }}
-            />
-            <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 py-24">
-              <p
-                style={{
-                  letterSpacing: '0.3em',
-                  fontSize: '0.7rem',
-                  fontWeight: '600',
-                  color: '#F5C842',
-                  textTransform: 'uppercase',
-                  marginBottom: '1.25rem',
-                }}
-              >
-                — Comparte tu experiencia —
-              </p>
-              <h2
-                style={{
-                  fontSize: 'clamp(2rem, 5vw, 3.5rem)',
-                  fontWeight: '800',
-                  color: '#ffffff',
-                  lineHeight: '1.1',
-                  marginBottom: '1rem',
-                  maxWidth: '700px',
-                  textShadow: '0 2px 20px rgba(0,0,0,0.5)',
-                }}
-              >
-                ¿Conocés un lugar increíble?
-              </h2>
-              <p
-                style={{
-                  fontSize: '1.05rem',
-                  color: 'rgba(255,255,255,0.75)',
-                  maxWidth: '480px',
-                  lineHeight: '1.65',
-                  marginBottom: '2.5rem',
-                }}
-              >
-                Ayudá a otros viajeros a descubrir El Salvador con tu mirada única.
-              </p>
-              <button
-                type="button"
-                style={{
-                  border: '1.5px solid rgba(255,255,255,0.85)',
-                  color: '#ffffff',
-                  backgroundColor: 'rgba(255,255,255,0.08)',
-                  backdropFilter: 'blur(8px)',
-                  padding: '0.85rem 2.5rem',
-                  fontSize: '0.85rem',
-                  fontWeight: '600',
-                  letterSpacing: '0.15em',
-                  textTransform: 'uppercase',
-                  borderRadius: '2px',
-                  cursor: 'pointer',
-                  transition: 'all 0.25s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = 'rgba(255,255,255,0.18)'
-                  e.target.style.borderColor = '#F5C842'
-                  e.target.style.color = '#F5C842'
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = 'rgba(255,255,255,0.08)'
-                  e.target.style.borderColor = 'rgba(255,255,255,0.85)'
-                  e.target.style.color = '#ffffff'
-                }}
-              >
-                Agregar un lugar
-              </button>
-            </div>
-          </section>
         </main>
 
-        <footer
-          style={{
-            backgroundColor: '#F8F7F4',
-            borderTop: '1px solid rgba(0,0,0,0.06)',
-          }}
-        >
-          <div
-            className="mx-auto grid grid-cols-3 gap-6"
-            style={{ maxWidth: '1200px', padding: '40px 24px 32px' }}
-          >
-            <div className="max-w-[280px]">
-              <p className="mb-3 select-none" style={{ letterSpacing: '-0.3px' }}>
-                <span style={{ fontSize: '18px', fontWeight: 500, color: '#2C2C2C' }}>Descubre</span>
-                <span style={{ fontSize: '18px', fontWeight: 700, color: '#1A1A1A' }}>SV</span>
-              </p>
-              <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#7A7770' }}>
-                Guía curada de destinos, experiencias y reseñas para descubrir El Salvador con más criterio.
+        <footer style={{
+          borderTop: '1px solid #e5e7eb',
+          backgroundColor: '#ffffff',
+          padding: '2rem 2.5rem',
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '1.5rem',
+            marginBottom: '1.5rem',
+          }}>
+            <div>
+              <span style={{ fontSize: '1rem', fontWeight: '700', color: '#111827', letterSpacing: '-0.02em' }}>
+                Descubre<span style={{ color: '#0EA5E9' }}>SV</span>
+              </span>
+              <p style={{ fontSize: '0.78rem', color: '#9ca3af', marginTop: '0.25rem', fontStyle: 'italic' }}>
+                El Salvador, desde una mirada curada.
               </p>
             </div>
 
-            <div>
-              <p className="footer-col-title">Navegación</p>
-              <ul className="footer-links">
-                <li><a href="#explorar" onClick={(e) => { e.preventDefault(); handleExplorar(e) }}>Explorar</a></li>
-                <li><a href="#guias" onClick={(e) => e.preventDefault()}>Guías</a></li>
-                <li><a href="#resenas" onClick={(e) => e.preventDefault()}>Reseñas</a></li>
-                <li><a href="#compartir" onClick={(e) => e.preventDefault()}>Compartir lugar</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <p className="footer-col-title">Soporte</p>
-              <ul className="footer-links">
-                <li><a href="#acceder" onClick={(e) => e.preventDefault()}>Acceder</a></li>
-                <li><a href="#idioma" onClick={(e) => e.preventDefault()}>ES / EN</a></li>
-                <li><a href="#privacidad" onClick={(e) => e.preventDefault()}>Privacidad</a></li>
-                <li><a href="#terminos" onClick={(e) => e.preventDefault()}>Términos</a></li>
-                <li><a href="#contacto" onClick={(e) => e.preventDefault()}>Contacto</a></li>
-              </ul>
-            </div>
+            <nav style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+              {['Explorar', 'Guías', 'Reseñas', 'Agregar lugar', 'Privacidad', 'Términos', 'Contacto'].map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  style={{
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    color: '#6b7280',
+                    fontSize: '0.82rem',
+                    padding: '0.35rem 0.75rem',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.07)'
+                    e.currentTarget.style.color = '#0EA5E9'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                    e.currentTarget.style.color = '#6b7280'
+                  }}
+                >
+                  {item}
+                </button>
+              ))}
+            </nav>
           </div>
 
-          <div
-            className="mx-auto flex items-center justify-between"
-            style={{
-              maxWidth: '1200px',
-              padding: '0 24px 24px',
-              borderTop: '1px solid rgba(0,0,0,0.05)',
-              paddingTop: '16px',
-            }}
-          >
-            <p style={{ fontSize: '13px', color: '#A09D96' }}>© 2026 DescubreSV</p>
-            <p style={{ fontSize: '13px', color: '#A09D96', fontStyle: 'italic' }}>
-              El Salvador, desde una mirada curada.
-            </p>
-          </div>
+          <div style={{ height: '1px', backgroundColor: '#f3f4f6', marginBottom: '1.25rem' }} />
+
+          <p style={{ fontSize: '0.75rem', color: '#d1d5db', textAlign: 'center' }}>
+            © 2026 DescubreSV · Hecho en El Salvador 🇸🇻
+          </p>
         </footer>
       </div>
     </div>

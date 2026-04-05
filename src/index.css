@@ -22,34 +22,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Footer premium */
-.footer-col-title {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  color: #A09D96;
-  margin-bottom: 14px;
-}
-.footer-links {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.footer-links a {
-  font-size: 14px;
-  font-weight: 450;
-  color: #4A4A46;
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-.footer-links a:hover {
-  color: #1A1A1A;
-}
-
-/* Foto + overlay: textura grain en ::after (hero y banner CTA) */
+/* Foto + overlay: textura grain en ::after (hero) */
 .hero-photo-section::after {
   content: '';
   position: absolute;
