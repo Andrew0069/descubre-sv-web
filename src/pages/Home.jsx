@@ -453,8 +453,8 @@ export default function Home() {
                     Selección DescubreSV
                   </p>
                   <h2 style={{
-                    fontSize: 'clamp(1.4rem, 3vw, 2rem)',
-                    fontWeight: '800',
+                    fontSize: 'clamp(1.1rem, 2vw, 1.4rem)',
+                    fontWeight: '700',
                     color: '#111827',
                     lineHeight: '1.15',
                     letterSpacing: '-0.02em',
