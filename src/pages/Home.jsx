@@ -5,12 +5,8 @@ import { ordenarCategorias } from '../lib/categoriaVisual'
 import CategoriaChip, { CategoriaIconSvg } from '../components/CategoriaChip'
 import LugarCard from '../components/LugarCard'
 
-const HERO_PATTERN = `
-  radial-gradient(circle at 18% 22%, rgba(255,255,255,0.07) 0%, transparent 42%),
-  radial-gradient(circle at 82% 8%, rgba(255,255,255,0.07) 0%, transparent 38%),
-  radial-gradient(circle at 72% 78%, rgba(255,255,255,0.06) 0%, transparent 45%),
-  radial-gradient(circle at 8% 88%, rgba(255,255,255,0.05) 0%, transparent 40%)
-`
+const HERO_OVERLAY =
+  'linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.75) 100%)'
 
 export default function Home() {
   const [lugares, setLugares] = useState([])
@@ -140,24 +136,31 @@ export default function Home() {
       </header>
 
       <div className="pt-[52px]">
-        <section
-          style={{
-            paddingTop: '90px',
-            paddingBottom: '60px',
-            paddingLeft: '24px',
-            paddingRight: '24px',
-            backgroundColor: '#0EA5E9',
-            backgroundImage: HERO_PATTERN,
-          }}
-        >
-          <div className="mx-auto max-w-3xl text-center">
+        <section className="hero-photo-section relative flex min-h-[500px] items-center justify-center overflow-hidden px-6 py-16 sm:py-20">
+          <div
+            className="pointer-events-none absolute inset-0 z-0 bg-[#0EA5E9] bg-cover bg-center"
+            style={{ backgroundImage: "url('/hero-bg.jpg')" }}
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute inset-0 z-[1]"
+            style={{ background: HERO_OVERLAY }}
+            aria-hidden
+          />
+          <div className="relative z-[3] mx-auto w-full max-w-3xl text-center">
             <h1
-              className="text-balance"
-              style={{ fontSize: 'clamp(22px, 5vw, 34px)', fontWeight: 800, color: 'white', lineHeight: 1.15, letterSpacing: '-0.5px', marginBottom: '10px' }}
+              className="text-balance text-white"
+              style={{
+                fontSize: 'clamp(22px, 5vw, 34px)',
+                fontWeight: 800,
+                lineHeight: 1.15,
+                letterSpacing: '-0.5px',
+                marginBottom: '10px',
+              }}
             >
               El Salvador, desde los ojos del viajero
             </h1>
-            <p className="mb-8 text-pretty text-sm text-white/70 sm:text-base">
+            <p className="mb-8 text-pretty text-sm text-white sm:text-base">
               Reseñas reales de playas, volcanes, pueblos coloniales y experiencias únicas
             </p>
 
@@ -206,15 +209,15 @@ export default function Home() {
             <div className="flex flex-wrap justify-center gap-8 text-center sm:gap-14">
               <div>
                 <p className="text-xl font-bold text-white sm:text-2xl">8+</p>
-                <p className="text-xs text-white/[0.55] sm:text-sm">Destinos</p>
+                <p className="text-xs text-white sm:text-sm">Destinos</p>
               </div>
               <div>
                 <p className="text-xl font-bold text-white sm:text-2xl">14</p>
-                <p className="text-xs text-white/[0.55] sm:text-sm">Departamentos</p>
+                <p className="text-xs text-white sm:text-sm">Departamentos</p>
               </div>
               <div>
                 <p className="text-xl font-bold text-white sm:text-2xl">10</p>
-                <p className="text-xs text-white/[0.55] sm:text-sm">Categorías</p>
+                <p className="text-xs text-white sm:text-sm">Categorías</p>
               </div>
             </div>
           </div>
@@ -309,24 +312,33 @@ export default function Home() {
             </ul>
           )}
 
-          <section
-            className="mx-6 mt-12 rounded-2xl px-5 py-8 text-center sm:mx-8 sm:px-8"
-            style={{ backgroundColor: '#0EA5E9' }}
-          >
-            <h3 className="mb-2 text-xl font-extrabold text-white sm:text-2xl">
-              ¿Conocés un lugar increíble?
-            </h3>
-            <p className="mb-6 text-sm text-white/[0.65] sm:text-base">
-              Compartí experiencias únicas y ayudá a otros a descubrir El Salvador.
-            </p>
-            <button
-              type="button"
-              className="rounded-full px-6 py-3 text-sm font-bold text-[#1A1A1A] transition hover:brightness-95"
-              style={{ backgroundColor: '#F5C518' }}
-              onClick={(e) => e.preventDefault()}
-            >
-              Agregar un lugar
-            </button>
+          <section className="hero-photo-section relative mx-6 mt-12 overflow-hidden rounded-2xl text-center sm:mx-8">
+            <div
+              className="pointer-events-none absolute inset-0 z-0 bg-[#0EA5E9] bg-cover bg-center"
+              style={{ backgroundImage: "url('/hero-bg.jpg')" }}
+              aria-hidden
+            />
+            <div
+              className="pointer-events-none absolute inset-0 z-[1]"
+              style={{ background: HERO_OVERLAY }}
+              aria-hidden
+            />
+            <div className="relative z-[3] px-5 py-8 sm:px-8 sm:py-10">
+              <h3 className="mb-2 text-xl font-extrabold text-white sm:text-2xl">
+                ¿Conocés un lugar increíble?
+              </h3>
+              <p className="mb-6 text-sm text-white sm:text-base">
+                Compartí experiencias únicas y ayudá a otros a descubrir El Salvador.
+              </p>
+              <button
+                type="button"
+                className="rounded-full px-6 py-3 text-sm font-bold text-[#1A1A1A] transition hover:brightness-95"
+                style={{ backgroundColor: '#F5C518' }}
+                onClick={(e) => e.preventDefault()}
+              >
+                Agregar un lugar
+              </button>
+            </div>
           </section>
         </main>
       </div>
