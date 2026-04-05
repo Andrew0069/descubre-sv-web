@@ -16,6 +16,7 @@ export default function Home() {
   const [categoriaId, setCategoriaId] = useState(null)
   const [searchInput, setSearchInput] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [menuOpen, setMenuOpen] = useState(false)
   const gridRef = useRef(null)
 
   useEffect(() => {
@@ -105,57 +106,136 @@ export default function Home() {
 
   return (
     <div className="min-h-screen pb-16" style={{ background: 'var(--bg)' }}>
-      <header
-        className="fixed left-0 right-0 top-0 z-50"
-        style={{
-          height: '68px',
-          backgroundColor: '#F8F7F4',
-          borderBottom: '1px solid rgba(0,0,0,0.05)',
-        }}
-      >
-        <div
-          className="mx-auto flex h-full items-center justify-between"
-          style={{ maxWidth: '1200px', paddingLeft: '48px', paddingRight: '48px' }}
-        >
-          <Link to="/" className="select-none" style={{ letterSpacing: '-0.3px' }}>
-            <span style={{ fontSize: '20px', fontWeight: 500, color: '#2C2C2C' }}>Descubre</span>
-            <span style={{ fontSize: '20px', fontWeight: 700, color: '#1A1A1A' }}>SV</span>
+      <header style={{
+        backgroundColor: '#ffffff',
+        borderBottom: '1px solid #e5e7eb',
+        padding: '0 2rem',
+        height: '60px',
+        display: 'flex',
+        alignItems: 'center',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', position: 'relative' }}>
+          <Link to="/" style={{ fontSize: '1.1rem', fontWeight: '700', color: '#111827', letterSpacing: '-0.02em', textDecoration: 'none' }}>
+            Descubre<span style={{ color: '#0EA5E9' }}>SV</span>
           </Link>
 
-          <nav className="hidden items-center sm:flex" style={{ gap: '36px' }}>
-            {['Explorar', 'Guías', 'Reseñas'].map((item) => (
-              <a
-                key={item}
-                href={`#${item.toLowerCase()}`}
-                className="nav-link-premium"
-                onClick={(e) => {
-                  e.preventDefault()
-                  if (item === 'Explorar') handleExplorar(e)
-                }}
-              >
-                {item}
-              </a>
-            ))}
-          </nav>
+          <button
+            type="button"
+            onClick={() => setMenuOpen(!menuOpen)}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '5px',
+              padding: '8px 10px',
+              backgroundColor: menuOpen ? 'rgba(14,165,233,0.08)' : 'transparent',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s ease',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.08)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = menuOpen ? 'rgba(14,165,233,0.08)' : 'transparent' }}
+          >
+            <span style={{ width: '20px', height: '1.5px', backgroundColor: '#374151', borderRadius: '2px', display: 'block', transition: 'all 0.2s' }} />
+            <span style={{ width: '20px', height: '1.5px', backgroundColor: '#374151', borderRadius: '2px', display: 'block', transition: 'all 0.2s' }} />
+            <span style={{ width: '20px', height: '1.5px', backgroundColor: '#374151', borderRadius: '2px', display: 'block', transition: 'all 0.2s' }} />
+          </button>
 
-          <div className="flex items-center" style={{ gap: '24px' }}>
-            <span className="hidden sm:flex items-center" style={{ gap: '4px', fontSize: '13px', letterSpacing: '0.3px' }}>
-              <button type="button" className="nav-lang-btn nav-lang-active">ES</button>
-              <span style={{ color: '#C4C0B8' }}>/</span>
-              <button type="button" className="nav-lang-btn">EN</button>
-            </span>
-            <a
-              href="#acceder"
-              className="nav-acceder-btn"
-              onClick={(e) => e.preventDefault()}
-            >
-              Acceder
-            </a>
-          </div>
+          {menuOpen && (
+            <div style={{
+              position: 'absolute',
+              top: '48px',
+              left: '0',
+              backgroundColor: '#ffffff',
+              border: '1px solid #e5e7eb',
+              borderRadius: '12px',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.08)',
+              padding: '0.5rem',
+              minWidth: '200px',
+              zIndex: 100,
+            }}>
+              {['Explorar', 'Guías', 'Reseñas', 'Agregar lugar'].map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '0.65rem 1rem',
+                    fontSize: '0.9rem',
+                    fontWeight: '500',
+                    color: '#374151',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.07)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                  onClick={() => {
+                    setMenuOpen(false)
+                    if (item === 'Explorar') handleExplorar(new Event('click'))
+                  }}
+                >
+                  {item}
+                </button>
+              ))}
+              <div style={{ height: '1px', backgroundColor: '#f3f4f6', margin: '0.4rem 0.5rem' }} />
+              {['ES', 'EN'].map((lang) => (
+                <button
+                  key={lang}
+                  type="button"
+                  style={{
+                    display: 'inline-block',
+                    padding: '0.5rem 1rem',
+                    fontSize: '0.82rem',
+                    fontWeight: '500',
+                    color: '#6b7280',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.07)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                >
+                  {lang}
+                </button>
+              ))}
+              <div style={{ height: '1px', backgroundColor: '#f3f4f6', margin: '0.4rem 0.5rem' }} />
+              <button
+                type="button"
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  textAlign: 'left',
+                  padding: '0.65rem 1rem',
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  color: '#0EA5E9',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.15s ease',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.07)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+              >
+                Acceder
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
-      <div className="pt-[68px]">
+      <div>
         <section className="hero-photo-section relative flex min-h-[520px] items-center justify-center overflow-hidden px-6 py-16 sm:py-20">
           <div
             className="pointer-events-none absolute inset-0 z-0 bg-[#0EA5E9] bg-cover bg-center"
