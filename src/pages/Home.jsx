@@ -6,6 +6,9 @@ import CategoriaChip, { CategoriaIconSvg } from '../components/CategoriaChip'
 import LugarCard from '../components/LugarCard'
 
 const HERO_OVERLAY =
+  'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.30) 60%, rgba(0,0,0,0.45) 100%)'
+
+const CTA_BANNER_OVERLAY =
   'linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.75) 100%)'
 
 export default function Home() {
@@ -350,7 +353,7 @@ export default function Home() {
             />
             <div
               className="pointer-events-none absolute inset-0 z-[1]"
-              style={{ background: HERO_OVERLAY }}
+              style={{ background: CTA_BANNER_OVERLAY }}
               aria-hidden
             />
             <div className="relative z-[3] px-5 py-8 sm:px-8 sm:py-10">
