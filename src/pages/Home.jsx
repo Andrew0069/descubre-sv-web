@@ -2,11 +2,66 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { ordenarCategorias } from '../lib/categoriaVisual'
-import CategoriaChip, { CategoriaIconSvg } from '../components/CategoriaChip'
+import { CategoriaIconSvg } from '../components/CategoriaChip'
 import LugarCard from '../components/LugarCard'
 
 const HERO_OVERLAY =
   'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.30) 60%, rgba(0,0,0,0.45) 100%)'
+
+function CatButton({ label, emoji, svgNombre, active, onClick }) {
+  const ref = useRef(null)
+  const [hov, setHov] = useState(false)
+
+  useEffect(() => {
+    if (active && ref.current) {
+      ref.current.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+    }
+  }, [active])
+
+  const bg = active
+    ? 'rgba(14,165,233,0.1)'
+    : hov
+      ? 'rgba(14,165,233,0.06)'
+      : 'transparent'
+
+  return (
+    <button
+      ref={ref}
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '4px',
+        padding: '0.6rem 1.1rem',
+        borderRadius: '12px',
+        backgroundColor: bg,
+        border: 'none',
+        borderBottom: active ? '2px solid #0EA5E9' : '2px solid transparent',
+        cursor: 'pointer',
+        flexShrink: 0,
+        transition: 'background-color 0.2s ease',
+      }}
+    >
+      {emoji ? (
+        <span style={{ fontSize: '24px', lineHeight: 1 }}>{emoji}</span>
+      ) : (
+        <CategoriaIconSvg nombre={svgNombre} active={active} size={24} />
+      )}
+      <span style={{
+        fontSize: '0.72rem',
+        fontWeight: 500,
+        color: active ? '#0EA5E9' : '#6b7280',
+        whiteSpace: 'nowrap',
+      }}>
+        {label}
+      </span>
+    </button>
+  )
+}
 
 export default function Home() {
   const [lugares, setLugares] = useState([])
@@ -328,24 +383,34 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="border-b border-[#EEEEEE] bg-white">
-          <div style={{ overflowX: 'auto' }}>
-            <div style={{ display: 'flex', overflowX: 'auto', gap: '0px', padding: '0 8px' }}>
-              <CategoriaChip
-                label="Todos"
-                isTodos
-                active={categoriaId === null}
-                onClick={() => setCategoriaId(null)}
+        <section style={{ padding: '16px 16px 0' }}>
+          <div
+            className="cat-bar-scroll"
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '16px',
+              boxShadow: '0 2px 16px rgba(0,0,0,0.07)',
+              padding: '0.5rem 1rem',
+              overflowX: 'auto',
+              display: 'flex',
+              gap: '0',
+            }}
+          >
+            <CatButton
+              label="Todos"
+              emoji="🗺️"
+              active={categoriaId === null}
+              onClick={() => setCategoriaId(null)}
+            />
+            {categorias.map((c) => (
+              <CatButton
+                key={c.id}
+                label={c.nombre}
+                svgNombre={c.nombre}
+                active={categoriaId === c.id}
+                onClick={() => setCategoriaId(c.id)}
               />
-              {categorias.map((c) => (
-                <CategoriaChip
-                  key={c.id}
-                  label={c.nombre}
-                  active={categoriaId === c.id}
-                  onClick={() => setCategoriaId(c.id)}
-                />
-              ))}
-            </div>
+            ))}
           </div>
         </section>
 
@@ -408,7 +473,7 @@ export default function Home() {
               No hay lugares que coincidan con tu búsqueda o filtro.
             </p>
           ) : (
-            <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <ul style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem', listStyle: 'none', padding: 0, margin: 0 }}>
               {filtrados.map((lugar) => (
                 <li key={lugar.id}>
                   <LugarCard lugar={lugar} />

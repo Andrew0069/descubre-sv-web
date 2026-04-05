@@ -22,6 +22,14 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Category bar: hide scrollbar */
+.cat-bar-scroll {
+  scrollbar-width: none;
+}
+.cat-bar-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 /* DetalleLugar: two-column layout on desktop */
 @media (min-width: 768px) {
   .detalle-body-grid {
