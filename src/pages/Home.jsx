@@ -159,7 +159,12 @@ export default function Home() {
         <section className="hero-photo-section relative flex min-h-[500px] items-center justify-center overflow-hidden px-6 py-16 sm:py-20">
           <div
             className="pointer-events-none absolute inset-0 z-0 bg-[#0EA5E9] bg-cover bg-center"
-            style={{ backgroundImage: "url('/hero-bg.jpg')" }}
+            style={{
+              backgroundImage: "url('/hero-bg.jpg')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center top',
+              backgroundRepeat: 'no-repeat',
+            }}
             aria-hidden
           />
           <div
@@ -335,7 +340,12 @@ export default function Home() {
           <section className="hero-photo-section relative mx-6 mt-12 overflow-hidden rounded-2xl text-center sm:mx-8">
             <div
               className="pointer-events-none absolute inset-0 z-0 bg-[#0EA5E9] bg-cover bg-center"
-              style={{ backgroundImage: "url('/hero-bg.jpg')" }}
+              style={{
+                backgroundImage: "url('/hero-bg.jpg')",
+                backgroundSize: 'cover',
+                backgroundPosition: 'center top',
+                backgroundRepeat: 'no-repeat',
+              }}
               aria-hidden
             />
             <div
