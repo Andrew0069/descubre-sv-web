@@ -8,9 +8,6 @@ import LugarCard from '../components/LugarCard'
 const HERO_OVERLAY =
   'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.30) 60%, rgba(0,0,0,0.45) 100%)'
 
-const CTA_BANNER_OVERLAY =
-  'linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.75) 100%)'
-
 export default function Home() {
   const [lugares, setLugares] = useState([])
   const [categorias, setCategorias] = useState([])
@@ -340,34 +337,87 @@ export default function Home() {
             </ul>
           )}
 
-          <section className="hero-photo-section relative mx-6 mt-12 overflow-hidden rounded-2xl text-center sm:mx-8">
+          {/* CTA Banner Premium */}
+          <section
+            style={{
+              backgroundImage: "url('/hero-bg.png')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center bottom',
+              backgroundRepeat: 'no-repeat',
+              position: 'relative',
+            }}
+            className="w-full"
+          >
             <div
-              className="pointer-events-none absolute inset-0 z-0 bg-[#0EA5E9] bg-cover bg-center"
               style={{
-                backgroundImage: "url('/hero-bg.png')",
-                backgroundSize: 'cover',
-                backgroundPosition: 'center bottom',
-                backgroundRepeat: 'no-repeat',
+                position: 'absolute',
+                inset: 0,
+                background: 'linear-gradient(to bottom, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.82) 100%)',
               }}
-              aria-hidden
             />
-            <div
-              className="pointer-events-none absolute inset-0 z-[1]"
-              style={{ background: CTA_BANNER_OVERLAY }}
-              aria-hidden
-            />
-            <div className="relative z-[3] px-5 py-8 sm:px-8 sm:py-10">
-              <h3 className="mb-2 text-xl font-extrabold text-white sm:text-2xl">
+            <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 py-24">
+              <p
+                style={{
+                  letterSpacing: '0.3em',
+                  fontSize: '0.7rem',
+                  fontWeight: '600',
+                  color: '#F5C842',
+                  textTransform: 'uppercase',
+                  marginBottom: '1.25rem',
+                }}
+              >
+                — Comparte tu experiencia —
+              </p>
+              <h2
+                style={{
+                  fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+                  fontWeight: '800',
+                  color: '#ffffff',
+                  lineHeight: '1.1',
+                  marginBottom: '1rem',
+                  maxWidth: '700px',
+                  textShadow: '0 2px 20px rgba(0,0,0,0.5)',
+                }}
+              >
                 ¿Conocés un lugar increíble?
-              </h3>
-              <p className="mb-6 text-sm text-white sm:text-base">
-                Compartí experiencias únicas y ayudá a otros a descubrir El Salvador.
+              </h2>
+              <p
+                style={{
+                  fontSize: '1.05rem',
+                  color: 'rgba(255,255,255,0.75)',
+                  maxWidth: '480px',
+                  lineHeight: '1.65',
+                  marginBottom: '2.5rem',
+                }}
+              >
+                Ayudá a otros viajeros a descubrir El Salvador con tu mirada única.
               </p>
               <button
                 type="button"
-                className="rounded-full px-6 py-3 text-sm font-bold text-[#1A1A1A] transition hover:brightness-95"
-                style={{ backgroundColor: '#F5C518' }}
-                onClick={(e) => e.preventDefault()}
+                style={{
+                  border: '1.5px solid rgba(255,255,255,0.85)',
+                  color: '#ffffff',
+                  backgroundColor: 'rgba(255,255,255,0.08)',
+                  backdropFilter: 'blur(8px)',
+                  padding: '0.85rem 2.5rem',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  letterSpacing: '0.15em',
+                  textTransform: 'uppercase',
+                  borderRadius: '2px',
+                  cursor: 'pointer',
+                  transition: 'all 0.25s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = 'rgba(255,255,255,0.18)'
+                  e.target.style.borderColor = '#F5C842'
+                  e.target.style.color = '#F5C842'
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = 'rgba(255,255,255,0.08)'
+                  e.target.style.borderColor = 'rgba(255,255,255,0.85)'
+                  e.target.style.color = '#ffffff'
+                }}
               >
                 Agregar un lugar
               </button>
