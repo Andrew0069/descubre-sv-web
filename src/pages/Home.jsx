@@ -72,7 +72,16 @@ export default function Home() {
   const [searchInput, setSearchInput] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
-  const gridRef = useRef(null)
+  const [toast, setToast] = useState(null)
+
+  const showToast = useCallback((msg) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3000)
+  }, [])
+
+  const scrollToLugares = useCallback(() => {
+    document.getElementById('lugares')?.scrollIntoView({ behavior: 'smooth' })
+  }, [])
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchInput.trim()), 400)
@@ -134,13 +143,42 @@ export default function Home() {
     setCategoriaId(null)
     setSearchInput('')
     setDebouncedSearch('')
-    gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    scrollToLugares()
   }
 
   const handleExplorar = (e) => {
     e.preventDefault()
-    gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    scrollToLugares()
   }
+
+  const handleFooterNav = useCallback(
+    (item) => {
+      switch (item) {
+        case 'Explorar':
+        case 'Reseñas':
+          scrollToLugares()
+          break
+        case 'Guías':
+          showToast('Guías — próximamente')
+          break
+        case 'Agregar lugar':
+          showToast('Registrate para agregar un lugar')
+          break
+        case 'Privacidad':
+          showToast('Política de privacidad — próximamente')
+          break
+        case 'Términos':
+          showToast('Términos de uso — próximamente')
+          break
+        case 'Contacto':
+          showToast('Contacto — próximamente')
+          break
+        default:
+          break
+      }
+    },
+    [scrollToLugares, showToast],
+  )
 
   return (
     <div className="min-h-screen pb-16" style={{ background: 'var(--bg)' }}>
@@ -195,9 +233,14 @@ export default function Home() {
               minWidth: '200px',
               zIndex: 100,
             }}>
-              {['Explorar', 'Guías', 'Reseñas', 'Agregar lugar'].map((item) => (
+              {[
+                { label: 'Explorar', onClick: () => { setMenuOpen(false); scrollToLugares() } },
+                { label: 'Guías', onClick: () => { setMenuOpen(false); showToast('Guías — próximamente') } },
+                { label: 'Reseñas', onClick: () => { setMenuOpen(false); scrollToLugares() } },
+                { label: 'Agregar lugar', onClick: () => { setMenuOpen(false); showToast('Registrate para agregar un lugar') } },
+              ].map(({ label, onClick }) => (
                 <button
-                  key={item}
+                  key={label}
                   type="button"
                   style={{
                     display: 'block',
@@ -215,37 +258,37 @@ export default function Home() {
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.07)' }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                  onClick={() => {
-                    setMenuOpen(false)
-                    if (item === 'Explorar') handleExplorar(new Event('click'))
-                  }}
+                  onClick={onClick}
                 >
-                  {item}
+                  {label}
                 </button>
               ))}
               <div style={{ height: '1px', backgroundColor: '#f3f4f6', margin: '0.4rem 0.5rem' }} />
-              {['ES', 'EN'].map((lang) => (
-                <button
-                  key={lang}
-                  type="button"
-                  style={{
-                    display: 'inline-block',
-                    padding: '0.5rem 1rem',
-                    fontSize: '0.82rem',
-                    fontWeight: '500',
-                    color: '#6b7280',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.15s ease',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.07)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                >
-                  {lang}
-                </button>
-              ))}
+              <button
+                type="button"
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  textAlign: 'left',
+                  padding: '0.5rem 1rem',
+                  fontSize: '0.82rem',
+                  fontWeight: '500',
+                  color: '#6b7280',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.15s ease',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.07)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                onClick={() => {
+                  setMenuOpen(false)
+                  showToast('Idioma — próximamente')
+                }}
+              >
+                ES / EN
+              </button>
               <div style={{ height: '1px', backgroundColor: '#f3f4f6', margin: '0.4rem 0.5rem' }} />
               <button
                 type="button"
@@ -265,6 +308,10 @@ export default function Home() {
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.07)' }}
                 onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                onClick={() => {
+                  setMenuOpen(false)
+                  window.location.href = '/login'
+                }}
               >
                 Acceder
               </button>
@@ -423,7 +470,7 @@ export default function Home() {
             </p>
           )}
 
-          <div ref={gridRef}>
+          <div>
             <div style={{
               borderBottom: '1px solid rgba(0,0,0,0.05)',
               paddingTop: '56px',
@@ -503,30 +550,32 @@ export default function Home() {
               </p>
             </div>
 
-            {loading ? (
-              <p className="py-12 text-center text-[#999999]">Cargando lugares…</p>
-            ) : filtrados.length === 0 ? (
-              <p className="rounded-[14px] border border-dashed border-[#E8E8E8] bg-white px-6 py-14 text-center text-[#999999]">
-                No hay lugares que coincidan con tu búsqueda o filtro.
-              </p>
-            ) : (
-              <ul style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                gap: '1.75rem',
-                listStyle: 'none',
-                padding: 0,
-                paddingTop: '32px',
-                margin: 0,
-              }}
-              >
-                {filtrados.map((lugar) => (
-                  <li key={lugar.id}>
-                    <LugarCard lugar={lugar} />
-                  </li>
-                ))}
-              </ul>
-            )}
+            <div id="lugares">
+              {loading ? (
+                <p className="py-12 text-center text-[#999999]">Cargando lugares…</p>
+              ) : filtrados.length === 0 ? (
+                <p className="rounded-[14px] border border-dashed border-[#E8E8E8] bg-white px-6 py-14 text-center text-[#999999]">
+                  No hay lugares que coincidan con tu búsqueda o filtro.
+                </p>
+              ) : (
+                <ul style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                  gap: '1.75rem',
+                  listStyle: 'none',
+                  padding: 0,
+                  paddingTop: '32px',
+                  margin: 0,
+                }}
+                >
+                  {filtrados.map((lugar) => (
+                    <li key={lugar.id}>
+                      <LugarCard lugar={lugar} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
 
         </main>
@@ -568,6 +617,7 @@ export default function Home() {
                     cursor: 'pointer',
                     transition: 'all 0.15s ease',
                   }}
+                  onClick={() => handleFooterNav(item)}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.07)'
                     e.currentTarget.style.color = '#0EA5E9'
@@ -590,6 +640,29 @@ export default function Home() {
           </p>
         </footer>
       </div>
+
+      {toast && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '2rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: '#111827',
+            color: '#ffffff',
+            padding: '0.75rem 1.5rem',
+            borderRadius: '50px',
+            fontSize: '0.85rem',
+            fontWeight: '500',
+            zIndex: 999,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+            animation: 'fadeInUp 0.25s ease',
+          }}
+          role="status"
+        >
+          {toast}
+        </div>
+      )}
     </div>
   )
 }
