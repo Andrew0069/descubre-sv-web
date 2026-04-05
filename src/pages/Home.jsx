@@ -423,32 +423,113 @@ export default function Home() {
             </p>
           )}
 
-          <div ref={gridRef} className="mb-6 flex items-end justify-between gap-4">
-            <h2 className="text-lg font-bold text-[#1A1A1A]">Más valorados</h2>
-            <button
-              type="button"
-              onClick={handleVerTodos}
-              className="shrink-0 text-sm font-semibold text-[#0EA5E9] hover:underline"
+          <div ref={gridRef}>
+            <div style={{
+              borderBottom: '1px solid rgba(0,0,0,0.05)',
+              paddingTop: '56px',
+              paddingBottom: '32px',
+              marginBottom: '8px',
+            }}
             >
-              Ver todos →
-            </button>
-          </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '1rem',
+                marginBottom: '0.5rem',
+              }}
+              >
+                <div>
+                  <p style={{
+                    fontSize: '0.72rem',
+                    fontWeight: '600',
+                    letterSpacing: '0.18em',
+                    textTransform: 'uppercase',
+                    color: '#0EA5E9',
+                    marginBottom: '0.5rem',
+                  }}
+                  >
+                    Selección DescubreSV
+                  </p>
+                  <h2 style={{
+                    fontSize: 'clamp(1.4rem, 3vw, 2rem)',
+                    fontWeight: '800',
+                    color: '#111827',
+                    lineHeight: '1.15',
+                    letterSpacing: '-0.02em',
+                    maxWidth: '520px',
+                  }}
+                  >
+                    Los lugares que no deberías perderte en El Salvador
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleVerTodos}
+                  style={{
+                    backgroundColor: 'transparent',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '40px',
+                    padding: '0.55rem 1.25rem',
+                    fontSize: '0.82rem',
+                    fontWeight: '600',
+                    color: '#374151',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.2s ease',
+                    letterSpacing: '0.01em',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#111827'
+                    e.currentTarget.style.color = '#ffffff'
+                    e.currentTarget.style.borderColor = '#111827'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                    e.currentTarget.style.color = '#374151'
+                    e.currentTarget.style.borderColor = '#d1d5db'
+                  }}
+                >
+                  Ver selección →
+                </button>
+              </div>
+              <p style={{
+                fontSize: '0.88rem',
+                color: '#9ca3af',
+                fontStyle: 'italic',
+                marginTop: '0.5rem',
+              }}
+              >
+                Lugares mejor valorados por viajeros y experiencias verificadas
+              </p>
+            </div>
 
-          {loading ? (
-            <p className="py-12 text-center text-[#999999]">Cargando lugares…</p>
-          ) : filtrados.length === 0 ? (
-            <p className="rounded-[14px] border border-dashed border-[#E8E8E8] bg-white px-6 py-14 text-center text-[#999999]">
-              No hay lugares que coincidan con tu búsqueda o filtro.
-            </p>
-          ) : (
-            <ul style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem', listStyle: 'none', padding: 0, margin: 0 }}>
-              {filtrados.map((lugar) => (
-                <li key={lugar.id}>
-                  <LugarCard lugar={lugar} />
-                </li>
-              ))}
-            </ul>
-          )}
+            {loading ? (
+              <p className="py-12 text-center text-[#999999]">Cargando lugares…</p>
+            ) : filtrados.length === 0 ? (
+              <p className="rounded-[14px] border border-dashed border-[#E8E8E8] bg-white px-6 py-14 text-center text-[#999999]">
+                No hay lugares que coincidan con tu búsqueda o filtro.
+              </p>
+            ) : (
+              <ul style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: '1.75rem',
+                listStyle: 'none',
+                padding: 0,
+                paddingTop: '32px',
+                margin: 0,
+              }}
+              >
+                {filtrados.map((lugar) => (
+                  <li key={lugar.id}>
+                    <LugarCard lugar={lugar} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
         </main>
 
