@@ -374,6 +374,64 @@ export default function Home() {
             </div>
           </section>
         </main>
+
+        <footer
+          style={{
+            backgroundColor: '#F8F7F4',
+            borderTop: '1px solid rgba(0,0,0,0.06)',
+          }}
+        >
+          <div
+            className="mx-auto grid grid-cols-3 gap-6"
+            style={{ maxWidth: '1200px', padding: '40px 24px 32px' }}
+          >
+            <div className="max-w-[280px]">
+              <p className="mb-3 select-none" style={{ letterSpacing: '-0.3px' }}>
+                <span style={{ fontSize: '18px', fontWeight: 500, color: '#2C2C2C' }}>Descubre</span>
+                <span style={{ fontSize: '18px', fontWeight: 700, color: '#1A1A1A' }}>SV</span>
+              </p>
+              <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#7A7770' }}>
+                Guía curada de destinos, experiencias y reseñas para descubrir El Salvador con más criterio.
+              </p>
+            </div>
+
+            <div>
+              <p className="footer-col-title">Navegación</p>
+              <ul className="footer-links">
+                <li><a href="#explorar" onClick={(e) => { e.preventDefault(); handleExplorar(e) }}>Explorar</a></li>
+                <li><a href="#guias" onClick={(e) => e.preventDefault()}>Guías</a></li>
+                <li><a href="#resenas" onClick={(e) => e.preventDefault()}>Reseñas</a></li>
+                <li><a href="#compartir" onClick={(e) => e.preventDefault()}>Compartir lugar</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <p className="footer-col-title">Soporte</p>
+              <ul className="footer-links">
+                <li><a href="#acceder" onClick={(e) => e.preventDefault()}>Acceder</a></li>
+                <li><a href="#idioma" onClick={(e) => e.preventDefault()}>ES / EN</a></li>
+                <li><a href="#privacidad" onClick={(e) => e.preventDefault()}>Privacidad</a></li>
+                <li><a href="#terminos" onClick={(e) => e.preventDefault()}>Términos</a></li>
+                <li><a href="#contacto" onClick={(e) => e.preventDefault()}>Contacto</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <div
+            className="mx-auto flex items-center justify-between"
+            style={{
+              maxWidth: '1200px',
+              padding: '0 24px 24px',
+              borderTop: '1px solid rgba(0,0,0,0.05)',
+              paddingTop: '16px',
+            }}
+          >
+            <p style={{ fontSize: '13px', color: '#A09D96' }}>© 2026 DescubreSV</p>
+            <p style={{ fontSize: '13px', color: '#A09D96', fontStyle: 'italic' }}>
+              El Salvador, desde una mirada curada.
+            </p>
+          </div>
+        </footer>
       </div>
     </div>
   )
