@@ -84,6 +84,10 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [])
+
+  useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchInput.trim()), 400)
     return () => clearTimeout(t)
   }, [searchInput])

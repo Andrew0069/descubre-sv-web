@@ -81,6 +81,10 @@ export default function DetalleLugar() {
   const [notFound, setNotFound] = useState(false)
   const [toast, setToast] = useState(false)
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
+
   const load = useCallback(async () => {
     if (!id) return
     setLoading(true)
