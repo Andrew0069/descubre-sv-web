@@ -129,23 +129,6 @@ export default function Home() {
     return list
   }, [lugares, categoriaId, debouncedSearch])
 
-  const destacado = useMemo(() => {
-    if (!lugares.length) return null
-    return [...lugares].sort((a, b) => {
-      const ra = Number(a.promedio_estrellas) || 0
-      const rb = Number(b.promedio_estrellas) || 0
-      if (rb !== ra) return rb - ra
-      return (b.total_resenas ?? 0) - (a.total_resenas ?? 0)
-    })[0]
-  }, [lugares])
-
-  const truncar = (texto, max = 120) => {
-    if (!texto) return ''
-    const t = texto.trim()
-    if (t.length <= max) return t
-    return `${t.slice(0, max).trim()}…`
-  }
-
   const handleVerTodos = (e) => {
     e.preventDefault()
     setCategoriaId(null)
@@ -325,61 +308,80 @@ export default function Home() {
             </p>
 
             <form
-              style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'white', borderRadius: '16px', padding: '8px', maxWidth: '480px', margin: '0 auto', boxShadow: '0 12px 40px rgba(0,0,0,0.18)' }}
-              className="mb-8"
               onSubmit={(e) => {
                 e.preventDefault()
                 handleExplorar(e)
               }}
+              style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: 0 }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 6px' }}>
-                <svg
-                  width={20}
-                  height={20}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#999999"
-                  strokeWidth={2}
-                  aria-hidden
-                  style={{ flexShrink: 0 }}
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.35-4.35" strokeLinecap="round" />
-                </svg>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                backgroundColor: 'rgba(255,255,255,0.12)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.25)',
+                borderRadius: '50px',
+                padding: '6px 6px 6px 20px',
+                maxWidth: '560px',
+                width: '100%',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.2)',
+              }}
+              >
+                <span style={{ fontSize: '1.1rem', marginRight: '10px' }}>🔍</span>
                 <label htmlFor="hero-buscar" className="sr-only">
                   Buscar destino
                 </label>
                 <input
                   id="hero-buscar"
-                  type="search"
+                  type="text"
                   placeholder="¿A dónde querés ir?"
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  style={{ border: 'none', outline: 'none', fontSize: '14px', padding: '10px 14px', flex: 1, background: 'transparent' }}
+                  className="hero-glass-input"
+                  style={{
+                    flex: 1,
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    outline: 'none',
+                    color: '#ffffff',
+                    fontSize: '0.95rem',
+                    fontWeight: '400',
+                  }}
                 />
+                <button
+                  type="submit"
+                  style={{
+                    backgroundColor: '#F5C842',
+                    color: '#111827',
+                    border: 'none',
+                    borderRadius: '40px',
+                    padding: '0.65rem 1.5rem',
+                    fontSize: '0.88rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    letterSpacing: '0.02em',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#e6b800' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#F5C842' }}
+                >
+                  Explorar →
+                </button>
               </div>
-              <button
-                type="submit"
-                style={{ background: '#F5C518', color: '#1A1A1A', border: 'none', borderRadius: '10px', padding: '12px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', width: '100%' }}
-              >
-                Explorar
-              </button>
             </form>
 
-            <div className="flex flex-wrap justify-center gap-8 text-center sm:gap-14">
-              <div>
-                <p className="text-xl font-bold text-white sm:text-2xl">8+</p>
-                <p className="text-xs text-white sm:text-sm">Destinos</p>
-              </div>
-              <div>
-                <p className="text-xl font-bold text-white sm:text-2xl">14</p>
-                <p className="text-xs text-white sm:text-sm">Departamentos</p>
-              </div>
-              <div>
-                <p className="text-xl font-bold text-white sm:text-2xl">10</p>
-                <p className="text-xs text-white sm:text-sm">Categorías</p>
-              </div>
-            </div>
+            <p style={{
+              color: 'rgba(255,255,255,0.7)',
+              fontSize: '0.85rem',
+              fontStyle: 'italic',
+              letterSpacing: '0.03em',
+              marginTop: '1.25rem',
+            }}
+            >
+              Una selección de experiencias para explorar mejor el país
+            </p>
           </div>
         </section>
 
@@ -419,40 +421,6 @@ export default function Home() {
             <p className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
               {error}
             </p>
-          )}
-
-          {!loading && destacado && (
-            <section className="mb-10 mt-4">
-              <h2 className="mb-3 text-sm font-semibold text-[#999999]">
-                Destino destacado
-              </h2>
-              <Link
-                to={`/lugar/${destacado.id}`}
-                className="flex items-center gap-4 rounded-xl border border-[#BAE6FD] bg-[#F0FAFE] p-4 transition hover:bg-[#e6f6fd]"
-              >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
-                  <CategoriaIconSvg nombre={destacado.categorias?.nombre} active size={26} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-bold text-[#1A1A1A]">{destacado.nombre}</p>
-                  <p className="mt-0.5 line-clamp-2 text-sm text-[#999999]">
-                    {truncar(destacado.descripcion, 140)}
-                  </p>
-                </div>
-                <svg
-                  width={20}
-                  height={20}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#0EA5E9"
-                  strokeWidth={2}
-                  className="shrink-0"
-                  aria-hidden
-                >
-                  <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </Link>
-            </section>
           )}
 
           <div ref={gridRef} className="mb-6 flex items-end justify-between gap-4">
