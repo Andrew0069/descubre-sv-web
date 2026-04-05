@@ -1,8 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import CategoriaChip from '../components/CategoriaChip'
+import { ordenarCategorias } from '../lib/categoriaVisual'
+import CategoriaChip, { CategoriaIconSvg } from '../components/CategoriaChip'
 import LugarCard from '../components/LugarCard'
+
+const HERO_PATTERN = `
+  radial-gradient(circle at 18% 22%, rgba(255,255,255,0.07) 0%, transparent 42%),
+  radial-gradient(circle at 82% 8%, rgba(255,255,255,0.07) 0%, transparent 38%),
+  radial-gradient(circle at 72% 78%, rgba(255,255,255,0.06) 0%, transparent 45%),
+  radial-gradient(circle at 8% 88%, rgba(255,255,255,0.05) 0%, transparent 40%)
+`
 
 export default function Home() {
   const [lugares, setLugares] = useState([])
@@ -12,6 +20,7 @@ export default function Home() {
   const [categoriaId, setCategoriaId] = useState(null)
   const [searchInput, setSearchInput] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const gridRef = useRef(null)
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchInput.trim()), 400)
@@ -48,7 +57,7 @@ export default function Home() {
         .order('nombre', { ascending: true })
       if (!cancelled) {
         if (err) setCategorias([])
-        else setCategorias(data ?? [])
+        else setCategorias(ordenarCategorias(data ?? []))
       }
     })()
     return () => {
@@ -68,73 +77,255 @@ export default function Home() {
     return list
   }, [lugares, categoriaId, debouncedSearch])
 
+  const destacado = useMemo(() => {
+    if (!lugares.length) return null
+    return [...lugares].sort((a, b) => {
+      const ra = Number(a.promedio_estrellas) || 0
+      const rb = Number(b.promedio_estrellas) || 0
+      if (rb !== ra) return rb - ra
+      return (b.total_resenas ?? 0) - (a.total_resenas ?? 0)
+    })[0]
+  }, [lugares])
+
+  const truncar = (texto, max = 120) => {
+    if (!texto) return ''
+    const t = texto.trim()
+    if (t.length <= max) return t
+    return `${t.slice(0, max).trim()}…`
+  }
+
+  const handleVerTodos = (e) => {
+    e.preventDefault()
+    setCategoriaId(null)
+    setSearchInput('')
+    setDebouncedSearch('')
+    gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const handleExplorar = (e) => {
+    e.preventDefault()
+    gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
-    <div className="min-h-screen bg-[#FAFAFA] pb-12 pt-16">
-      <header className="fixed left-0 right-0 top-0 z-40 border-b border-gray-200 bg-white shadow-sm">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          <Link to="/" className="text-xl font-bold text-[#1565C0]">
-            Descubre SV
+    <div className="min-h-screen pb-16" style={{ background: 'var(--bg)' }}>
+      <header className="fixed left-0 right-0 top-0 z-50 border-b border-[#E8E8E8] bg-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+          <Link to="/" className="select-none text-lg font-extrabold tracking-tight">
+            <span className="text-[#0EA5E9]">Descubre</span>
+            <span className="text-[#F5C518]">SV</span>
           </Link>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex rounded-full border border-[#E8E8E8] p-0.5 text-xs font-medium text-[#999999]">
+              <button type="button" className="rounded-full bg-[#F8F8F8] px-2.5 py-1 text-[#1A1A1A]">
+                ES
+              </button>
+              <button
+                type="button"
+                className="rounded-full px-2.5 py-1 hover:text-[#1A1A1A]"
+                aria-label="English"
+              >
+                EN
+              </button>
+            </div>
+            <a
+              href="#iniciar-sesion"
+              className="text-sm font-semibold text-[#0EA5E9] hover:underline"
+              onClick={(e) => e.preventDefault()}
+            >
+              Iniciar sesión
+            </a>
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4">
-        <div className="mb-6 pt-4">
-          <label htmlFor="buscar-lugar" className="sr-only">
-            Buscar por nombre
-          </label>
-          <input
-            id="buscar-lugar"
-            type="search"
-            placeholder="Buscar por nombre..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-[#1565C0] focus:outline-none focus:ring-2 focus:ring-[#1565C0]/30"
-          />
-        </div>
+      <div className="pt-[52px]">
+        <section
+          className="px-4 pb-10 pt-8 sm:px-6 sm:pb-12 sm:pt-10"
+          style={{
+            backgroundColor: '#0EA5E9',
+            backgroundImage: HERO_PATTERN,
+          }}
+        >
+          <div className="mx-auto max-w-3xl text-center">
+            <h1
+              className="mb-3 text-balance text-[28px] font-extrabold leading-tight tracking-[-0.5px] text-white sm:text-[34px]"
+            >
+              El Salvador, desde los ojos del viajero
+            </h1>
+            <p className="mb-8 text-pretty text-sm text-white/70 sm:text-base">
+              Reseñas reales de playas, volcanes, pueblos coloniales y experiencias únicas
+            </p>
 
-        <div className="-mx-4 mb-8 overflow-x-auto px-4 pb-1">
-          <div className="flex w-max gap-2 pb-1">
-            <CategoriaChip
-              label="Todos"
-              isTodos
-              active={categoriaId === null}
-              onClick={() => setCategoriaId(null)}
-            />
-            {categorias.map((c) => (
-              <CategoriaChip
-                key={c.id}
-                label={c.nombre}
-                accentColor={c.color}
-                active={categoriaId === c.id}
-                onClick={() => setCategoriaId(c.id)}
-              />
-            ))}
+            <form
+              className="mx-auto mb-8 flex max-w-xl flex-col gap-2 rounded-full bg-white p-1.5 shadow-lg sm:flex-row sm:items-center"
+              onSubmit={(e) => {
+                e.preventDefault()
+                handleExplorar(e)
+              }}
+            >
+              <div className="flex min-h-[44px] flex-1 items-center gap-2 px-3">
+                <svg
+                  width={20}
+                  height={20}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="shrink-0 text-[#999999]"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  aria-hidden
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.35-4.35" strokeLinecap="round" />
+                </svg>
+                <label htmlFor="hero-buscar" className="sr-only">
+                  Buscar destino
+                </label>
+                <input
+                  id="hero-buscar"
+                  type="search"
+                  placeholder="¿A dónde querés ir?"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="min-w-0 flex-1 border-0 bg-transparent text-sm text-[#1A1A1A] outline-none placeholder:text-[#999999]"
+                />
+              </div>
+              <button
+                type="submit"
+                className="shrink-0 rounded-full px-6 py-2.5 text-sm font-bold text-[#1A1A1A] transition hover:brightness-95"
+                style={{ backgroundColor: '#F5C518' }}
+              >
+                Explorar
+              </button>
+            </form>
+
+            <div className="flex flex-wrap justify-center gap-8 text-center sm:gap-14">
+              <div>
+                <p className="text-xl font-bold text-white sm:text-2xl">8+</p>
+                <p className="text-xs text-white/[0.55] sm:text-sm">Destinos</p>
+              </div>
+              <div>
+                <p className="text-xl font-bold text-white sm:text-2xl">14</p>
+                <p className="text-xs text-white/[0.55] sm:text-sm">Departamentos</p>
+              </div>
+              <div>
+                <p className="text-xl font-bold text-white sm:text-2xl">10</p>
+                <p className="text-xs text-white/[0.55] sm:text-sm">Categorías</p>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
 
-        {error && (
-          <p className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
-            {error}
-          </p>
-        )}
+        <section className="border-b border-[#EEEEEE] bg-white">
+          <div className="-mx-0 overflow-x-auto">
+            <div className="mx-auto flex w-max max-w-6xl justify-start px-2 sm:px-4">
+              <CategoriaChip
+                label="Todos"
+                isTodos
+                active={categoriaId === null}
+                onClick={() => setCategoriaId(null)}
+              />
+              {categorias.map((c) => (
+                <CategoriaChip
+                  key={c.id}
+                  label={c.nombre}
+                  active={categoriaId === c.id}
+                  onClick={() => setCategoriaId(c.id)}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
 
-        {loading ? (
-          <p className="text-center text-gray-500">Cargando lugares…</p>
-        ) : filtrados.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-gray-300 bg-white px-6 py-12 text-center text-gray-600">
-            No hay lugares que coincidan con tu búsqueda o filtro.
-          </p>
-        ) : (
-          <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {filtrados.map((lugar) => (
-              <li key={lugar.id}>
-                <LugarCard lugar={lugar} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </main>
+        <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+          {error && (
+            <p className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              {error}
+            </p>
+          )}
+
+          {!loading && destacado && (
+            <section className="mb-10">
+              <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-[#999999]">
+                Destino destacado
+              </h2>
+              <Link
+                to={`/lugar/${destacado.id}`}
+                className="flex items-center gap-4 rounded-xl border border-[#BAE6FD] bg-[#F0FAFE] p-4 transition hover:bg-[#e6f6fd]"
+              >
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
+                  <CategoriaIconSvg nombre={destacado.categorias?.nombre} active size={26} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold text-[#1A1A1A]">{destacado.nombre}</p>
+                  <p className="mt-0.5 line-clamp-2 text-sm text-[#999999]">
+                    {truncar(destacado.descripcion, 140)}
+                  </p>
+                </div>
+                <svg
+                  width={20}
+                  height={20}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#0EA5E9"
+                  strokeWidth={2}
+                  className="shrink-0"
+                  aria-hidden
+                >
+                  <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </Link>
+            </section>
+          )}
+
+          <div ref={gridRef} className="mb-6 flex items-end justify-between gap-4">
+            <h2 className="text-lg font-bold text-[#1A1A1A]">Más valorados</h2>
+            <button
+              type="button"
+              onClick={handleVerTodos}
+              className="shrink-0 text-sm font-semibold text-[#0EA5E9] hover:underline"
+            >
+              Ver todos →
+            </button>
+          </div>
+
+          {loading ? (
+            <p className="py-12 text-center text-[#999999]">Cargando lugares…</p>
+          ) : filtrados.length === 0 ? (
+            <p className="rounded-[14px] border border-dashed border-[#E8E8E8] bg-white px-6 py-14 text-center text-[#999999]">
+              No hay lugares que coincidan con tu búsqueda o filtro.
+            </p>
+          ) : (
+            <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {filtrados.map((lugar) => (
+                <li key={lugar.id}>
+                  <LugarCard lugar={lugar} />
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <section
+            className="mx-6 mt-12 rounded-2xl px-5 py-8 text-center sm:mx-8 sm:px-8"
+            style={{ backgroundColor: '#0EA5E9' }}
+          >
+            <h3 className="mb-2 text-xl font-extrabold text-white sm:text-2xl">
+              ¿Conocés un lugar increíble?
+            </h3>
+            <p className="mb-6 text-sm text-white/[0.65] sm:text-base">
+              Compartí experiencias únicas y ayudá a otros a descubrir El Salvador.
+            </p>
+            <button
+              type="button"
+              className="rounded-full px-6 py-3 text-sm font-bold text-[#1A1A1A] transition hover:brightness-95"
+              style={{ backgroundColor: '#F5C518' }}
+              onClick={(e) => e.preventDefault()}
+            >
+              Agregar un lugar
+            </button>
+          </section>
+        </main>
+      </div>
     </div>
   )
 }

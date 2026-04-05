@@ -29,14 +29,14 @@ export default function ResenaCard({ resena }) {
   const autor = nombre || 'Anónimo'
 
   return (
-    <article className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-      <p className="mb-2 font-medium text-gray-800">{autor}</p>
+    <article className="rounded-[14px] border border-[#E8E8E8] bg-white p-4 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+      <p className="mb-2 text-sm font-medium text-[#1A1A1A]">{autor}</p>
       <div className="mb-2">
         <StarRating value={resena.estrellas} />
       </div>
-      <h3 className="mb-1 font-bold text-gray-900">{resena.titulo}</h3>
-      <p className="mb-3 text-sm leading-relaxed text-gray-600">{resena.contenido}</p>
-      <time className="text-sm text-gray-500" dateTime={resena.created_at}>
+      <h3 className="mb-1 text-sm font-bold text-[#1A1A1A]">{resena.titulo}</h3>
+      <p className="mb-3 text-sm leading-relaxed text-[#999999]">{resena.contenido}</p>
+      <time className="text-xs text-[#999999]" dateTime={resena.created_at}>
         {formatRelativeEs(resena.created_at)}
       </time>
     </article>
