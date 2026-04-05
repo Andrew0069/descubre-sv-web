@@ -105,37 +105,57 @@ export default function Home() {
 
   return (
     <div className="min-h-screen pb-16" style={{ background: 'var(--bg)' }}>
-      <header className="fixed left-0 right-0 top-0 z-50 border-b border-[#E8E8E8] bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-6 py-3.5">
-          <Link to="/" className="select-none pl-0 text-lg font-extrabold tracking-tight sm:pl-0">
-            <span className="text-[#0EA5E9]">Descubre</span>
-            <span className="text-[#F5C518]">SV</span>
+      <header
+        className="fixed left-0 right-0 top-0 z-50"
+        style={{
+          height: '68px',
+          backgroundColor: '#F8F7F4',
+          borderBottom: '1px solid rgba(0,0,0,0.05)',
+        }}
+      >
+        <div
+          className="mx-auto flex h-full items-center justify-between"
+          style={{ maxWidth: '1200px', paddingLeft: '48px', paddingRight: '48px' }}
+        >
+          <Link to="/" className="select-none" style={{ letterSpacing: '-0.3px' }}>
+            <span style={{ fontSize: '20px', fontWeight: 500, color: '#2C2C2C' }}>Descubre</span>
+            <span style={{ fontSize: '20px', fontWeight: 700, color: '#1A1A1A' }}>SV</span>
           </Link>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="flex rounded-full border border-[#E8E8E8] p-0.5 text-xs font-medium text-[#999999]">
-              <button type="button" className="rounded-full bg-[#F8F8F8] px-2.5 py-1 text-[#1A1A1A]">
-                ES
-              </button>
-              <button
-                type="button"
-                className="rounded-full px-2.5 py-1 hover:text-[#1A1A1A]"
-                aria-label="English"
+
+          <nav className="hidden items-center sm:flex" style={{ gap: '36px' }}>
+            {['Explorar', 'Guías', 'Reseñas'].map((item) => (
+              <a
+                key={item}
+                href={`#${item.toLowerCase()}`}
+                className="nav-link-premium"
+                onClick={(e) => {
+                  e.preventDefault()
+                  if (item === 'Explorar') handleExplorar(e)
+                }}
               >
-                EN
-              </button>
-            </div>
+                {item}
+              </a>
+            ))}
+          </nav>
+
+          <div className="flex items-center" style={{ gap: '24px' }}>
+            <span className="hidden sm:flex items-center" style={{ gap: '4px', fontSize: '13px', letterSpacing: '0.3px' }}>
+              <button type="button" className="nav-lang-btn nav-lang-active">ES</button>
+              <span style={{ color: '#C4C0B8' }}>/</span>
+              <button type="button" className="nav-lang-btn">EN</button>
+            </span>
             <a
-              href="#iniciar-sesion"
-              className="text-sm font-semibold text-[#0EA5E9] hover:underline"
+              href="#acceder"
+              className="nav-acceder-btn"
               onClick={(e) => e.preventDefault()}
             >
-              Iniciar sesión
+              Acceder
             </a>
           </div>
         </div>
       </header>
 
-      <div className="pt-[52px]">
+      <div className="pt-[68px]">
         <section className="hero-photo-section relative flex min-h-[500px] items-center justify-center overflow-hidden px-6 py-16 sm:py-20">
           <div
             className="pointer-events-none absolute inset-0 z-0 bg-[#0EA5E9] bg-cover bg-center"
