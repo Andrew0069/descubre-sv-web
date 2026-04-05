@@ -22,6 +22,13 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* DetalleLugar: two-column layout on desktop */
+@media (min-width: 768px) {
+  .detalle-body-grid {
+    grid-template-columns: 3fr 2fr !important;
+  }
+}
+
 /* Foto + overlay: textura grain en ::after (hero) */
 .hero-photo-section::after {
   content: '';
