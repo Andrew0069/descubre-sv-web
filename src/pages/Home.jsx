@@ -160,7 +160,7 @@ export default function Home() {
           <div
             className="pointer-events-none absolute inset-0 z-0 bg-[#0EA5E9] bg-cover bg-center"
             style={{
-              backgroundImage: "url('/hero-bg.jpg')",
+              backgroundImage: "url('/hero-bg.png')",
               backgroundSize: 'cover',
               backgroundPosition: 'center top',
               backgroundRepeat: 'no-repeat',
@@ -341,7 +341,7 @@ export default function Home() {
             <div
               className="pointer-events-none absolute inset-0 z-0 bg-[#0EA5E9] bg-cover bg-center"
               style={{
-                backgroundImage: "url('/hero-bg.jpg')",
+                backgroundImage: "url('/hero-bg.png')",
                 backgroundSize: 'cover',
                 backgroundPosition: 'center top',
                 backgroundRepeat: 'no-repeat',
