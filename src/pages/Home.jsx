@@ -73,6 +73,7 @@ export default function Home() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const [toast, setToast] = useState(null)
+  const [user, setUser] = useState(null)
 
   const showToast = useCallback((msg) => {
     setToast(msg)
@@ -85,6 +86,16 @@ export default function Home() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [])
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+    return () => subscription.unsubscribe()
   }, [])
 
   useEffect(() => {
@@ -294,31 +305,60 @@ export default function Home() {
                 ES / EN
               </button>
               <div style={{ height: '1px', backgroundColor: '#f3f4f6', margin: '0.4rem 0.5rem' }} />
-              <button
-                type="button"
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  textAlign: 'left',
-                  padding: '0.65rem 1rem',
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  color: '#0EA5E9',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.15s ease',
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.07)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                onClick={() => {
-                  setMenuOpen(false)
-                  window.location.href = '/login'
-                }}
-              >
-                Acceder
-              </button>
+              {user ? (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await supabase.auth.signOut()
+                    setMenuOpen(false)
+                    showToast('Sesión cerrada')
+                  }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '0.65rem 1rem',
+                    fontSize: '0.9rem',
+                    fontWeight: '600',
+                    color: '#ef4444',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.07)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                >
+                  Cerrar sesión
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false)
+                    window.location.href = '/login'
+                  }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '0.65rem 1rem',
+                    fontSize: '0.9rem',
+                    fontWeight: '600',
+                    color: '#0EA5E9',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.07)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                >
+                  Acceder
+                </button>
+              )}
             </div>
           )}
         </div>
