@@ -191,6 +191,7 @@ export default function DetalleLugar() {
     const { error: insertError } = await supabase.from('resenas').insert({
       lugar_id: id,
       usuario_id: usuarioRow.id,
+      titulo: resenaTexto.trim().slice(0, 60),
       contenido: resenaTexto.trim(),
       estrellas: 5,
       fotos: urlsFotos,
