@@ -170,7 +170,7 @@ export default function DetalleLugar() {
       const { error: uploadError } = await supabase.storage
         .from('resenas-fotos')
         .upload(path, foto)
-      if (uploadError) { setResenaError('Error subiendo foto.'); setResenaLoading(false); return }
+      if (uploadError) { setResenaError(`Error subiendo foto: ${uploadError.message}`); setResenaLoading(false); return }
       const { data: urlData } = supabase.storage.from('resenas-fotos').getPublicUrl(path)
       urlsFotos.push(urlData.publicUrl)
     }
@@ -197,7 +197,7 @@ export default function DetalleLugar() {
     })
 
     if (insertError) {
-      setResenaError('No se pudo guardar la reseña. Intentá de nuevo.')
+      setResenaError(`Error: ${insertError.message}`)
       setResenaLoading(false)
       return
     }
