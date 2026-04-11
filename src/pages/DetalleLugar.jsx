@@ -639,11 +639,13 @@ export default function DetalleLugar() {
                               src={url}
                               alt=""
                               style={{
-                                width: '90px',
-                                height: '90px',
+                                height: '140px',
+                                width: 'auto',
+                                maxWidth: '220px',
                                 objectFit: 'cover',
-                                borderRadius: '8px',
+                                borderRadius: '10px',
                                 cursor: 'pointer',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                               }}
                               onClick={() => window.open(url, '_blank')}
                             />
