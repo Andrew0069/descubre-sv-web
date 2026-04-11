@@ -170,7 +170,7 @@ export default function DetalleLugar() {
 
   useEffect(() => {
     load()
-  }, [load])
+  }, [load, idioma])
 
   useEffect(() => {
     if (!toast) return

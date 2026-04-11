@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getGradiente } from '../lib/categoriaVisual'
 import { CategoriaIconSvg } from './CategoriaChip'
+import { useIdioma } from '../lib/idiomaContext'
 
 const TROPICAL_GRADIENT = 'linear-gradient(135deg, #0EA5E9 0%, #06b6d4 50%, #f59e0b 100%)'
 
@@ -30,14 +31,16 @@ export function LugarImagePlaceholder({ categoriaNombre, iconSize = 36 }) {
 export default function LugarCard({ lugar }) {
   const [hovered, setHovered] = useState(false)
   const [heartHover, setHeartHover] = useState(false)
+  const { idioma } = useIdioma()
 
   const cat = lugar.categorias
   const dep = lugar.departamentos
   const img = lugar.imagen_principal?.trim()
   const hearts = Number(lugar.promedio_estrellas) || 0
   const heartsText = Number.isInteger(hearts) ? String(hearts) : hearts.toFixed(1)
-  const precio = getEntradaPrice(lugar)
-  const isFree = precio === 'Gratis'
+  const precioRaw = getEntradaPrice(lugar)
+  const precio = precioRaw === 'Gratis' ? (idioma === 'en' ? 'Free' : 'Gratis') : precioRaw
+  const isFree = precioRaw === 'Gratis'
   const catBg = cat ? getGradiente(cat.nombre) : TROPICAL_GRADIENT
 
   return (
