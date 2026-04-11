@@ -80,9 +80,23 @@ export default function DetalleLugar() {
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [toast, setToast] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [session, setSession] = useState(null)
+  const [resenaTexto, setResenaTexto] = useState('')
+  const [resenaFotos, setResenaFotos] = useState([])
+  const [resenaPreview, setResenaPreview] = useState([])
+  const [resenaLoading, setResenaLoading] = useState(false)
+  const [resenaError, setResenaError] = useState('')
+  const [resenaSuccess, setResenaSuccess] = useState(false)
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSession(data.session))
+    const { data: listener } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
+    return () => listener.subscription.unsubscribe()
   }, [])
 
   const load = useCallback(async () => {
@@ -125,6 +139,67 @@ export default function DetalleLugar() {
     const t = setTimeout(() => setToast(false), 3500)
     return () => clearTimeout(t)
   }, [toast])
+
+  const handleFotos = (e) => {
+    const files = Array.from(e.target.files)
+    const disponibles = 3 - resenaFotos.length
+    const nuevas = files.slice(0, disponibles)
+    setResenaFotos(prev => [...prev, ...nuevas])
+    const previews = nuevas.map(f => URL.createObjectURL(f))
+    setResenaPreview(prev => [...prev, ...previews])
+  }
+
+  const quitarFoto = (i) => {
+    setResenaFotos(prev => prev.filter((_, idx) => idx !== i))
+    setResenaPreview(prev => prev.filter((_, idx) => idx !== i))
+  }
+
+  const handleSubmitResena = async () => {
+    setResenaError('')
+    if (resenaTexto.trim().length < 50) {
+      setResenaError('La reseña debe tener al menos 50 caracteres.')
+      return
+    }
+    setResenaLoading(true)
+
+    // Subir fotos
+    const urlsFotos = []
+    for (const foto of resenaFotos) {
+      const ext = foto.name.split('.').pop()
+      const path = `${id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const { error: uploadError } = await supabase.storage
+        .from('resenas-fotos')
+        .upload(path, foto)
+      if (uploadError) { setResenaError('Error subiendo foto.'); setResenaLoading(false); return }
+      const { data: urlData } = supabase.storage.from('resenas-fotos').getPublicUrl(path)
+      urlsFotos.push(urlData.publicUrl)
+    }
+
+    // Insertar reseña
+    const { error: insertError } = await supabase.from('resenas').insert({
+      lugar_id: id,
+      usuario_id: session.user.id,
+      contenido: resenaTexto.trim(),
+      fotos: urlsFotos,
+    })
+
+    if (insertError) {
+      setResenaError('No se pudo guardar la reseña. Intentá de nuevo.')
+      setResenaLoading(false)
+      return
+    }
+
+    setResenaSuccess(true)
+    setResenaLoading(false)
+    setTimeout(() => {
+      setModalOpen(false)
+      setResenaTexto('')
+      setResenaFotos([])
+      setResenaPreview([])
+      setResenaSuccess(false)
+      load()
+    }, 1500)
+  }
 
   if (loading) {
     return (
@@ -187,7 +262,108 @@ export default function DetalleLugar() {
           }}
           role="status"
         >
-          Próximamente — registrate para reseñar
+          Iniciá sesión para escribir una reseña
+        </div>
+      )}
+
+      {modalOpen && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 200,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '1rem',
+        }}
+          onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false) }}
+        >
+          <div style={{
+            backgroundColor: '#ffffff', borderRadius: '16px',
+            padding: '2rem', width: '100%', maxWidth: '480px',
+            maxHeight: '90vh', overflowY: 'auto',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827', margin: 0 }}>
+                Escribir reseña
+              </h2>
+              <button type="button" onClick={() => setModalOpen(false)}
+                style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#9ca3af' }}>
+                ✕
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.85rem', color: '#6b7280', marginBottom: '1rem' }}>
+              📍 {lugar.nombre}
+            </p>
+
+            <textarea
+              value={resenaTexto}
+              onChange={(e) => setResenaTexto(e.target.value.slice(0, 1000))}
+              placeholder="Contá tu experiencia en este lugar..."
+              rows={5}
+              style={{
+                width: '100%', padding: '0.85rem', borderRadius: '10px',
+                border: '1.5px solid #e5e7eb', fontSize: '0.92rem',
+                lineHeight: 1.6, resize: 'vertical', outline: 'none',
+                fontFamily: 'inherit', boxSizing: 'border-box',
+                color: '#111827',
+              }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <span style={{ fontSize: '0.75rem', color: resenaTexto.length < 50 ? '#EF4444' : '#10B981' }}>
+                {resenaTexto.length < 50 ? `Mínimo 50 — faltan ${50 - resenaTexto.length}` : '✓ Longitud válida'}
+              </span>
+              <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
+                {resenaTexto.length}/1000
+              </span>
+            </div>
+
+            {/* Fotos */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <p style={{ fontSize: '0.82rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>
+                Fotos ({resenaFotos.length}/3)
+              </p>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {resenaPreview.map((src, i) => (
+                  <div key={i} style={{ position: 'relative' }}>
+                    <img src={src} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }} />
+                    <button type="button" onClick={() => quitarFoto(i)}
+                      style={{
+                        position: 'absolute', top: '-6px', right: '-6px',
+                        background: '#EF4444', color: '#fff', border: 'none',
+                        borderRadius: '50%', width: '20px', height: '20px',
+                        fontSize: '0.7rem', cursor: 'pointer', display: 'flex',
+                        alignItems: 'center', justifyContent: 'center',
+                      }}>✕</button>
+                  </div>
+                ))}
+                {resenaFotos.length < 3 && (
+                  <label style={{
+                    width: '80px', height: '80px', borderRadius: '8px',
+                    border: '2px dashed #d1d5db', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', color: '#9ca3af', fontSize: '1.5rem',
+                  }}>
+                    +
+                    <input type="file" accept="image/*" multiple onChange={handleFotos} style={{ display: 'none' }} />
+                  </label>
+                )}
+              </div>
+            </div>
+
+            {resenaError && <p style={{ color: '#EF4444', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{resenaError}</p>}
+            {resenaSuccess && <p style={{ color: '#10B981', fontSize: '0.85rem', marginBottom: '0.75rem' }}>¡Reseña publicada!</p>}
+
+            <button type="button" onClick={handleSubmitResena} disabled={resenaLoading}
+              style={{
+                width: '100%', backgroundColor: '#0EA5E9', color: '#fff',
+                border: 'none', borderRadius: '50px', padding: '0.85rem',
+                fontSize: '0.95rem', fontWeight: 700,
+                cursor: resenaLoading ? 'not-allowed' : 'pointer',
+                opacity: resenaLoading ? 0.7 : 1,
+              }}>
+              {resenaLoading ? 'Publicando...' : 'Publicar reseña'}
+            </button>
+          </div>
         </div>
       )}
 
@@ -362,7 +538,7 @@ export default function DetalleLugar() {
               </h2>
               <button
                 type="button"
-                onClick={() => setToast(true)}
+                onClick={() => session ? setModalOpen(true) : setToast(true)}
                 style={{
                   backgroundColor: '#0EA5E9',
                   color: '#ffffff',
