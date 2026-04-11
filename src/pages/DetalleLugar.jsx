@@ -101,6 +101,9 @@ export default function DetalleLugar() {
     minimo: idioma === 'en' ? 'Minimum 50 characters' : 'Mínimo 50 caracteres',
     valido: idioma === 'en' ? '✓ Valid length' : '✓ Longitud válida',
     cargando: idioma === 'en' ? 'Loading...' : 'Cargando…',
+    noEncontrado: idioma === 'en' ? 'We couldn\'t find this place.' : 'No encontramos este lugar.',
+    volverInicio: idioma === 'en' ? 'Back to home' : 'Volver al inicio',
+    errorResena: idioma === 'en' ? 'The review must be at least 50 characters.' : 'La reseña debe tener al menos 50 caracteres.',
   }
 
   const [lugar, setLugar] = useState(null)
@@ -174,8 +177,8 @@ export default function DetalleLugar() {
 
   useEffect(() => {
     if (!toast) return
-    const t = setTimeout(() => setToast(false), 3500)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setToast(false), 3500)
+    return () => clearTimeout(timer)
   }, [toast])
 
   const handleFotos = (e) => {
@@ -195,7 +198,7 @@ export default function DetalleLugar() {
   const handleSubmitResena = async () => {
     setResenaError('')
     if (resenaTexto.trim().length < 50) {
-      setResenaError('La reseña debe tener al menos 50 caracteres.')
+      setResenaError(t.errorResena)
       return
     }
     setResenaLoading(true)
@@ -264,7 +267,7 @@ export default function DetalleLugar() {
   if (notFound || !lugar) {
     return (
       <div style={{ minHeight: '100vh', background: '#f9fafb', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
-        <p style={{ color: '#9ca3af', fontSize: '1rem' }}>No encontramos este lugar.</p>
+        <p style={{ color: '#9ca3af', fontSize: '1rem' }}>{t.noEncontrado}</p>
         <Link
           to="/"
           style={{
@@ -279,7 +282,7 @@ export default function DetalleLugar() {
             textDecoration: 'none',
           }}
         >
-          Volver al inicio
+          {t.volverInicio}
         </Link>
       </div>
     )

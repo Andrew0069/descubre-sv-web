@@ -102,6 +102,14 @@ export default function Home() {
     menuPrivacidad: idioma === 'en' ? 'Privacy' : 'Privacidad',
     menuTerminos: idioma === 'en' ? 'Terms' : 'Términos',
     menuContacto: idioma === 'en' ? 'Contact' : 'Contacto',
+    todos: idioma === 'en' ? 'All' : 'Todos',
+    cargando: idioma === 'en' ? 'Loading places...' : 'Cargando lugares…',
+    sesionCerrada: idioma === 'en' ? 'Signed out' : 'Sesión cerrada',
+    guiasProx: idioma === 'en' ? 'Guides — coming soon' : 'Guías — próximamente',
+    agregarProx: idioma === 'en' ? 'Sign up to add a place' : 'Registrate para agregar un lugar',
+    privacidadProx: idioma === 'en' ? 'Privacy policy — coming soon' : 'Política de privacidad — próximamente',
+    terminosProx: idioma === 'en' ? 'Terms of use — coming soon' : 'Términos de uso — próximamente',
+    contactoProx: idioma === 'en' ? 'Contact — coming soon' : 'Contacto — próximamente',
   }
 
   const showToast = useCallback((msg) => {
@@ -128,8 +136,8 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(searchInput.trim()), 400)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setDebouncedSearch(searchInput.trim()), 400)
+    return () => clearTimeout(timer)
   }, [searchInput])
 
   const loadLugares = useCallback(async () => {
@@ -219,25 +227,25 @@ export default function Home() {
           scrollToLugares()
           break
         case 'Guías':
-          showToast('Guías — próximamente')
+          showToast(t.guiasProx)
           break
         case 'Agregar lugar':
-          showToast('Registrate para agregar un lugar')
+          showToast(t.agregarProx)
           break
         case 'Privacidad':
-          showToast('Política de privacidad — próximamente')
+          showToast(t.privacidadProx)
           break
         case 'Términos':
-          showToast('Términos de uso — próximamente')
+          showToast(t.terminosProx)
           break
         case 'Contacto':
-          showToast('Contacto — próximamente')
+          showToast(t.contactoProx)
           break
         default:
           break
       }
     },
-    [scrollToLugares, showToast],
+    [scrollToLugares, showToast, idioma],
   )
 
   return (
@@ -294,10 +302,10 @@ export default function Home() {
               zIndex: 100,
             }}>
               {[
-                { label: 'Explorar', onClick: () => { setMenuOpen(false); scrollToLugares() } },
-                { label: 'Guías', onClick: () => { setMenuOpen(false); showToast('Guías — próximamente') } },
-                { label: 'Reseñas', onClick: () => { setMenuOpen(false); scrollToLugares() } },
-                { label: 'Agregar lugar', onClick: () => { setMenuOpen(false); showToast('Registrate para agregar un lugar') } },
+                { label: t.menuExplorar, onClick: () => { setMenuOpen(false); scrollToLugares() } },
+                { label: t.menuGuias, onClick: () => { setMenuOpen(false); showToast(t.guiasProx) } },
+                { label: t.menuResenas, onClick: () => { setMenuOpen(false); scrollToLugares() } },
+                { label: t.menuAgregar, onClick: () => { setMenuOpen(false); showToast(t.agregarProx) } },
               ].map(({ label, onClick }) => (
                 <button
                   key={label}
@@ -376,14 +384,14 @@ export default function Home() {
                     onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.07)' }}
                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
                   >
-                    👤 Mi perfil
+                    {t.menuPerfil}
                   </button>
                   <button
                     type="button"
                     onClick={async () => {
                       await supabase.auth.signOut()
                       setMenuOpen(false)
-                      showToast('Sesión cerrada')
+                      showToast(t.sesionCerrada)
                     }}
                     style={{
                       display: 'block',
@@ -402,7 +410,7 @@ export default function Home() {
                     onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.07)' }}
                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
                   >
-                    Cerrar sesión
+                    {t.menuCerrar}
                   </button>
                 </>
               ) : (
@@ -429,7 +437,7 @@ export default function Home() {
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.07)' }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
-                  Acceder
+                  {t.menuAcceder}
                 </button>
               )}
             </div>
@@ -563,7 +571,7 @@ export default function Home() {
             }}
           >
             <CatButton
-              label="Todos"
+              label={t.todos}
               emoji="🗺️"
               active={categoriaId === null}
               onClick={() => setCategoriaId(null)}
@@ -669,10 +677,10 @@ export default function Home() {
 
             <div id="lugares">
               {loading ? (
-                <p className="py-12 text-center text-[#999999]">Cargando lugares…</p>
+                <p className="py-12 text-center text-[#999999]">{t.cargando}</p>
               ) : filtrados.length === 0 ? (
                 <p className="rounded-[14px] border border-dashed border-[#E8E8E8] bg-white px-6 py-14 text-center text-[#999999]">
-                  No hay lugares que coincidan con tu búsqueda o filtro.
+                  {t.noResults}
                 </p>
               ) : (
                 <ul style={{
