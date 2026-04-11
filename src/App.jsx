@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import Home from './pages/Home'
 import DetalleLugar from './pages/DetalleLugar'
 import Login from './pages/Login'
+import ResetPassword from './pages/ResetPassword'
 
 function AnimatedRoutes() {
   const location = useLocation()
@@ -54,6 +55,7 @@ function AnimatedRoutes() {
           <Route path="/" element={<Home />} />
           <Route path="/lugar/:id" element={<DetalleLugar />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Routes>
       </div>
     </>
