@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { useIdioma } from '../lib/idiomaContext'
+import { traducirArray } from '../lib/traduccion'
 import { ordenarCategorias } from '../lib/categoriaVisual'
 import { CategoriaIconSvg } from '../components/CategoriaChip'
 import LugarCard from '../components/LugarCard'
@@ -74,6 +76,27 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [toast, setToast] = useState(null)
   const [user, setUser] = useState(null)
+  const { idioma, setIdioma } = useIdioma()
+
+  const t = {
+    heroTitle: idioma === 'en' ? 'El Salvador, through the eyes of the traveler' : 'El Salvador, desde los ojos del viajero',
+    heroSubtitle: idioma === 'en' ? 'Real reviews of beaches, volcanoes, colonial towns and unique experiences' : 'Reseñas reales de playas, volcanes, pueblos coloniales y experiencias únicas',
+    heroPlaceholder: idioma === 'en' ? 'Where do you want to go?' : '¿A dónde querés ir?',
+    heroButton: idioma === 'en' ? 'Explore →' : 'Explorar →',
+    heroTagline: idioma === 'en' ? 'A curated selection of experiences to better explore the country' : 'Una selección de experiencias para explorar mejor el país',
+    sectionLabel: idioma === 'en' ? 'DescubreSV Selection' : 'Selección DescubreSV',
+    sectionTitle: idioma === 'en' ? 'Discover El Salvador' : 'Descubre El Salvador',
+    sectionDesc: idioma === 'en' ? 'Must-see places according to traveler experience' : 'Lugares imprescindibles según la experiencia de viajeros',
+    verTodos: idioma === 'en' ? 'See selection →' : 'Ver selección →',
+    noResults: idioma === 'en' ? 'No places match your search or filter.' : 'No hay lugares que coincidan con tu búsqueda o filtro.',
+    menuExplorar: idioma === 'en' ? 'Explore' : 'Explorar',
+    menuGuias: idioma === 'en' ? 'Guides' : 'Guías',
+    menuResenas: idioma === 'en' ? 'Reviews' : 'Reseñas',
+    menuAgregar: idioma === 'en' ? 'Add place' : 'Agregar lugar',
+    menuAcceder: idioma === 'en' ? 'Sign in' : 'Acceder',
+    menuCerrar: idioma === 'en' ? 'Sign out' : 'Cerrar sesión',
+    menuPerfil: idioma === 'en' ? 'My profile' : '👤 Mi perfil',
+  }
 
   const showToast = useCallback((msg) => {
     setToast(msg)
@@ -115,14 +138,19 @@ export default function Home() {
       setError(err.message)
       setLugares([])
     } else {
-      setLugares(data ?? [])
+      if (idioma === 'en') {
+        const traducidos = await traducirArray(data ?? [], ['nombre', 'descripcion', 'direccion'], 'en')
+        setLugares(traducidos)
+      } else {
+        setLugares(data ?? [])
+      }
     }
     setLoading(false)
-  }, [])
+  }, [idioma])
 
   useEffect(() => {
     loadLugares()
-  }, [loadLugares])
+  }, [loadLugares, idioma])
 
   useEffect(() => {
     let cancelled = false
@@ -299,7 +327,8 @@ export default function Home() {
                 onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
                 onClick={() => {
                   setMenuOpen(false)
-                  showToast('Idioma — próximamente')
+                  setIdioma(idioma === 'es' ? 'en' : 'es')
+                  showToast(idioma === 'es' ? 'Switched to English' : 'Cambiado a español')
                 }}
               >
                 ES / EN
@@ -419,10 +448,10 @@ export default function Home() {
                 marginBottom: '10px',
               }}
             >
-              El Salvador, desde los ojos del viajero
+              {t.heroTitle}
             </h1>
             <p className="mb-8 text-pretty text-sm text-white sm:text-base">
-              Reseñas reales de playas, volcanes, pueblos coloniales y experiencias únicas
+              {t.heroSubtitle}
             </p>
 
             <form
@@ -453,7 +482,7 @@ export default function Home() {
                 <input
                   id="hero-buscar"
                   type="text"
-                  placeholder="¿A dónde querés ir?"
+                  placeholder={t.heroPlaceholder}
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   className="hero-glass-input"
@@ -485,7 +514,7 @@ export default function Home() {
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#e6b800' }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#F5C842' }}
                 >
-                  Explorar →
+                  {t.heroButton}
                 </button>
               </div>
             </form>
@@ -498,7 +527,7 @@ export default function Home() {
               marginTop: '1.25rem',
             }}
             >
-              Una selección de experiencias para explorar mejor el país
+              {t.heroTagline}
             </p>
           </div>
         </section>
@@ -568,7 +597,7 @@ export default function Home() {
                     marginBottom: '0.5rem',
                   }}
                   >
-                    Selección DescubreSV
+                    {t.sectionLabel}
                   </p>
                   <h2 style={{
                     fontSize: 'clamp(1rem, 1.8vw, 1.25rem)',
@@ -579,7 +608,7 @@ export default function Home() {
                     whiteSpace: 'nowrap',
                   }}
                   >
-                    Descubre El Salvador
+                    {t.sectionTitle}
                   </h2>
                 </div>
                 <button
@@ -608,7 +637,7 @@ export default function Home() {
                     e.currentTarget.style.boxShadow = '0 2px 8px rgba(245,200,66,0.35)'
                   }}
                 >
-                  Ver selección →
+                  {t.verTodos}
                 </button>
               </div>
               <p style={{
@@ -617,7 +646,7 @@ export default function Home() {
                 marginTop: '0.35rem',
               }}
               >
-                Lugares imprescindibles según la experiencia de viajeros
+                {t.sectionDesc}
               </p>
             </div>
 

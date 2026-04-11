@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { LugarImagePlaceholder } from '../components/LugarCard'
 import { getGradiente } from '../lib/categoriaVisual'
+import { useIdioma } from '../lib/idiomaContext'
+import { traducirObjeto, traducirArray } from '../lib/traduccion'
 
 function formatRelativeEs(dateString) {
   if (!dateString) return ''
@@ -28,11 +30,11 @@ function formatRelativeEs(dateString) {
   return rtf.format(-diffYear, 'year')
 }
 
-function getEntradaDisplay(lugar) {
+function getEntradaDisplay(lugar, gratisLabel) {
   const n = (lugar.nombre || '').toLowerCase()
   if (n.includes('joya') || n.includes('cerén') || n.includes('ceren')) return '$5'
   if (n.includes('imposible') || n.includes('volcán') || n.includes('volcan')) return '$3'
-  return 'Gratis'
+  return gratisLabel
 }
 
 function HeartIcon({ filled = false, size = 16 }) {
@@ -75,6 +77,28 @@ function CategoryPill({ nombre }) {
 
 export default function DetalleLugar() {
   const { id } = useParams()
+  const { idioma } = useIdioma()
+
+  const t = {
+    volver: idioma === 'en' ? '← Back' : '← Volver',
+    sobre: idioma === 'en' ? 'About this place' : 'Sobre este lugar',
+    ubicacion: idioma === 'en' ? '📍 Location' : '📍 Ubicación',
+    resenas: idioma === 'en' ? 'Reviews' : 'Reseñas',
+    escribir: idioma === 'en' ? 'Write a review' : 'Escribir reseña',
+    primero: idioma === 'en' ? 'Be the first to review this place' : 'Sé el primero en reseñar este lugar',
+    gratis: idioma === 'en' ? 'Free' : 'Gratis',
+    proximamente: idioma === 'en' ? 'Sign in to write a review' : 'Iniciá sesión para escribir una reseña',
+    modalTitulo: idioma === 'en' ? 'Write a review' : 'Escribir reseña',
+    modalPlaceholder: idioma === 'en' ? 'Tell us about your experience...' : 'Contá tu experiencia en este lugar...',
+    modalFotos: idioma === 'en' ? 'Photos' : 'Fotos',
+    modalPublicar: idioma === 'en' ? 'Publish review' : 'Publicar reseña',
+    modalPublicando: idioma === 'en' ? 'Publishing...' : 'Publicando...',
+    modalExito: idioma === 'en' ? '¡Review published!' : '¡Reseña publicada!',
+    minimo: idioma === 'en' ? 'Minimum 50 characters' : 'Mínimo 50 caracteres',
+    valido: idioma === 'en' ? '✓ Valid length' : '✓ Longitud válida',
+    cargando: idioma === 'en' ? 'Loading...' : 'Cargando…',
+  }
+
   const [lugar, setLugar] = useState(null)
   const [resenas, setResenas] = useState([])
   const [loading, setLoading] = useState(true)
@@ -118,7 +142,12 @@ export default function DetalleLugar() {
       return
     }
 
-    setLugar(lugarRow)
+    if (idioma === 'en') {
+      const lugarTraducido = await traducirObjeto(lugarRow, ['nombre', 'descripcion', 'direccion'], 'en')
+      setLugar(lugarTraducido)
+    } else {
+      setLugar(lugarRow)
+    }
 
     const { data: resenasRows } = await supabase
       .from('resenas')
@@ -126,9 +155,14 @@ export default function DetalleLugar() {
       .eq('lugar_id', id)
       .order('created_at', { ascending: false })
 
-    setResenas(resenasRows ?? [])
+    if (idioma === 'en') {
+      const resenasTraducidas = await traducirArray(resenasRows ?? [], ['titulo', 'contenido'], 'en')
+      setResenas(resenasTraducidas)
+    } else {
+      setResenas(resenasRows ?? [])
+    }
     setLoading(false)
-  }, [id])
+  }, [id, idioma])
 
   useEffect(() => {
     load()
@@ -218,7 +252,7 @@ export default function DetalleLugar() {
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#9ca3af', fontSize: '0.95rem' }}>Cargando…</p>
+        <p style={{ color: '#9ca3af', fontSize: '0.95rem' }}>{t.cargando}</p>
       </div>
     )
   }
@@ -253,7 +287,7 @@ export default function DetalleLugar() {
   const hearts = Number(lugar.promedio_estrellas) || 0
   const heartsText = Number.isInteger(hearts) ? String(hearts) : hearts.toFixed(1)
   const totalResenas = lugar.total_resenas ?? 0
-  const entrada = getEntradaDisplay(lugar)
+  const entrada = getEntradaDisplay(lugar, t.gratis)
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
@@ -276,7 +310,7 @@ export default function DetalleLugar() {
           }}
           role="status"
         >
-          Iniciá sesión para escribir una reseña
+          {t.proximamente}
         </div>
       )}
 
@@ -297,7 +331,7 @@ export default function DetalleLugar() {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827', margin: 0 }}>
-                Escribir reseña
+                {t.modalTitulo}
               </h2>
               <button type="button" onClick={() => setModalOpen(false)}
                 style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#9ca3af' }}>
@@ -312,7 +346,7 @@ export default function DetalleLugar() {
             <textarea
               value={resenaTexto}
               onChange={(e) => setResenaTexto(e.target.value.slice(0, 1000))}
-              placeholder="Contá tu experiencia en este lugar..."
+              placeholder={t.modalPlaceholder}
               rows={5}
               style={{
                 width: '100%', padding: '0.85rem', borderRadius: '10px',
@@ -324,7 +358,7 @@ export default function DetalleLugar() {
             />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
               <span style={{ fontSize: '0.75rem', color: resenaTexto.length < 50 ? '#EF4444' : '#10B981' }}>
-                {resenaTexto.length < 50 ? `Mínimo 50 — faltan ${50 - resenaTexto.length}` : '✓ Longitud válida'}
+                {resenaTexto.length < 50 ? `${t.minimo} — ${50 - resenaTexto.length}` : t.valido}
               </span>
               <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
                 {resenaTexto.length}/1000
@@ -334,7 +368,7 @@ export default function DetalleLugar() {
             {/* Fotos */}
             <div style={{ marginBottom: '1.25rem' }}>
               <p style={{ fontSize: '0.82rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>
-                Fotos ({resenaFotos.length}/3)
+                {t.modalFotos} ({resenaFotos.length}/3)
               </p>
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 {resenaPreview.map((src, i) => (
@@ -365,7 +399,7 @@ export default function DetalleLugar() {
             </div>
 
             {resenaError && <p style={{ color: '#EF4444', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{resenaError}</p>}
-            {resenaSuccess && <p style={{ color: '#10B981', fontSize: '0.85rem', marginBottom: '0.75rem' }}>¡Reseña publicada!</p>}
+            {resenaSuccess && <p style={{ color: '#10B981', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{t.modalExito}</p>}
 
             <button type="button" onClick={handleSubmitResena} disabled={resenaLoading}
               style={{
@@ -375,7 +409,7 @@ export default function DetalleLugar() {
                 cursor: resenaLoading ? 'not-allowed' : 'pointer',
                 opacity: resenaLoading ? 0.7 : 1,
               }}>
-              {resenaLoading ? 'Publicando...' : 'Publicar reseña'}
+              {resenaLoading ? t.modalPublicando : t.modalPublicar}
             </button>
           </div>
         </div>
@@ -427,7 +461,7 @@ export default function DetalleLugar() {
           onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.25)' }}
           onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)' }}
         >
-          ← Volver
+          {t.volver}
         </Link>
 
         <div style={{ position: 'absolute', bottom: '24px', left: '24px', right: '24px', zIndex: 10 }}>
@@ -503,7 +537,7 @@ export default function DetalleLugar() {
             boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
           }}>
             <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827', marginBottom: '14px' }}>
-              Sobre este lugar
+              {t.sobre}
             </h2>
             <p style={{
               fontSize: '0.95rem',
@@ -524,7 +558,7 @@ export default function DetalleLugar() {
               border: '1px solid #f3f4f6',
             }}>
               <h3 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#6b7280', marginBottom: '8px' }}>
-                📍 Ubicación
+                {t.ubicacion}
               </h3>
               <p style={{ fontSize: '0.9rem', color: '#374151', margin: 0, lineHeight: 1.5 }}>
                 {lugar.direccion}
@@ -548,7 +582,7 @@ export default function DetalleLugar() {
               marginBottom: '20px',
             }}>
               <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827', margin: 0 }}>
-                Reseñas <span style={{ fontWeight: 400, color: '#9ca3af', fontSize: '0.9rem' }}>({totalResenas})</span>
+                {t.resenas} <span style={{ fontWeight: 400, color: '#9ca3af', fontSize: '0.9rem' }}>({totalResenas})</span>
               </h2>
               <button
                 type="button"
@@ -567,7 +601,7 @@ export default function DetalleLugar() {
                 onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#0284c7' }}
                 onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#0EA5E9' }}
               >
-                Escribir reseña
+                {t.escribir}
               </button>
             </div>
 
@@ -575,7 +609,7 @@ export default function DetalleLugar() {
               <div style={{ textAlign: 'center', padding: '40px 16px' }}>
                 <div style={{ fontSize: '3rem', marginBottom: '12px' }}>✍️</div>
                 <p style={{ color: '#9ca3af', fontSize: '0.95rem', margin: 0 }}>
-                  Sé el primero en reseñar este lugar
+                  {t.primero}
                 </p>
               </div>
             ) : (
