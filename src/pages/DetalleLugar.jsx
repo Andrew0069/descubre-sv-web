@@ -180,6 +180,7 @@ export default function DetalleLugar() {
       lugar_id: id,
       usuario_id: session.user.id,
       contenido: resenaTexto.trim(),
+      estrellas: 5,
       fotos: urlsFotos,
     })
 
