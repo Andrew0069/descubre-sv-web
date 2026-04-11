@@ -86,7 +86,11 @@ export default function DetalleLugar() {
     resenas: idioma === 'en' ? 'Reviews' : 'Reseñas',
     escribir: idioma === 'en' ? 'Write a review' : 'Escribir reseña',
     primero: idioma === 'en' ? 'Be the first to review this place' : 'Sé el primero en reseñar este lugar',
-    gratis: idioma === 'en' ? 'Free' : 'Gratis',
+    resena: idioma === 'en' ? 'review' : 'reseña',
+    resenas2: idioma === 'en' ? 'reviews' : 'reseñas',
+    anonimo: idioma === 'en' ? 'Anonymous' : 'Anónimo',
+    sinDesc: idioma === 'en' ? 'No description available.' : 'Sin descripción disponible.',
+    entrada: idioma === 'en' ? 'Free' : 'Gratis',
     proximamente: idioma === 'en' ? 'Sign in to write a review' : 'Iniciá sesión para escribir una reseña',
     modalTitulo: idioma === 'en' ? 'Write a review' : 'Escribir reseña',
     modalPlaceholder: idioma === 'en' ? 'Tell us about your experience...' : 'Contá tu experiencia en este lugar...',
@@ -287,7 +291,7 @@ export default function DetalleLugar() {
   const hearts = Number(lugar.promedio_estrellas) || 0
   const heartsText = Number.isInteger(hearts) ? String(hearts) : hearts.toFixed(1)
   const totalResenas = lugar.total_resenas ?? 0
-  const entrada = getEntradaDisplay(lugar, t.gratis)
+  const entrada = getEntradaDisplay(lugar, t.entrada)
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
@@ -513,7 +517,7 @@ export default function DetalleLugar() {
         </span>
         <span style={{ margin: '0 14px', color: '#d1d5db' }}>|</span>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}>
-          💬 {totalResenas} {totalResenas === 1 ? 'reseña' : 'reseñas'}
+          💬 {totalResenas} {totalResenas === 1 ? t.resena : t.resenas2}
         </span>
       </div>
 
@@ -546,7 +550,7 @@ export default function DetalleLugar() {
               whiteSpace: 'pre-line',
               margin: 0,
             }}>
-              {lugar.descripcion || 'Sin descripción disponible.'}
+              {lugar.descripcion || t.sinDesc}
             </p>
           </div>
 
@@ -616,7 +620,7 @@ export default function DetalleLugar() {
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {resenas.map((r) => {
                   const nombre = r.usuarios?.nombre?.trim()
-                  const autor = nombre || 'Anónimo'
+                  const autor = nombre || t.anonimo
                   const inicial = autor.charAt(0).toUpperCase()
                   const rHearts = Number(r.estrellas) || 0
 

@@ -73,6 +73,7 @@ export default function Home() {
   const [categoriaId, setCategoriaId] = useState(null)
   const [searchInput, setSearchInput] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [categoriasTraducidas, setCategoriasTraducidas] = useState([])
   const [menuOpen, setMenuOpen] = useState(false)
   const [toast, setToast] = useState(null)
   const [user, setUser] = useState(null)
@@ -96,6 +97,11 @@ export default function Home() {
     menuAcceder: idioma === 'en' ? 'Sign in' : 'Acceder',
     menuCerrar: idioma === 'en' ? 'Sign out' : 'Cerrar sesión',
     menuPerfil: idioma === 'en' ? 'My profile' : '👤 Mi perfil',
+    footerTagline: idioma === 'en' ? 'El Salvador, from a curated perspective.' : 'El Salvador, desde una mirada curada.',
+    footerCopy: idioma === 'en' ? '© 2026 DescubreSV · Made in El Salvador 🇸🇻' : '© 2026 DescubreSV · Hecho en El Salvador 🇸🇻',
+    menuPrivacidad: idioma === 'en' ? 'Privacy' : 'Privacidad',
+    menuTerminos: idioma === 'en' ? 'Terms' : 'Términos',
+    menuContacto: idioma === 'en' ? 'Contact' : 'Contacto',
   }
 
   const showToast = useCallback((msg) => {
@@ -160,14 +166,25 @@ export default function Home() {
         .select('*')
         .order('nombre', { ascending: true })
       if (!cancelled) {
-        if (err) setCategorias([])
-        else setCategorias(ordenarCategorias(data ?? []))
+        if (err) {
+          setCategorias([])
+          setCategoriasTraducidas([])
+        } else {
+          const ordenadas = ordenarCategorias(data ?? [])
+          setCategorias(ordenadas)
+          if (idioma === 'en') {
+            const traducidas = await traducirArray(ordenadas, ['nombre'], 'en')
+            setCategoriasTraducidas(traducidas)
+          } else {
+            setCategoriasTraducidas(ordenadas)
+          }
+        }
       }
     })()
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [idioma])
 
   const filtrados = useMemo(() => {
     let list = lugares
@@ -551,11 +568,11 @@ export default function Home() {
               active={categoriaId === null}
               onClick={() => setCategoriaId(null)}
             />
-            {categorias.map((c) => (
+            {(idioma === 'en' ? categoriasTraducidas : categorias).map((c, i) => (
               <CatButton
                 key={c.id}
                 label={c.nombre}
-                svgNombre={c.nombre}
+                svgNombre={categorias[i]?.nombre}
                 active={categoriaId === c.id}
                 onClick={() => setCategoriaId(c.id)}
               />
@@ -698,14 +715,22 @@ export default function Home() {
                 Descubre<span style={{ color: '#0EA5E9' }}>SV</span>
               </span>
               <p style={{ fontSize: '0.78rem', color: '#9ca3af', marginTop: '0.25rem', fontStyle: 'italic' }}>
-                El Salvador, desde una mirada curada.
+                {t.footerTagline}
               </p>
             </div>
 
             <nav style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-              {['Explorar', 'Guías', 'Reseñas', 'Agregar lugar', 'Privacidad', 'Términos', 'Contacto'].map((item) => (
+              {[
+                { key: 'Explorar', label: t.menuExplorar },
+                { key: 'Guías', label: t.menuGuias },
+                { key: 'Reseñas', label: t.menuResenas },
+                { key: 'Agregar lugar', label: t.menuAgregar },
+                { key: 'Privacidad', label: t.menuPrivacidad },
+                { key: 'Términos', label: t.menuTerminos },
+                { key: 'Contacto', label: t.menuContacto },
+              ].map(({ key, label }) => (
                 <button
-                  key={item}
+                  key={key}
                   type="button"
                   style={{
                     backgroundColor: 'transparent',
@@ -717,7 +742,7 @@ export default function Home() {
                     cursor: 'pointer',
                     transition: 'all 0.15s ease',
                   }}
-                  onClick={() => handleFooterNav(item)}
+                  onClick={() => handleFooterNav(key)}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.07)'
                     e.currentTarget.style.color = '#0EA5E9'
@@ -727,7 +752,7 @@ export default function Home() {
                     e.currentTarget.style.color = '#6b7280'
                   }}
                 >
-                  {item}
+                  {label}
                 </button>
               ))}
             </nav>
@@ -736,7 +761,7 @@ export default function Home() {
           <div style={{ height: '1px', backgroundColor: '#f3f4f6', marginBottom: '1.25rem' }} />
 
           <p style={{ fontSize: '0.75rem', color: '#d1d5db', textAlign: 'center' }}>
-            © 2026 DescubreSV · Hecho en El Salvador 🇸🇻
+            {t.footerCopy}
           </p>
         </footer>
       </div>
