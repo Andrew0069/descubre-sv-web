@@ -631,6 +631,26 @@ export default function DetalleLugar() {
                         {r.contenido}
                       </p>
 
+                      {r.fotos && r.fotos.length > 0 && (
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
+                          {r.fotos.map((url, i) => (
+                            <img
+                              key={i}
+                              src={url}
+                              alt=""
+                              style={{
+                                width: '90px',
+                                height: '90px',
+                                objectFit: 'cover',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                              }}
+                              onClick={() => window.open(url, '_blank')}
+                            />
+                          ))}
+                        </div>
+                      )}
+
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#ef4444' }}>
                         <HeartIcon filled size={14} />
                         <span style={{ fontSize: '0.78rem', fontWeight: 600 }}>{rHearts}</span>
