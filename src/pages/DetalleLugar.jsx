@@ -176,9 +176,21 @@ export default function DetalleLugar() {
     }
 
     // Insertar reseña
+    const { data: usuarioRow } = await supabase
+      .from('usuarios')
+      .select('id')
+      .eq('auth_id', session.user.id)
+      .maybeSingle()
+
+    if (!usuarioRow) {
+      setResenaError('No se encontró tu perfil. Intentá cerrar sesión y volver a entrar.')
+      setResenaLoading(false)
+      return
+    }
+
     const { error: insertError } = await supabase.from('resenas').insert({
       lugar_id: id,
-      usuario_id: session.user.id,
+      usuario_id: usuarioRow.id,
       contenido: resenaTexto.trim(),
       estrellas: 5,
       fotos: urlsFotos,
