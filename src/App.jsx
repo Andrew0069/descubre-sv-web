@@ -4,6 +4,7 @@ import Home from './pages/Home'
 import DetalleLugar from './pages/DetalleLugar'
 import Login from './pages/Login'
 import ResetPassword from './pages/ResetPassword'
+import Perfil from './pages/Perfil'
 
 function AnimatedRoutes() {
   const location = useLocation()
@@ -56,6 +57,7 @@ function AnimatedRoutes() {
           <Route path="/lugar/:id" element={<DetalleLugar />} />
           <Route path="/login" element={<Login />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/perfil" element={<Perfil />} />
         </Routes>
       </div>
     </>

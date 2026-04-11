@@ -306,32 +306,59 @@ export default function Home() {
               </button>
               <div style={{ height: '1px', backgroundColor: '#f3f4f6', margin: '0.4rem 0.5rem' }} />
               {user ? (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await supabase.auth.signOut()
-                    setMenuOpen(false)
-                    showToast('Sesión cerrada')
-                  }}
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    textAlign: 'left',
-                    padding: '0.65rem 1rem',
-                    fontSize: '0.9rem',
-                    fontWeight: '600',
-                    color: '#ef4444',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.15s ease',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.07)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                >
-                  Cerrar sesión
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      window.location.href = '/perfil'
+                    }}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '0.65rem 1rem',
+                      fontSize: '0.9rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.07)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                  >
+                    👤 Mi perfil
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await supabase.auth.signOut()
+                      setMenuOpen(false)
+                      showToast('Sesión cerrada')
+                    }}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '0.65rem 1rem',
+                      fontSize: '0.9rem',
+                      fontWeight: '600',
+                      color: '#ef4444',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.07)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                  >
+                    Cerrar sesión
+                  </button>
+                </>
               ) : (
                 <button
                   type="button"
