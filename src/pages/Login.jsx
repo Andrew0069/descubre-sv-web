@@ -8,6 +8,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [forgotMode, setForgotMode] = useState(false)
 
   const handleEmailAuth = async () => {
     setLoading(true)
@@ -37,6 +38,23 @@ export default function Login() {
       provider: 'google',
       options: { redirectTo: window.location.origin },
     })
+  }
+
+  const handleForgotPassword = async () => {
+    setLoading(true)
+    setError('')
+    setSuccess('')
+    if (!email) {
+      setError('Ingresá tu correo primero.')
+      setLoading(false)
+      return
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    if (error) setError('No se pudo enviar el correo. Intentá de nuevo.')
+    else setSuccess('¡Correo enviado! Revisá tu bandeja de entrada.')
+    setLoading(false)
   }
 
   const inputStyle = {
@@ -92,6 +110,17 @@ export default function Login() {
           onKeyDown={(e) => e.key === 'Enter' && handleEmailAuth()}
           style={inputStyle}
         />
+
+        {!isSignUp && (
+          <div style={{ textAlign: 'right', marginBottom: '0.75rem', marginTop: '-0.5rem' }}>
+            <span
+              onClick={handleForgotPassword}
+              style={{ color: '#0EA5E9', fontSize: '0.82rem', cursor: 'pointer' }}
+            >
+              ¿Olvidaste tu contraseña?
+            </span>
+          </div>
+        )}
 
         {error && (
           <p style={{ color: '#EF4444', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{error}</p>
