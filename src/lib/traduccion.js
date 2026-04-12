@@ -1,23 +1,13 @@
-const API_KEY = import.meta.env.VITE_GOOGLE_TRANSLATE_KEY
-
 export async function traducirTexto(texto, targetLang) {
   if (!texto || targetLang === 'es') return texto
   try {
-    const res = await fetch(
-      `https://translation.googleapis.com/language/translate/v2?key=${API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          q: texto,
-          source: 'es',
-          target: targetLang,
-          format: 'text',
-        }),
-      }
-    )
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(texto)}&langpair=es|${targetLang}`
+    const res = await fetch(url)
     const data = await res.json()
-    return data?.data?.translations?.[0]?.translatedText || texto
+    if (data?.responseStatus === 200) {
+      return data.responseData.translatedText || texto
+    }
+    return texto
   } catch {
     return texto
   }
