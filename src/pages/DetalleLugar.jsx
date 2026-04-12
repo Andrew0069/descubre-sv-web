@@ -131,9 +131,16 @@ export default function DetalleLugar() {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session))
-    const { data: listener } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
-    return () => listener.subscription.unsubscribe()
+    const initSession = async () => {
+      const { data } = await supabase.auth.getSession()
+      setSession(data.session ?? null)
+    }
+    initSession()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession)
+    })
+    return () => subscription.unsubscribe()
   }, [])
 
   const load = useCallback(async () => {
@@ -316,28 +323,30 @@ export default function DetalleLugar() {
 
   const handleRatingClick = useCallback(
     async (valor) => {
-      if (!session?.user) {
+      const { data: { session: activeSession } } = await supabase.auth.getSession()
+      if (!activeSession?.user) {
         setToast('Inicia sesión para calificar este lugar')
         return
       }
+      const uid = activeSession.user.id
       if (userRating === valor) {
         const { error } = await supabase
           .from('ratings_lugar')
           .delete()
           .eq('lugar_id', id)
-          .eq('user_id', session.user.id)
+          .eq('user_id', uid)
         if (!error) await refreshLugarRatings()
       } else {
         const { error } = await supabase
           .from('ratings_lugar')
           .upsert(
-            { lugar_id: id, user_id: session.user.id, valor },
+            { lugar_id: id, user_id: uid, valor },
             { onConflict: 'lugar_id,user_id' },
           )
         if (!error) await refreshLugarRatings()
       }
     },
-    [session, userRating, id, refreshLugarRatings],
+    [userRating, id, refreshLugarRatings],
   )
 
   const handleToggleResenaLike = useCallback(
@@ -786,7 +795,10 @@ export default function DetalleLugar() {
                 <button
                   key={v}
                   type="button"
-                  onClick={() => handleRatingClick(v)}
+                  onClick={() => {
+                    console.log('[DetalleLugar] rating heart click', { valor: v, session })
+                    handleRatingClick(v)
+                  }}
                   style={{
                     background: 'none',
                     border: 'none',
