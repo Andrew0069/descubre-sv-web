@@ -110,7 +110,9 @@ export default function DetalleLugar() {
   const [resenas, setResenas] = useState([])
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
-  const [toast, setToast] = useState(false)
+  const [toast, setToast] = useState(null)
+  const [likesCount, setLikesCount] = useState(0)
+  const [userLiked, setUserLiked] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [session, setSession] = useState(null)
   const [resenaTexto, setResenaTexto] = useState('')
@@ -156,11 +158,36 @@ export default function DetalleLugar() {
       setLugar(lugarRow)
     }
 
-    const { data: resenasRows } = await supabase
-      .from('resenas')
-      .select('*, usuarios(nombre)')
-      .eq('lugar_id', id)
-      .order('created_at', { ascending: false })
+    const { data: { session: sess } } = await supabase.auth.getSession()
+
+    const userLikePromise = sess?.user?.id
+      ? supabase
+        .from('likes_lugar')
+        .select('id')
+        .eq('lugar_id', id)
+        .eq('user_id', sess.user.id)
+        .maybeSingle()
+      : Promise.resolve({ data: null, error: null })
+
+    const [
+      { data: resenasRows },
+      { count: likesTotal, error: likesCountErr },
+      { data: userLikeRow },
+    ] = await Promise.all([
+      supabase
+        .from('resenas')
+        .select('*, usuarios(nombre)')
+        .eq('lugar_id', id)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('likes_lugar')
+        .select('*', { count: 'exact', head: true })
+        .eq('lugar_id', id),
+      userLikePromise,
+    ])
+
+    setLikesCount(likesCountErr ? 0 : likesTotal ?? 0)
+    setUserLiked(!!userLikeRow)
 
     if (idioma === 'en') {
       const resenasTraducidas = await traducirArray(resenasRows ?? [], ['titulo', 'contenido'], 'en')
@@ -177,9 +204,35 @@ export default function DetalleLugar() {
 
   useEffect(() => {
     if (!toast) return
-    const timer = setTimeout(() => setToast(false), 3500)
+    const timer = setTimeout(() => setToast(null), 3500)
     return () => clearTimeout(timer)
   }, [toast])
+
+  const handleToggleLike = useCallback(async () => {
+    if (!session?.user) {
+      setToast('Inicia sesión para guardar tus lugares favoritos')
+      return
+    }
+    if (userLiked) {
+      const { error } = await supabase
+        .from('likes_lugar')
+        .delete()
+        .eq('lugar_id', id)
+        .eq('user_id', session.user.id)
+      if (!error) {
+        setUserLiked(false)
+        setLikesCount((c) => Math.max(0, c - 1))
+      }
+    } else {
+      const { error } = await supabase
+        .from('likes_lugar')
+        .insert({ lugar_id: id, user_id: session.user.id })
+      if (!error) {
+        setUserLiked(true)
+        setLikesCount((c) => c + 1)
+      }
+    }
+  }, [session, userLiked, id])
 
   const handleFotos = (e) => {
     const files = Array.from(e.target.files)
@@ -291,9 +344,7 @@ export default function DetalleLugar() {
   const cat = lugar.categorias
   const dep = lugar.departamentos
   const img = lugar.imagen_principal?.trim()
-  const hearts = Number(lugar.promedio_estrellas) || 0
-  const heartsText = Number.isInteger(hearts) ? String(hearts) : hearts.toFixed(1)
-  const totalResenas = lugar.total_resenas ?? 0
+  const totalResenas = resenas.length
   const entrada = getEntradaDisplay(lugar, t.entrada)
 
   return (
@@ -317,7 +368,7 @@ export default function DetalleLugar() {
           }}
           role="status"
         >
-          {t.proximamente}
+          {toast}
         </div>
       )}
 
@@ -514,10 +565,25 @@ export default function DetalleLugar() {
           🎫 {entrada}
         </span>
         <span style={{ margin: '0 14px', color: '#d1d5db' }}>|</span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', color: '#ef4444' }}>
-          <HeartIcon filled size={15} />
-          <span style={{ fontWeight: 600 }}>{heartsText}</span>
-        </span>
+        <button
+          type="button"
+          onClick={handleToggleLike}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+            whiteSpace: 'nowrap',
+            color: '#ef4444',
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
+            font: 'inherit',
+          }}
+        >
+          <HeartIcon filled={userLiked} size={15} />
+          <span style={{ fontWeight: 600 }}>{likesCount}</span>
+        </button>
         <span style={{ margin: '0 14px', color: '#d1d5db' }}>|</span>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}>
           💬 {totalResenas} {totalResenas === 1 ? t.resena : t.resenas2}
@@ -593,7 +659,7 @@ export default function DetalleLugar() {
               </h2>
               <button
                 type="button"
-                onClick={() => session ? setModalOpen(true) : setToast(true)}
+                onClick={() => session ? setModalOpen(true) : setToast(t.proximamente)}
                 style={{
                   backgroundColor: '#0EA5E9',
                   color: '#ffffff',
