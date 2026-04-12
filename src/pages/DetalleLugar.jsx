@@ -113,6 +113,10 @@ export default function DetalleLugar() {
   const [toast, setToast] = useState(null)
   const [likesCount, setLikesCount] = useState(0)
   const [userLiked, setUserLiked] = useState(false)
+  const [ratingPromedio, setRatingPromedio] = useState(null)
+  const [userRating, setUserRating] = useState(null)
+  const [resenaLikeCounts, setResenaLikeCounts] = useState({})
+  const [userResenaLikes, setUserResenaLikes] = useState({})
   const [modalOpen, setModalOpen] = useState(false)
   const [session, setSession] = useState(null)
   const [resenaTexto, setResenaTexto] = useState('')
@@ -147,6 +151,10 @@ export default function DetalleLugar() {
       setLugar(null)
       setNotFound(true)
       setResenas([])
+      setRatingPromedio(null)
+      setUserRating(null)
+      setResenaLikeCounts({})
+      setUserResenaLikes({})
       setLoading(false)
       return
     }
@@ -169,10 +177,23 @@ export default function DetalleLugar() {
         .maybeSingle()
       : Promise.resolve({ data: null, error: null })
 
+    const ratingsValsPromise = supabase.from('ratings_lugar').select('valor').eq('lugar_id', id)
+
+    const userRatingPromise = sess?.user?.id
+      ? supabase
+        .from('ratings_lugar')
+        .select('valor')
+        .eq('lugar_id', id)
+        .eq('user_id', sess.user.id)
+        .maybeSingle()
+      : Promise.resolve({ data: null, error: null })
+
     const [
       { data: resenasRows },
       { count: likesTotal, error: likesCountErr },
       { data: userLikeRow },
+      { data: ratingValRows },
+      { data: userRatingRow },
     ] = await Promise.all([
       supabase
         .from('resenas')
@@ -184,10 +205,49 @@ export default function DetalleLugar() {
         .select('*', { count: 'exact', head: true })
         .eq('lugar_id', id),
       userLikePromise,
+      ratingsValsPromise,
+      userRatingPromise,
     ])
+
+    const valsList = ratingValRows ?? []
+    const avgRating =
+      valsList.length > 0
+        ? valsList.reduce((s, row) => s + Number(row.valor), 0) / valsList.length
+        : null
+    setRatingPromedio(avgRating)
+    setUserRating(userRatingRow?.valor != null ? Number(userRatingRow.valor) : null)
 
     setLikesCount(likesCountErr ? 0 : likesTotal ?? 0)
     setUserLiked(!!userLikeRow)
+
+    const ids = (resenasRows ?? []).map((r) => r.id).filter(Boolean)
+    const likeCountMap = {}
+    const userLikedMap = {}
+    if (ids.length > 0) {
+      const { data: allResenaLikes } = await supabase
+        .from('likes_resena')
+        .select('resena_id')
+        .in('resena_id', ids)
+      for (const rid of ids) {
+        likeCountMap[rid] = 0
+      }
+      for (const row of allResenaLikes ?? []) {
+        const rid = row.resena_id
+        likeCountMap[rid] = (likeCountMap[rid] ?? 0) + 1
+      }
+      if (sess?.user?.id) {
+        const { data: myResenaLikes } = await supabase
+          .from('likes_resena')
+          .select('resena_id')
+          .eq('user_id', sess.user.id)
+          .in('resena_id', ids)
+        for (const row of myResenaLikes ?? []) {
+          userLikedMap[row.resena_id] = true
+        }
+      }
+    }
+    setResenaLikeCounts(likeCountMap)
+    setUserResenaLikes(userLikedMap)
 
     if (idioma === 'en') {
       const resenasTraducidas = await traducirArray(resenasRows ?? [], ['titulo', 'contenido'], 'en')
@@ -233,6 +293,88 @@ export default function DetalleLugar() {
       }
     }
   }, [session, userLiked, id])
+
+  const refreshLugarRatings = useCallback(async () => {
+    const { data: rows } = await supabase.from('ratings_lugar').select('valor').eq('lugar_id', id)
+    const list = rows ?? []
+    setRatingPromedio(
+      list.length > 0 ? list.reduce((s, r) => s + Number(r.valor), 0) / list.length : null,
+    )
+    const { data: { session: s } } = await supabase.auth.getSession()
+    if (s?.user?.id) {
+      const { data: mine } = await supabase
+        .from('ratings_lugar')
+        .select('valor')
+        .eq('lugar_id', id)
+        .eq('user_id', s.user.id)
+        .maybeSingle()
+      setUserRating(mine?.valor != null ? Number(mine.valor) : null)
+    } else {
+      setUserRating(null)
+    }
+  }, [id])
+
+  const handleRatingClick = useCallback(
+    async (valor) => {
+      if (!session?.user) {
+        setToast('Inicia sesión para calificar este lugar')
+        return
+      }
+      if (userRating === valor) {
+        const { error } = await supabase
+          .from('ratings_lugar')
+          .delete()
+          .eq('lugar_id', id)
+          .eq('user_id', session.user.id)
+        if (!error) await refreshLugarRatings()
+      } else {
+        const { error } = await supabase
+          .from('ratings_lugar')
+          .upsert(
+            { lugar_id: id, user_id: session.user.id, valor },
+            { onConflict: 'lugar_id,user_id' },
+          )
+        if (!error) await refreshLugarRatings()
+      }
+    },
+    [session, userRating, id, refreshLugarRatings],
+  )
+
+  const handleToggleResenaLike = useCallback(
+    async (resenaId) => {
+      if (!session?.user) {
+        setToast('Inicia sesión para dar like')
+        return
+      }
+      const liked = !!userResenaLikes[resenaId]
+      if (liked) {
+        const { error } = await supabase
+          .from('likes_resena')
+          .delete()
+          .eq('resena_id', resenaId)
+          .eq('user_id', session.user.id)
+        if (!error) {
+          setUserResenaLikes((prev) => ({ ...prev, [resenaId]: false }))
+          setResenaLikeCounts((prev) => ({
+            ...prev,
+            [resenaId]: Math.max(0, (prev[resenaId] ?? 0) - 1),
+          }))
+        }
+      } else {
+        const { error } = await supabase
+          .from('likes_resena')
+          .insert({ resena_id: resenaId, user_id: session.user.id })
+        if (!error) {
+          setUserResenaLikes((prev) => ({ ...prev, [resenaId]: true }))
+          setResenaLikeCounts((prev) => ({
+            ...prev,
+            [resenaId]: (prev[resenaId] ?? 0) + 1,
+          }))
+        }
+      }
+    },
+    [session, userResenaLikes],
+  )
 
   const handleFotos = (e) => {
     const files = Array.from(e.target.files)
@@ -565,6 +707,13 @@ export default function DetalleLugar() {
           🎫 {entrada}
         </span>
         <span style={{ margin: '0 14px', color: '#d1d5db' }}>|</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', color: '#ef4444' }}>
+          <span aria-hidden>♥</span>
+          <span style={{ fontWeight: 600, color: '#4b5563' }}>
+            {ratingPromedio != null ? ratingPromedio.toFixed(1) : '—'}
+          </span>
+        </span>
+        <span style={{ margin: '0 14px', color: '#d1d5db' }}>|</span>
         <button
           type="button"
           onClick={handleToggleLike}
@@ -621,6 +770,37 @@ export default function DetalleLugar() {
             }}>
               {lugar.descripcion || t.sinDesc}
             </p>
+          </div>
+
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '12px',
+            padding: '20px 24px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+          }}>
+            <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#6b7280', margin: '0 0 12px' }}>
+              {idioma === 'en' ? 'Rate this place' : 'Calificá este lugar'}
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {[1, 2, 3, 4, 5].map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => handleRatingClick(v)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: '4px',
+                    cursor: 'pointer',
+                    lineHeight: 0,
+                    color: userRating != null && v <= userRating ? '#ef4444' : '#d1d5db',
+                  }}
+                  aria-label={idioma === 'en' ? `Rate ${v} of 5` : `Calificar ${v} de 5`}
+                >
+                  <HeartIcon filled={userRating != null && v <= userRating} size={28} />
+                </button>
+              ))}
+            </div>
           </div>
 
           {lugar.direccion && (
@@ -691,7 +871,8 @@ export default function DetalleLugar() {
                   const nombre = r.usuarios?.nombre?.trim()
                   const autor = nombre || t.anonimo
                   const inicial = autor.charAt(0).toUpperCase()
-                  const rHearts = Number(r.estrellas) || 0
+                  const rLikeCount = resenaLikeCounts[r.id] ?? 0
+                  const rUserLiked = !!userResenaLikes[r.id]
 
                   return (
                     <li
@@ -760,10 +941,24 @@ export default function DetalleLugar() {
                         </div>
                       )}
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#ef4444' }}>
-                        <HeartIcon filled size={14} />
-                        <span style={{ fontSize: '0.78rem', fontWeight: 600 }}>{rHearts}</span>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleResenaLike(r.id)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          color: '#ef4444',
+                          background: 'none',
+                          border: 'none',
+                          padding: 0,
+                          cursor: 'pointer',
+                          font: 'inherit',
+                        }}
+                      >
+                        <HeartIcon filled={rUserLiked} size={14} />
+                        <span style={{ fontSize: '0.78rem', fontWeight: 600 }}>{rLikeCount}</span>
+                      </button>
                     </li>
                   )
                 })}
