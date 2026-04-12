@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useIdioma } from '../lib/idiomaContext'
-import { traducirArray } from '../lib/traduccion'
+import { traducirArray, traducirTexto } from '../lib/traduccion'
 import { ordenarCategorias } from '../lib/categoriaVisual'
 import { CategoriaIconSvg } from '../components/CategoriaChip'
 import LugarCard from '../components/LugarCard'
@@ -154,6 +154,14 @@ export default function Home() {
     } else {
       if (idioma === 'en') {
         const traducidos = await traducirArray(data ?? [], ['nombre', 'descripcion', 'direccion'], 'en')
+        for (const lugar of traducidos) {
+          if (lugar.categorias?.nombre) {
+            lugar.categorias = { ...lugar.categorias, nombre: await traducirTexto(lugar.categorias.nombre, 'en') }
+          }
+          if (lugar.departamentos?.nombre) {
+            lugar.departamentos = { ...lugar.departamentos, nombre: await traducirTexto(lugar.departamentos.nombre, 'en') }
+          }
+        }
         setLugares(traducidos)
       } else {
         setLugares(data ?? [])
