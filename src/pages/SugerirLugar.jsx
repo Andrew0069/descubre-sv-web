@@ -16,9 +16,18 @@ export default function SugerirLugar() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [session, setSession] = useState(null)
+  const [sessionLoading, setSessionLoading] = useState(true)
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [])
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session ?? null)
+      setSessionLoading(false)
+    })
   }, [])
 
   const handleChange = (field) => (e) => {
@@ -60,6 +69,83 @@ export default function SugerirLugar() {
 
     setSuccess(true)
     setForm(initialForm)
+  }
+
+  if (sessionLoading) return null
+
+  if (!session) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          background: 'linear-gradient(180deg, #0f172a 0%, #020617 50%, #0f172a 100%)',
+          padding: '2rem 1rem 3rem',
+        }}
+      >
+        <div style={{ maxWidth: '520px', margin: '0 auto' }}>
+          <div style={{ marginBottom: '1.75rem' }}>
+            <Link
+              to="/"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                color: '#94a3b8',
+                fontSize: '0.9rem',
+                fontWeight: 500,
+                textDecoration: 'none',
+              }}
+            >
+              ← Volver al inicio
+            </Link>
+          </div>
+
+          <div
+            style={{
+              borderRadius: '16px',
+              padding: '2.5rem 1.75rem',
+              backgroundColor: 'rgba(30, 41, 59, 0.55)',
+              border: '1px solid rgba(148, 163, 184, 0.15)',
+              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.35)',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🔒</div>
+            <h1
+              style={{
+                fontSize: '1.3rem',
+                fontWeight: 800,
+                color: '#f8fafc',
+                marginBottom: '0.6rem',
+                lineHeight: 1.2,
+              }}
+            >
+              Iniciá sesión para continuar
+            </h1>
+            <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '1.75rem', lineHeight: 1.5 }}>
+              Necesitás una cuenta para sugerir un nuevo lugar en{' '}
+              <span style={{ color: '#0EA5E9', fontWeight: 700 }}>DescubreSV</span>.
+            </p>
+            <Link
+              to="/login"
+              style={{
+                display: 'inline-block',
+                backgroundColor: '#0EA5E9',
+                color: '#ffffff',
+                borderRadius: '50px',
+                padding: '0.75rem 2rem',
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                textDecoration: 'none',
+                boxShadow: '0 8px 24px rgba(14, 165, 233, 0.25)',
+              }}
+            >
+              Ir al login
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   const inputBase = {
