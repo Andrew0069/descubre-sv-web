@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useIdioma } from '../lib/idiomaContext'
 import { traducirArray, traducirTexto } from '../lib/traduccion'
@@ -78,6 +78,7 @@ export default function Home() {
   const [toast, setToast] = useState(null)
   const [user, setUser] = useState(null)
   const { idioma, setIdioma } = useIdioma()
+  const navigate = useNavigate()
 
   const t = {
     heroTitle: idioma === 'en' ? 'El Salvador, through the eyes of the traveler' : 'El Salvador, desde los ojos del viajero',
@@ -93,7 +94,7 @@ export default function Home() {
     menuExplorar: idioma === 'en' ? 'Explore' : 'Explorar',
     menuGuias: idioma === 'en' ? 'Guides' : 'Guías',
     menuResenas: idioma === 'en' ? 'Reviews' : 'Reseñas',
-    menuAgregar: idioma === 'en' ? 'Add place' : 'Agregar lugar',
+    menuAgregar: idioma === 'en' ? 'Suggest a place' : 'Sugerir lugar',
     menuAcceder: idioma === 'en' ? 'Sign in' : 'Acceder',
     menuCerrar: idioma === 'en' ? 'Sign out' : 'Cerrar sesión',
     menuPerfil: idioma === 'en' ? 'My profile' : '👤 Mi perfil',
@@ -106,7 +107,6 @@ export default function Home() {
     cargando: idioma === 'en' ? 'Loading places...' : 'Cargando lugares…',
     sesionCerrada: idioma === 'en' ? 'Signed out' : 'Sesión cerrada',
     guiasProx: idioma === 'en' ? 'Guides — coming soon' : 'Guías — próximamente',
-    agregarProx: idioma === 'en' ? 'Sign up to add a place' : 'Registrate para agregar un lugar',
     privacidadProx: idioma === 'en' ? 'Privacy policy — coming soon' : 'Política de privacidad — próximamente',
     terminosProx: idioma === 'en' ? 'Terms of use — coming soon' : 'Términos de uso — próximamente',
     contactoProx: idioma === 'en' ? 'Contact — coming soon' : 'Contacto — próximamente',
@@ -237,8 +237,8 @@ export default function Home() {
         case 'Guías':
           showToast(t.guiasProx)
           break
-        case 'Agregar lugar':
-          showToast(t.agregarProx)
+        case 'Sugerir lugar':
+          navigate('/sugerir-lugar')
           break
         case 'Privacidad':
           showToast(t.privacidadProx)
@@ -253,7 +253,7 @@ export default function Home() {
           break
       }
     },
-    [scrollToLugares, showToast, idioma],
+    [scrollToLugares, showToast, navigate, idioma],
   )
 
   return (
@@ -313,7 +313,7 @@ export default function Home() {
                 { label: t.menuExplorar, onClick: () => { setMenuOpen(false); scrollToLugares() } },
                 { label: t.menuGuias, onClick: () => { setMenuOpen(false); showToast(t.guiasProx) } },
                 { label: t.menuResenas, onClick: () => { setMenuOpen(false); scrollToLugares() } },
-                { label: t.menuAgregar, onClick: () => { setMenuOpen(false); showToast(t.agregarProx) } },
+                { label: t.menuAgregar, onClick: () => { setMenuOpen(false); navigate('/sugerir-lugar') } },
               ].map(({ label, onClick }) => (
                 <button
                   key={label}
@@ -740,7 +740,7 @@ export default function Home() {
                 { key: 'Explorar', label: t.menuExplorar },
                 { key: 'Guías', label: t.menuGuias },
                 { key: 'Reseñas', label: t.menuResenas },
-                { key: 'Agregar lugar', label: t.menuAgregar },
+                { key: 'Sugerir lugar', label: t.menuAgregar },
                 { key: 'Privacidad', label: t.menuPrivacidad },
                 { key: 'Términos', label: t.menuTerminos },
                 { key: 'Contacto', label: t.menuContacto },
