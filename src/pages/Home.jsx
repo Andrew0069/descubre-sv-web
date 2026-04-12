@@ -143,29 +143,58 @@ export default function Home() {
   const loadLugares = useCallback(async () => {
     setLoading(true)
     setError(null)
-    const { data, error: err } = await supabase
-      .from('lugares')
-      .select('*, categorias(*), departamentos(*)')
-      .order('nombre', { ascending: true })
+
+    const [
+      { data, error: err },
+      { data: likeRows },
+    ] = await Promise.all([
+      supabase
+        .from('lugares')
+        .select('*, categorias(*), departamentos(*)')
+        .order('nombre', { ascending: true }),
+      supabase
+        .from('likes_lugar')
+        .select('lugar_id, rating'),
+    ])
 
     if (err) {
       setError(err.message)
       setLugares([])
-    } else {
-      if (idioma === 'en') {
-        const traducidos = await traducirArray(data ?? [], ['nombre', 'descripcion', 'direccion'], 'en')
-        for (const lugar of traducidos) {
-          if (lugar.categorias?.nombre) {
-            lugar.categorias = { ...lugar.categorias, nombre: await traducirTexto(lugar.categorias.nombre, 'en') }
-          }
-          if (lugar.departamentos?.nombre) {
-            lugar.departamentos = { ...lugar.departamentos, nombre: await traducirTexto(lugar.departamentos.nombre, 'en') }
-          }
-        }
-        setLugares(traducidos)
-      } else {
-        setLugares(data ?? [])
+      setLoading(false)
+      return
+    }
+
+    // Compute average rating per lugar from likes_lugar.rating
+    const statsMap = {}
+    for (const row of likeRows ?? []) {
+      const lid = row.lugar_id
+      if (!statsMap[lid]) statsMap[lid] = { ratingSum: 0, ratingCount: 0 }
+      if (row.rating != null) {
+        statsMap[lid].ratingSum += Number(row.rating)
+        statsMap[lid].ratingCount++
       }
+    }
+    const withStats = (data ?? []).map((lugar) => {
+      const s = statsMap[lugar.id]
+      return {
+        ...lugar,
+        promedio_estrellas: s?.ratingCount > 0 ? s.ratingSum / s.ratingCount : null,
+      }
+    })
+
+    if (idioma === 'en') {
+      const traducidos = await traducirArray(withStats, ['nombre', 'descripcion', 'direccion'], 'en')
+      for (const lugar of traducidos) {
+        if (lugar.categorias?.nombre) {
+          lugar.categorias = { ...lugar.categorias, nombre: await traducirTexto(lugar.categorias.nombre, 'en') }
+        }
+        if (lugar.departamentos?.nombre) {
+          lugar.departamentos = { ...lugar.departamentos, nombre: await traducirTexto(lugar.departamentos.nombre, 'en') }
+        }
+      }
+      setLugares(traducidos)
+    } else {
+      setLugares(withStats)
     }
     setLoading(false)
   }, [idioma])

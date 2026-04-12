@@ -178,29 +178,16 @@ export default function DetalleLugar() {
     const userLikePromise = sess?.user?.id
       ? supabase
         .from('likes_lugar')
-        .select('id')
+        .select('rating')
         .eq('lugar_id', id)
         .eq('user_id', sess.user.id)
         .maybeSingle()
-      : Promise.resolve({ data: null, error: null })
-
-    const ratingsValsPromise = supabase.from('ratings_lugar').select('valor').eq('lugar_id', id)
-
-    const userRatingPromise = sess?.user?.id
-      ? supabase
-        .from('ratings_lugar')
-        .select('valor')
-        .eq('lugar_id', id)
-        .eq('user_id', sess.user.id)
-        .maybeSingle()
-      : Promise.resolve({ data: null, error: null })
+      : Promise.resolve({ data: null })
 
     const [
       { data: resenasRows },
-      { count: likesTotal, error: likesCountErr },
+      { data: allLikesRows },
       { data: userLikeRow },
-      { data: ratingValRows },
-      { data: userRatingRow },
     ] = await Promise.all([
       supabase
         .from('resenas')
@@ -209,23 +196,22 @@ export default function DetalleLugar() {
         .order('created_at', { ascending: false }),
       supabase
         .from('likes_lugar')
-        .select('*', { count: 'exact', head: true })
+        .select('rating')
         .eq('lugar_id', id),
       userLikePromise,
-      ratingsValsPromise,
-      userRatingPromise,
     ])
 
-    const valsList = ratingValRows ?? []
-    const avgRating =
-      valsList.length > 0
-        ? valsList.reduce((s, row) => s + Number(row.valor), 0) / valsList.length
-        : null
-    setRatingPromedio(avgRating)
-    setUserRating(userRatingRow?.valor != null ? Number(userRatingRow.valor) : null)
+    const allLikes = allLikesRows ?? []
+    setLikesCount(allLikes.length)
 
-    setLikesCount(likesCountErr ? 0 : likesTotal ?? 0)
+    const ratingRows = allLikes.filter((r) => r.rating != null)
+    setRatingPromedio(
+      ratingRows.length > 0
+        ? ratingRows.reduce((s, r) => s + Number(r.rating), 0) / ratingRows.length
+        : null,
+    )
     setUserLiked(!!userLikeRow)
+    setUserRating(userLikeRow?.rating != null ? Number(userLikeRow.rating) : null)
 
     const ids = (resenasRows ?? []).map((r) => r.id).filter(Boolean)
     const likeCountMap = {}
@@ -276,47 +262,67 @@ export default function DetalleLugar() {
   }, [toast])
 
   const handleToggleLike = useCallback(async () => {
-    if (!session?.user) {
+    // Always fetch a fresh session — React state can be null on first render
+    const { data: { session: activeSession } } = await supabase.auth.getSession()
+    if (!activeSession?.user) {
       setToast('Inicia sesión para guardar tus lugares favoritos')
       return
     }
+    const uid = activeSession.user.id
     if (userLiked) {
       const { error } = await supabase
         .from('likes_lugar')
         .delete()
         .eq('lugar_id', id)
-        .eq('user_id', session.user.id)
-      if (!error) {
+        .eq('user_id', uid)
+      if (error) {
+        console.error('[handleToggleLike] delete error:', error)
+      } else {
         setUserLiked(false)
+        setUserRating(null)
         setLikesCount((c) => Math.max(0, c - 1))
       }
     } else {
       const { error } = await supabase
         .from('likes_lugar')
-        .insert({ lugar_id: id, user_id: session.user.id })
-      if (!error) {
+        .insert({ lugar_id: id, user_id: uid })
+      if (error) {
+        console.error('[handleToggleLike] insert error:', error)
+      } else {
         setUserLiked(true)
         setLikesCount((c) => c + 1)
       }
     }
-  }, [session, userLiked, id])
+  }, [userLiked, id])
 
   const refreshLugarRatings = useCallback(async () => {
-    const { data: rows } = await supabase.from('ratings_lugar').select('valor').eq('lugar_id', id)
-    const list = rows ?? []
+    const { data: allRows } = await supabase
+      .from('likes_lugar')
+      .select('rating')
+      .eq('lugar_id', id)
+
+    const rows = allRows ?? []
+    setLikesCount(rows.length)
+
+    const ratingRows = rows.filter((r) => r.rating != null)
     setRatingPromedio(
-      list.length > 0 ? list.reduce((s, r) => s + Number(r.valor), 0) / list.length : null,
+      ratingRows.length > 0
+        ? ratingRows.reduce((sum, r) => sum + Number(r.rating), 0) / ratingRows.length
+        : null,
     )
+
     const { data: { session: s } } = await supabase.auth.getSession()
     if (s?.user?.id) {
       const { data: mine } = await supabase
-        .from('ratings_lugar')
-        .select('valor')
+        .from('likes_lugar')
+        .select('rating')
         .eq('lugar_id', id)
         .eq('user_id', s.user.id)
         .maybeSingle()
-      setUserRating(mine?.valor != null ? Number(mine.valor) : null)
+      setUserLiked(!!mine)
+      setUserRating(mine?.rating != null ? Number(mine.rating) : null)
     } else {
+      setUserLiked(false)
       setUserRating(null)
     }
   }, [id])
@@ -329,21 +335,38 @@ export default function DetalleLugar() {
         return
       }
       const uid = activeSession.user.id
+      const prevRating = userRating
+
       if (userRating === valor) {
+        // Same heart clicked again → clear the rating
+        setUserRating(null)
         const { error } = await supabase
-          .from('ratings_lugar')
-          .delete()
-          .eq('lugar_id', id)
-          .eq('user_id', uid)
-        if (!error) await refreshLugarRatings()
-      } else {
-        const { error } = await supabase
-          .from('ratings_lugar')
+          .from('likes_lugar')
           .upsert(
-            { lugar_id: id, user_id: uid, valor },
+            { lugar_id: id, user_id: uid, rating: null },
             { onConflict: 'lugar_id,user_id' },
           )
-        if (!error) await refreshLugarRatings()
+        if (error) {
+          console.error('[handleRatingClick] clear rating error:', error)
+          setUserRating(prevRating)
+        } else {
+          await refreshLugarRatings()
+        }
+      } else {
+        // New or changed rating
+        setUserRating(valor)
+        const { error } = await supabase
+          .from('likes_lugar')
+          .upsert(
+            { lugar_id: id, user_id: uid, rating: valor },
+            { onConflict: 'lugar_id,user_id' },
+          )
+        if (error) {
+          console.error('[handleRatingClick] upsert rating error:', error)
+          setUserRating(prevRating)
+        } else {
+          await refreshLugarRatings()
+        }
       }
     },
     [userRating, id, refreshLugarRatings],
@@ -795,10 +818,7 @@ export default function DetalleLugar() {
                 <button
                   key={v}
                   type="button"
-                  onClick={() => {
-                    console.log('[DetalleLugar] rating heart click', { valor: v, session })
-                    handleRatingClick(v)
-                  }}
+                  onClick={() => handleRatingClick(v)}
                   style={{
                     background: 'none',
                     border: 'none',
