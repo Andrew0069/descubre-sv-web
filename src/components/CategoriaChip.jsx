@@ -153,9 +153,23 @@ const ICON_BY_NAME = {
   Restaurantes: IconRestaurantes,
 }
 
+const EN_TO_ES = {
+  'Beaches': 'Playas',
+  'Mountains and volcanoes': 'Montañas y Volcanes',
+  'Charming Villages': 'Pueblos con Encanto',
+  'Archaeological Sites': 'Sitios Arqueológicos',
+  'Lakes and Rivers': 'Lagos y Ríos',
+  'Natural Parks': 'Parques Naturales',
+  'Viewpoints': 'Miradores',
+  'Markets and Crafts': 'Mercados y Artesanías',
+  'Night Life': 'Vida Nocturna',
+  'Restaurants': 'Restaurantes',
+}
+
 export function CategoriaIconSvg({ nombre, active, size = 22, onDark = false }) {
   const stroke = onDark ? '#FFFFFF' : active ? STROKE_ACTIVE : STROKE_IDLE
-  const Icon = (nombre && ICON_BY_NAME[nombre]) || IconTodos
+  const nombreEs = EN_TO_ES[nombre] ?? nombre
+  const Icon = (nombreEs && ICON_BY_NAME[nombreEs]) || IconTodos
   return <Icon stroke={stroke} size={size} />
 }
 

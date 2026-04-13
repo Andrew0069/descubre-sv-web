@@ -14,9 +14,23 @@ export const gradientes = {
 
 export const gradienteDefault = 'linear-gradient(160deg, #60A5FA, #1E3A8A)'
 
+const EN_TO_ES = {
+  'Beaches': 'Playas',
+  'Mountains and volcanoes': 'Montañas y Volcanes',
+  'Charming Villages': 'Pueblos con Encanto',
+  'Archaeological Sites': 'Sitios Arqueológicos',
+  'Lakes and Rivers': 'Lagos y Ríos',
+  'Natural Parks': 'Parques Naturales',
+  'Viewpoints': 'Miradores',
+  'Markets and Crafts': 'Mercados y Artesanías',
+  'Night Life': 'Vida Nocturna',
+  'Restaurants': 'Restaurantes',
+}
+
 export function getGradiente(categoriaNombre) {
   if (!categoriaNombre) return gradienteDefault
-  return gradientes[categoriaNombre] ?? gradienteDefault
+  const nombre = EN_TO_ES[categoriaNombre] ?? categoriaNombre
+  return gradientes[nombre] ?? gradienteDefault
 }
 
 /** Orden visual de chips (coincide con el diseño). */

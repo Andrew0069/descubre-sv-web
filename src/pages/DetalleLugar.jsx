@@ -4,7 +4,6 @@ import { supabase } from '../lib/supabase'
 import { LugarImagePlaceholder } from '../components/LugarCard'
 import { getGradiente } from '../lib/categoriaVisual'
 import { useIdioma } from '../lib/idiomaContext'
-import { traducirObjeto, traducirArray } from '../lib/traduccion'
 
 function formatRelativeEs(dateString) {
   if (!dateString) return ''
@@ -166,12 +165,7 @@ export default function DetalleLugar() {
       return
     }
 
-    if (idioma === 'en') {
-      const lugarTraducido = await traducirObjeto(lugarRow, ['nombre', 'descripcion', 'direccion'], 'en')
-      setLugar(lugarTraducido)
-    } else {
-      setLugar(lugarRow)
-    }
+    setLugar(lugarRow)
 
     const { data: { session: sess } } = await supabase.auth.getSession()
 
@@ -242,18 +236,13 @@ export default function DetalleLugar() {
     setResenaLikeCounts(likeCountMap)
     setUserResenaLikes(userLikedMap)
 
-    if (idioma === 'en') {
-      const resenasTraducidas = await traducirArray(resenasRows ?? [], ['titulo', 'contenido'], 'en')
-      setResenas(resenasTraducidas)
-    } else {
-      setResenas(resenasRows ?? [])
-    }
+    setResenas(resenasRows ?? [])
     setLoading(false)
-  }, [id, idioma])
+  }, [id])
 
   useEffect(() => {
     load()
-  }, [load, idioma])
+  }, [load])
 
   useEffect(() => {
     if (!toast) return

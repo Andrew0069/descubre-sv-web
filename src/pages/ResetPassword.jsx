@@ -9,11 +9,15 @@ export default function ResetPassword() {
   const [success, setSuccess] = useState('')
 
   useEffect(() => {
-    supabase.auth.onAuthStateChange(async (event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
       if (event === 'PASSWORD_RECOVERY') {
         // Supabase ya procesó el token del link
       }
     })
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [])
 
   const handleReset = async () => {

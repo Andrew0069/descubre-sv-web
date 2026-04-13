@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useIdioma } from '../lib/idiomaContext'
-import { traducirArray, traducirTexto } from '../lib/traduccion'
 import { ordenarCategorias } from '../lib/categoriaVisual'
 import { CategoriaIconSvg } from '../components/CategoriaChip'
 import LugarCard from '../components/LugarCard'
@@ -77,7 +76,7 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [toast, setToast] = useState(null)
   const [user, setUser] = useState(null)
-  const { idioma, setIdioma } = useIdioma()
+  const { idioma } = useIdioma()
   const navigate = useNavigate()
 
   const t = {
@@ -182,26 +181,13 @@ export default function Home() {
       }
     })
 
-    if (idioma === 'en') {
-      const traducidos = await traducirArray(withStats, ['nombre', 'descripcion', 'direccion'], 'en')
-      for (const lugar of traducidos) {
-        if (lugar.categorias?.nombre) {
-          lugar.categorias = { ...lugar.categorias, nombre: await traducirTexto(lugar.categorias.nombre, 'en') }
-        }
-        if (lugar.departamentos?.nombre) {
-          lugar.departamentos = { ...lugar.departamentos, nombre: await traducirTexto(lugar.departamentos.nombre, 'en') }
-        }
-      }
-      setLugares(traducidos)
-    } else {
-      setLugares(withStats)
-    }
+    setLugares(withStats)
     setLoading(false)
-  }, [idioma])
+  }, [])
 
   useEffect(() => {
     loadLugares()
-  }, [loadLugares, idioma])
+  }, [loadLugares])
 
   useEffect(() => {
     let cancelled = false
@@ -217,19 +203,12 @@ export default function Home() {
         } else {
           const ordenadas = ordenarCategorias(data ?? [])
           setCategorias(ordenadas)
-          if (idioma === 'en') {
-            const traducidas = await traducirArray(ordenadas, ['nombre'], 'en')
-            setCategoriasTraducidas(traducidas)
-          } else {
-            setCategoriasTraducidas(ordenadas)
-          }
+          setCategoriasTraducidas(ordenadas)
         }
       }
     })()
-    return () => {
-      cancelled = true
-    }
-  }, [idioma])
+    return () => { cancelled = true }
+  }, [])
 
   const filtrados = useMemo(() => {
     let list = lugares
@@ -368,33 +347,6 @@ export default function Home() {
                   {label}
                 </button>
               ))}
-              <div style={{ height: '1px', backgroundColor: '#f3f4f6', margin: '0.4rem 0.5rem' }} />
-              <button
-                type="button"
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  textAlign: 'left',
-                  padding: '0.5rem 1rem',
-                  fontSize: '0.82rem',
-                  fontWeight: '500',
-                  color: '#6b7280',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.15s ease',
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.07)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                onClick={() => {
-                  setMenuOpen(false)
-                  setIdioma(idioma === 'es' ? 'en' : 'es')
-                  showToast(idioma === 'es' ? 'Switched to English' : 'Cambiado a español')
-                }}
-              >
-                ES / EN
-              </button>
               <div style={{ height: '1px', backgroundColor: '#f3f4f6', margin: '0.4rem 0.5rem' }} />
               {user ? (
                 <>
