@@ -398,7 +398,19 @@ export default function DetalleLugar() {
   )
 
   const handleFotos = (e) => {
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    const MAX_SIZE_MB = 5
     const files = Array.from(e.target.files)
+    for (const file of files) {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        setResenaError('Solo se permiten imágenes en formato JPG, PNG, WEBP o GIF.')
+        return
+      }
+      if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+        setResenaError(`Cada imagen no puede superar ${MAX_SIZE_MB}MB.`)
+        return
+      }
+    }
     const disponibles = 3 - resenaFotos.length
     const nuevas = files.slice(0, disponibles)
     setResenaFotos(prev => [...prev, ...nuevas])
@@ -450,7 +462,7 @@ export default function DetalleLugar() {
       usuario_id: usuarioRow.id,
       titulo: resenaTexto.trim().slice(0, 60),
       contenido: resenaTexto.trim(),
-      estrellas: 5,
+      estrellas: userRating ?? 5,
       fotos: urlsFotos,
     })
 

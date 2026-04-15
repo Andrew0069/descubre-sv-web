@@ -63,7 +63,8 @@ export default function SugerirLugar() {
     setLoading(false)
 
     if (insertError) {
-      setError(insertError.message || 'No se pudo enviar la sugerencia. Intentá de nuevo.')
+      console.error('[SugerirLugar] insert error:', insertError)
+      setError('Ocurrió un error inesperado. Intentá de nuevo.')
       return
     }
 

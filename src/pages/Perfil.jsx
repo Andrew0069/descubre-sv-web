@@ -43,8 +43,18 @@ export default function Perfil() {
   }, [session])
 
   const handleAvatar = (e) => {
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    const MAX_SIZE_MB = 5
     const file = e.target.files[0]
     if (!file) return
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setError('Solo se permiten imágenes en formato JPG, PNG, WEBP o GIF.')
+      return
+    }
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      setError(`La imagen no puede superar ${MAX_SIZE_MB}MB.`)
+      return
+    }
     setAvatarFile(file)
     setAvatarPreview(URL.createObjectURL(file))
   }
@@ -67,7 +77,8 @@ export default function Perfil() {
         .from('avatares')
         .upload(path, avatarFile, { upsert: true })
       if (uploadError) {
-        setError(`Error subiendo foto: ${uploadError.message}`)
+        console.error('[Perfil] avatar upload error:', uploadError)
+        setError('Ocurrió un error al subir la foto. Intentá de nuevo.')
         setSaving(false)
         return
       }
@@ -85,7 +96,8 @@ export default function Perfil() {
       .eq('auth_id', session.user.id)
 
     if (updateError) {
-      setError(`Error: ${updateError.message}`)
+      console.error('[Perfil] update error:', updateError)
+      setError('Ocurrió un error al guardar el perfil. Intentá de nuevo.')
       setSaving(false)
       return
     }
