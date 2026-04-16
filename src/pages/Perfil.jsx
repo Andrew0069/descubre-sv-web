@@ -42,6 +42,12 @@ export default function Perfil() {
     cargarPerfil()
   }, [session])
 
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview)
+    }
+  }, [avatarPreview])
+
   const handleAvatar = (e) => {
     const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
     const MAX_SIZE_MB = 5

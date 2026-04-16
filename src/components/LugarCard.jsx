@@ -74,7 +74,10 @@ export default function LugarCard({ lugar }) {
               alt=""
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               loading="lazy"
-              onError={() => setImageError(true)}
+              onError={(e) => {
+                e.target.onerror = null;
+                setImageError(true);
+              }}
             />
           ) : (
             <div style={{ width: '100%', height: '100%', background: TROPICAL_GRADIENT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

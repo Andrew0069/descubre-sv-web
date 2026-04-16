@@ -354,7 +354,7 @@ export default function Home() {
                     type="button"
                     onClick={() => {
                       setMenuOpen(false)
-                      window.location.href = '/perfil'
+                      navigate('/perfil')
                     }}
                     style={{
                       display: 'block',
@@ -407,7 +407,7 @@ export default function Home() {
                   type="button"
                   onClick={() => {
                     setMenuOpen(false)
-                    window.location.href = '/login'
+                    navigate('/login')
                   }}
                   style={{
                     display: 'block',

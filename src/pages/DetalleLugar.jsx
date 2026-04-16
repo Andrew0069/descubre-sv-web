@@ -131,6 +131,11 @@ export default function DetalleLugar() {
   }, [])
 
   useEffect(() => {
+    const urls = resenaPreview
+    return () => urls.forEach((url) => URL.revokeObjectURL(url))
+  }, [resenaPreview])
+
+  useEffect(() => {
     const initSession = async () => {
       const { data } = await supabase.auth.getSession()
       setSession(data.session ?? null)
@@ -250,6 +255,10 @@ export default function DetalleLugar() {
     const timer = setTimeout(() => setToast(null), 3500)
     return () => clearTimeout(timer)
   }, [toast])
+
+  useEffect(() => {
+    setImageError(false)
+  }, [id])
 
   const handleToggleLike = useCallback(async () => {
     // Always fetch a fresh session — React state can be null on first render
@@ -524,10 +533,6 @@ export default function DetalleLugar() {
   const totalResenas = resenas.length
   const entrada = getEntradaDisplay(lugar, t.entrada)
 
-  useEffect(() => {
-    setImageError(false)
-  }, [img, id])
-
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
       {toast && (
@@ -661,7 +666,10 @@ export default function DetalleLugar() {
             src={img}
             alt=""
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            onError={() => setImageError(true)}
+            onError={(e) => {
+              e.target.onerror = null;
+              setImageError(true);
+            }}
           />
         ) : (
           <div style={{ width: '100%', height: '100%' }}>

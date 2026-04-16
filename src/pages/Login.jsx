@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 export default function Login() {
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
@@ -28,7 +30,7 @@ export default function Login() {
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) setError('Correo o contraseña incorrectos.')
-      else window.location.href = '/'
+      else navigate('/')
     }
     setLoading(false)
   }
@@ -201,7 +203,7 @@ export default function Login() {
 
         <button
           type="button"
-          onClick={() => { window.location.href = '/' }}
+          onClick={() => navigate('/')}
           style={{
             marginTop: '1.25rem',
             backgroundColor: 'transparent',

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 export default function ResetPassword() {
+  const navigate = useNavigate()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
@@ -92,7 +94,7 @@ export default function ResetPassword() {
             <p style={{ color: '#10B981', fontSize: '0.85rem', marginBottom: '1rem' }}>{success}</p>
             <button
               type="button"
-              onClick={() => { window.location.href = '/login' }}
+              onClick={() => navigate('/login')}
               style={{
                 width: '100%',
                 backgroundColor: '#0EA5E9',
