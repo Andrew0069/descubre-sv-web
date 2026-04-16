@@ -541,12 +541,10 @@ export default function DetalleLugar() {
   const img = lugar.imagen_principal?.trim()
   const totalResenas = resenas.length
   const entrada = getEntradaDisplay(lugar, t.entrada)
-  const fotosCarousel = (() => {
-    if (imagenes.length === 0) return img ? [img] : []
-    const rutas = imagenes.map((i) => i.ruta_imagen)
-    if (img && !rutas.includes(img)) return [img, ...rutas]
-    return rutas
-  })()
+  const urlsDesdeTabla = (imagenes ?? []).map((i) => i.ruta_imagen).filter(Boolean)
+  const fotosCarousel = urlsDesdeTabla.length > 0
+    ? urlsDesdeTabla
+    : (img ? [img] : [])
   const fotoActual = fotosCarousel[carouselIndex] ?? null
 
   return (
