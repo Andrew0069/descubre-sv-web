@@ -125,6 +125,8 @@ export default function DetalleLugar() {
   const [resenaError, setResenaError] = useState('')
   const [resenaSuccess, setResenaSuccess] = useState(false)
   const [imageError, setImageError] = useState(false)
+  const [imagenes, setImagenes] = useState([])
+  const [carouselIndex, setCarouselIndex] = useState(0)
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -188,6 +190,7 @@ export default function DetalleLugar() {
       { data: resenasRows },
       { data: allLikesRows },
       { data: userLikeRow },
+      { data: imagenesRows },
     ] = await Promise.all([
       supabase
         .from('resenas')
@@ -199,6 +202,11 @@ export default function DetalleLugar() {
         .select('rating')
         .eq('lugar_id', id),
       userLikePromise,
+      supabase
+        .from('imagenes_lugar')
+        .select('*')
+        .eq('lugar_id', id)
+        .order('id', { ascending: true }),
     ])
 
     const allLikes = allLikesRows ?? []
@@ -242,6 +250,7 @@ export default function DetalleLugar() {
     setResenaLikeCounts(likeCountMap)
     setUserResenaLikes(userLikedMap)
 
+    setImagenes(imagenesRows ?? [])
     setResenas(resenasRows ?? [])
     setLoading(false)
   }, [id])
@@ -258,6 +267,7 @@ export default function DetalleLugar() {
 
   useEffect(() => {
     setImageError(false)
+    setCarouselIndex(0)
   }, [id])
 
   const handleToggleLike = useCallback(async () => {
@@ -529,9 +539,15 @@ export default function DetalleLugar() {
   const cat = lugar.categorias
   const dep = lugar.departamentos
   const img = lugar.imagen_principal?.trim()
-  const showImage = Boolean(img) && !imageError
   const totalResenas = resenas.length
   const entrada = getEntradaDisplay(lugar, t.entrada)
+  const fotosCarousel = (() => {
+    if (imagenes.length === 0) return img ? [img] : []
+    const rutas = imagenes.map((i) => i.ruta_imagen)
+    if (img && !rutas.includes(img)) return [img, ...rutas]
+    return rutas
+  })()
+  const fotoActual = fotosCarousel[carouselIndex] ?? null
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
@@ -661,20 +677,18 @@ export default function DetalleLugar() {
 
       {/* HERO */}
       <section style={{ position: 'relative', width: '100%', height: '380px', overflow: 'hidden' }}>
-        {showImage ? (
-          <img
-            src={img}
-            alt=""
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            onError={(e) => {
-              e.target.onerror = null;
-              setImageError(true);
-            }}
-          />
-        ) : (
+        {fotosCarousel.length === 0 || imageError ? (
           <div style={{ width: '100%', height: '100%' }}>
             <LugarImagePlaceholder categoriaNombre={cat?.nombre} iconSize={56} />
           </div>
+        ) : (
+          <img
+            key={fotoActual}
+            src={fotoActual}
+            alt=""
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'opacity 0.3s ease' }}
+            onError={() => setImageError(true)}
+          />
         )}
 
         <div
@@ -711,6 +725,83 @@ export default function DetalleLugar() {
         >
           {t.volver}
         </Link>
+
+        {fotosCarousel.length > 1 && (
+          <div style={{
+            position: 'absolute', top: '16px', right: '16px', zIndex: 10,
+            backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)',
+            color: '#ffffff', fontSize: '0.78rem', fontWeight: 600,
+            padding: '4px 10px', borderRadius: '20px',
+          }}>
+            {carouselIndex + 1} / {fotosCarousel.length}
+          </div>
+        )}
+
+        {fotosCarousel.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={() => setCarouselIndex((prev) => (prev - 1 + fotosCarousel.length) % fotosCarousel.length)}
+              aria-label="Foto anterior"
+              style={{
+                position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)',
+                zIndex: 10, width: '44px', height: '44px', borderRadius: '50%',
+                backgroundColor: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)',
+                backdropFilter: 'blur(12px)', color: '#ffffff',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.28)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)' }}
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCarouselIndex((prev) => (prev + 1) % fotosCarousel.length)}
+              aria-label="Foto siguiente"
+              style={{
+                position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)',
+                zIndex: 10, width: '44px', height: '44px', borderRadius: '50%',
+                backgroundColor: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)',
+                backdropFilter: 'blur(12px)', color: '#ffffff',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.28)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)' }}
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          </>
+        )}
+
+        {fotosCarousel.length > 1 && (
+          <div style={{
+            position: 'absolute', bottom: '80px', left: '50%', transform: 'translateX(-50%)',
+            zIndex: 10, display: 'flex', gap: '8px', alignItems: 'center',
+          }}>
+            {fotosCarousel.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setCarouselIndex(i)}
+                aria-label={`Foto ${i + 1}`}
+                style={{
+                  width: i === carouselIndex ? '8px' : '6px',
+                  height: i === carouselIndex ? '8px' : '6px',
+                  borderRadius: '50%', border: 'none', padding: 0, cursor: 'pointer',
+                  backgroundColor: i === carouselIndex ? '#ffffff' : 'rgba(255,255,255,0.45)',
+                  transition: 'all 0.2s ease', outline: 'none',
+                }}
+              />
+            ))}
+          </div>
+        )}
 
         <div style={{ position: 'absolute', bottom: '24px', left: '24px', right: '24px', zIndex: 10 }}>
           {cat && (
