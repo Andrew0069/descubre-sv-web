@@ -124,6 +124,7 @@ export default function DetalleLugar() {
   const [resenaLoading, setResenaLoading] = useState(false)
   const [resenaError, setResenaError] = useState('')
   const [resenaSuccess, setResenaSuccess] = useState(false)
+  const [imageError, setImageError] = useState(false)
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -519,8 +520,13 @@ export default function DetalleLugar() {
   const cat = lugar.categorias
   const dep = lugar.departamentos
   const img = lugar.imagen_principal?.trim()
+  const showImage = Boolean(img) && !imageError
   const totalResenas = resenas.length
   const entrada = getEntradaDisplay(lugar, t.entrada)
+
+  useEffect(() => {
+    setImageError(false)
+  }, [img, id])
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
@@ -650,11 +656,12 @@ export default function DetalleLugar() {
 
       {/* HERO */}
       <section style={{ position: 'relative', width: '100%', height: '380px', overflow: 'hidden' }}>
-        {img ? (
+        {showImage ? (
           <img
             src={img}
             alt=""
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            onError={() => setImageError(true)}
           />
         ) : (
           <div style={{ width: '100%', height: '100%' }}>

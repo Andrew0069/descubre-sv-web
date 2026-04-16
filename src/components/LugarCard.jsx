@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getGradiente } from '../lib/categoriaVisual'
 import { CategoriaIconSvg } from './CategoriaChip'
@@ -31,17 +31,23 @@ export function LugarImagePlaceholder({ categoriaNombre, iconSize = 36 }) {
 export default function LugarCard({ lugar }) {
   const [hovered, setHovered] = useState(false)
   const [heartHover, setHeartHover] = useState(false)
+  const [imageError, setImageError] = useState(false)
   const { idioma } = useIdioma()
 
   const cat = lugar.categorias
   const dep = lugar.departamentos
   const img = lugar.imagen_principal?.trim()
+  const showImage = Boolean(img) && !imageError
   const hearts = Number(lugar.promedio_estrellas) || 0
   const heartsText = Number.isInteger(hearts) ? String(hearts) : hearts.toFixed(1)
   const precioRaw = getEntradaPrice(lugar)
   const precio = precioRaw === 'Gratis' ? (idioma === 'en' ? 'Free' : 'Gratis') : precioRaw
   const isFree = precioRaw === 'Gratis'
   const catBg = cat ? getGradiente(cat.nombre) : TROPICAL_GRADIENT
+
+  useEffect(() => {
+    setImageError(false)
+  }, [img, lugar.id])
 
   return (
     <div
@@ -62,12 +68,13 @@ export default function LugarCard({ lugar }) {
       {/* Image */}
       <div style={{ position: 'relative', height: '220px', overflow: 'hidden' }}>
         <Link to={`/lugar/${lugar.id}`} style={{ display: 'block', width: '100%', height: '100%' }}>
-          {img ? (
+          {showImage ? (
             <img
               src={img}
               alt=""
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               loading="lazy"
+              onError={() => setImageError(true)}
             />
           ) : (
             <div style={{ width: '100%', height: '100%', background: TROPICAL_GRADIENT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
