@@ -145,17 +145,15 @@ export default function Home() {
 
     let lugaresQuery = supabase
       .from('lugares')
-      .select('id, nombre, categoria_id, subtipo, imagen_principal, precio_entrada, updated_at, categorias(nombre), departamentos(nombre), imagenes_lugar(ruta_imagen)')
-      .eq('destacado', true)
+      .select('id, nombre, categoria_id, subtipo, destacado, imagen_principal, precio_entrada, updated_at, categorias(nombre), departamentos(nombre), imagenes_lugar(ruta_imagen)')
 
     if (filtroSubtipo !== 'Todos') {
       lugaresQuery = lugaresQuery.eq('subtipo', filtroSubtipo)
     }
 
     const { data, error: err } = await lugaresQuery
-      .order('destacado', { ascending: false })
+      .order('destacado', { ascending: false, nullsFirst: false })
       .order('updated_at', { ascending: false })
-      .limit(6)
 
     if (err) {
       setError(err.message)
@@ -174,19 +172,19 @@ export default function Home() {
 
   useEffect(() => {
     let cancelled = false
-    ;(async () => {
-      const { data, error: err } = await supabase
-        .from('categorias')
-        .select('*')
-        .order('nombre', { ascending: true })
-      if (!cancelled) {
-        if (err) {
-          setCategorias([])
-        } else {
-          setCategorias(ordenarCategorias(data ?? []))
+      ; (async () => {
+        const { data, error: err } = await supabase
+          .from('categorias')
+          .select('*')
+          .order('nombre', { ascending: true })
+        if (!cancelled) {
+          if (err) {
+            setCategorias([])
+          } else {
+            setCategorias(ordenarCategorias(data ?? []))
+          }
         }
-      }
-    })()
+      })()
     return () => { cancelled = true }
   }, [])
 
@@ -651,11 +649,10 @@ export default function Home() {
                   key={sub}
                   type="button"
                   onClick={() => setFiltroSubtipo(sub)}
-                  className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                    filtroSubtipo === sub
-                      ? 'bg-sky-500 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
+                  className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${filtroSubtipo === sub
+                    ? 'bg-sky-500 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
                 >
                   {sub}
                 </button>
@@ -688,9 +685,9 @@ export default function Home() {
                   {filtrados.map((lugar, index) => {
                     const isFeatured = index === 0;
                     return (
-                    <li key={lugar.id} className={isFeatured ? 'md:col-span-2 md:row-span-2' : ''}>
-                      <LugarCard lugar={lugar} isFeatured={isFeatured} />
-                    </li>
+                      <li key={lugar.id} className={isFeatured ? 'md:col-span-2 md:row-span-2' : ''}>
+                        <LugarCard lugar={lugar} isFeatured={isFeatured} />
+                      </li>
                     );
                   })}
                 </ul>
