@@ -2,17 +2,10 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getGradiente } from '../lib/categoriaVisual'
 import { CategoriaIconSvg } from './CategoriaChip'
-import { useIdioma } from '../lib/idiomaContext'
 import LoginModal from './LoginModal'
 
 const TROPICAL_GRADIENT = 'linear-gradient(135deg, #0EA5E9 0%, #06b6d4 50%, #f59e0b 100%)'
 
-function getEntradaPrice(lugar) {
-  const n = (lugar.nombre || '').toLowerCase()
-  if (n.includes('joya') || n.includes('cerén') || n.includes('ceren')) return '$5'
-  if (n.includes('imposible') || n.includes('volcán') || n.includes('volcan')) return '$3'
-  return 'Gratis'
-}
 
 export function LugarImagePlaceholder({ categoriaNombre, iconSize = 36 }) {
   const bg = getGradiente(categoriaNombre)
@@ -34,7 +27,6 @@ export default function LugarCard({ lugar }) {
   const [heartHover, setHeartHover] = useState(false)
   const [imageError, setImageError] = useState(false)
   const [showLoginModal, setShowLoginModal] = useState(false)
-  const { idioma } = useIdioma()
 
   const cat = lugar.categorias
   const dep = lugar.departamentos
@@ -42,9 +34,7 @@ export default function LugarCard({ lugar }) {
   const showImage = Boolean(img) && !imageError
   const hearts = Number(lugar.promedio_estrellas) || 0
   const heartsText = Number.isInteger(hearts) ? String(hearts) : hearts.toFixed(1)
-  const precioRaw = getEntradaPrice(lugar)
-  const precio = precioRaw === 'Gratis' ? (idioma === 'en' ? 'Free' : 'Gratis') : precioRaw
-  const isFree = precioRaw === 'Gratis'
+  const precio = lugar.precio_entrada ?? null
   const catBg = cat ? getGradiente(cat.nombre) : TROPICAL_GRADIENT
 
   useEffect(() => {
@@ -74,8 +64,11 @@ export default function LugarCard({ lugar }) {
             <img
               src={img}
               alt=""
+              width={400}
+              height={220}
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               loading="lazy"
+              decoding="async"
               onError={(e) => {
                 e.target.onerror = null;
                 setImageError(true);
@@ -174,10 +167,12 @@ export default function LugarCard({ lugar }) {
         </p>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-            🎫 <span style={{ fontWeight: 600, color: isFree ? '#10b981' : '#374151' }}>{precio}</span>
-          </span>
-          <span style={{ fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#ef4444' }}>
+          {precio != null && (
+            <span style={{ fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              🎫 <span style={{ fontWeight: 600, color: '#374151' }}>{precio}</span>
+            </span>
+          )}
+          <span style={{ fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#ef4444', marginLeft: 'auto' }}>
             ❤️ <span style={{ fontWeight: 600 }}>{heartsText}</span>
           </span>
         </div>

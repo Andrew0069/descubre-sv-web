@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
@@ -9,18 +9,6 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        // Supabase ya procesó el token del link
-      }
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [])
 
   const handleReset = async () => {
     setError('')

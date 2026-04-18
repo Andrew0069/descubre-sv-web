@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { LugarImagePlaceholder } from '../components/LugarCard'
 import { getGradiente } from '../lib/categoriaVisual'
 import { useIdioma } from '../lib/idiomaContext'
+import LoginModal from '../components/LoginModal'
 
 function formatRelativeEs(dateString) {
   if (!dateString) return ''
@@ -29,12 +30,6 @@ function formatRelativeEs(dateString) {
   return rtf.format(-diffYear, 'year')
 }
 
-function getEntradaDisplay(lugar, gratisLabel) {
-  const n = (lugar.nombre || '').toLowerCase()
-  if (n.includes('joya') || n.includes('cerén') || n.includes('ceren')) return '$5'
-  if (n.includes('imposible') || n.includes('volcán') || n.includes('volcan')) return '$3'
-  return gratisLabel
-}
 
 function HeartIcon({ filled = false, size = 16 }) {
   return (
@@ -89,7 +84,6 @@ export default function DetalleLugar() {
     resenas2: idioma === 'en' ? 'reviews' : 'reseñas',
     anonimo: idioma === 'en' ? 'Anonymous' : 'Anónimo',
     sinDesc: idioma === 'en' ? 'No description available.' : 'Sin descripción disponible.',
-    entrada: idioma === 'en' ? 'Free' : 'Gratis',
     proximamente: idioma === 'en' ? 'Sign in to write a review' : 'Iniciá sesión para escribir una reseña',
     modalTitulo: idioma === 'en' ? 'Write a review' : 'Escribir reseña',
     modalPlaceholder: idioma === 'en' ? 'Tell us about your experience...' : 'Contá tu experiencia en este lugar...',
@@ -127,9 +121,11 @@ export default function DetalleLugar() {
   const [imageError, setImageError] = useState(false)
   const [imagenes, setImagenes] = useState([])
   const [carouselIndex, setCarouselIndex] = useState(0)
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [loginMensaje, setLoginMensaje] = useState('')
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    window.scrollTo({ top: 0, behavior: 'instant' })
   }, [])
 
   useEffect(() => {
@@ -144,10 +140,10 @@ export default function DetalleLugar() {
     }
     initSession()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession)
     })
-    return () => subscription.unsubscribe()
+    return () => data?.subscription?.unsubscribe()
   }, [])
 
   const load = useCallback(async () => {
@@ -270,11 +266,19 @@ export default function DetalleLugar() {
     setCarouselIndex(0)
   }, [id])
 
+  useEffect(() => {
+    setCarouselIndex((prev) => {
+      const max = Math.max(0, imagenes.length - 1)
+      return prev > max ? 0 : prev
+    })
+  }, [imagenes])
+
   const handleToggleLike = useCallback(async () => {
     // Always fetch a fresh session — React state can be null on first render
     const { data: { session: activeSession } } = await supabase.auth.getSession()
     if (!activeSession?.user) {
-      setToast('Inicia sesión para guardar tus lugares favoritos')
+      setLoginMensaje('Guardá tus lugares favoritos y llevá El Salvador en el bolsillo.')
+      setShowLoginModal(true)
       return
     }
     const uid = activeSession.user.id
@@ -340,7 +344,8 @@ export default function DetalleLugar() {
     async (valor) => {
       const { data: { session: activeSession } } = await supabase.auth.getSession()
       if (!activeSession?.user) {
-        setToast('Inicia sesión para calificar este lugar')
+        setLoginMensaje('Iniciá sesión para calificar este lugar.')
+        setShowLoginModal(true)
         return
       }
       const uid = activeSession.user.id
@@ -421,21 +426,37 @@ export default function DetalleLugar() {
     const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
     const MAX_SIZE_MB = 5
     const files = Array.from(e.target.files)
-    for (const file of files) {
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        setResenaError('Solo se permiten imágenes en formato JPG, PNG, WEBP o GIF.')
-        return
-      }
-      if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-        setResenaError(`Cada imagen no puede superar ${MAX_SIZE_MB}MB.`)
-        return
-      }
+    setResenaError('')
+
+    const invalidType = files.find((f) => !ALLOWED_TYPES.includes(f.type))
+    if (invalidType) {
+      setResenaError('Solo se permiten imágenes en formato JPG, PNG, WEBP o GIF.')
+      e.target.value = ''
+      return
     }
+    const oversize = files.find((f) => f.size > MAX_SIZE_MB * 1024 * 1024)
+    if (oversize) {
+      setResenaError(`Cada imagen no puede superar ${MAX_SIZE_MB}MB.`)
+      e.target.value = ''
+      return
+    }
+
     const disponibles = 3 - resenaFotos.length
     const nuevas = files.slice(0, disponibles)
     setResenaFotos(prev => [...prev, ...nuevas])
     const previews = nuevas.map(f => URL.createObjectURL(f))
     setResenaPreview(prev => [...prev, ...previews])
+    e.target.value = ''
+  }
+
+  const extensionSegura = (file) => {
+    const mimeMap = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+      'image/gif': 'gif',
+    }
+    return mimeMap[file.type] ?? 'jpg'
   }
 
   const quitarFoto = (i) => {
@@ -454,7 +475,7 @@ export default function DetalleLugar() {
     // Subir fotos
     const urlsFotos = []
     for (const foto of resenaFotos) {
-      const ext = foto.name.split('.').pop()
+      const ext = extensionSegura(foto)
       const path = `${id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
       const { error: uploadError } = await supabase.storage
         .from('resenas-fotos')
@@ -539,7 +560,7 @@ export default function DetalleLugar() {
   const dep = lugar.departamentos
   const img = lugar.imagen_principal?.trim()
   const totalResenas = resenas.length
-  const entrada = getEntradaDisplay(lugar, t.entrada)
+  const entrada = lugar.precio_entrada ?? null
   const urlsDesdeTabla = (imagenes ?? []).map((i) => i.ruta_imagen).filter(Boolean)
   const fotosCarousel = urlsDesdeTabla.length > 0
     ? urlsDesdeTabla
@@ -683,6 +704,7 @@ export default function DetalleLugar() {
             key={fotoActual}
             src={fotoActual}
             alt=""
+            decoding="async"
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'opacity 0.3s ease' }}
             onError={() => setImageError(true)}
           />
@@ -839,10 +861,14 @@ export default function DetalleLugar() {
             <span style={{ margin: '0 14px', color: '#d1d5db' }}>|</span>
           </>
         )}
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}>
-          🎫 {entrada}
-        </span>
-        <span style={{ margin: '0 14px', color: '#d1d5db' }}>|</span>
+        {entrada != null && (
+          <>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}>
+              🎫 {entrada}
+            </span>
+            <span style={{ margin: '0 14px', color: '#d1d5db' }}>|</span>
+          </>
+        )}
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', color: '#ef4444' }}>
           <span aria-hidden>♥</span>
           <span style={{ fontWeight: 600, color: '#4b5563' }}>
@@ -975,7 +1001,14 @@ export default function DetalleLugar() {
               </h2>
               <button
                 type="button"
-                onClick={() => session ? setModalOpen(true) : setToast(t.proximamente)}
+                onClick={() => {
+                  if (session) {
+                    setModalOpen(true)
+                  } else {
+                    setLoginMensaje('Iniciá sesión para compartir tu experiencia en este lugar.')
+                    setShowLoginModal(true)
+                  }
+                }}
                 style={{
                   backgroundColor: '#0EA5E9',
                   color: '#ffffff',
@@ -1058,6 +1091,8 @@ export default function DetalleLugar() {
                               key={i}
                               src={url}
                               alt=""
+                              loading="lazy"
+                              decoding="async"
                               style={{
                                 height: '140px',
                                 width: 'auto',
@@ -1099,6 +1134,12 @@ export default function DetalleLugar() {
           </div>
         </div>
       </div>
+      {showLoginModal && (
+        <LoginModal
+          mensaje={loginMensaje}
+          onClose={() => setShowLoginModal(false)}
+        />
+      )}
     </div>
   )
 }

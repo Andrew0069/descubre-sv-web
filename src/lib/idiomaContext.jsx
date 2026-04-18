@@ -17,5 +17,9 @@ export function IdiomaProvider({ children }) {
 }
 
 export function useIdioma() {
-  return useContext(IdiomaContext)
+  const ctx = useContext(IdiomaContext)
+  if (!ctx) {
+    throw new Error('useIdioma must be used within an IdiomaProvider')
+  }
+  return ctx
 }

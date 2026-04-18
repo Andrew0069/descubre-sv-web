@@ -72,7 +72,6 @@ export default function Home() {
   const [categoriaId, setCategoriaId] = useState(null)
   const [searchInput, setSearchInput] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [categoriasTraducidas, setCategoriasTraducidas] = useState([])
   const [menuOpen, setMenuOpen] = useState(false)
   const [toast, setToast] = useState(null)
   const [user, setUser] = useState(null)
@@ -199,11 +198,8 @@ export default function Home() {
       if (!cancelled) {
         if (err) {
           setCategorias([])
-          setCategoriasTraducidas([])
         } else {
-          const ordenadas = ordenarCategorias(data ?? [])
-          setCategorias(ordenadas)
-          setCategoriasTraducidas(ordenadas)
+          setCategorias(ordenarCategorias(data ?? []))
         }
       }
     })()
@@ -261,7 +257,7 @@ export default function Home() {
           break
       }
     },
-    [scrollToLugares, showToast, navigate, idioma],
+    [scrollToLugares, showToast, navigate, t.guiasProx, t.privacidadProx, t.terminosProx, t.contactoProx],
   )
 
   return (
@@ -565,11 +561,11 @@ export default function Home() {
               active={categoriaId === null}
               onClick={() => setCategoriaId(null)}
             />
-            {(idioma === 'en' ? categoriasTraducidas : categorias).map((c, i) => (
+            {categorias.map((c) => (
               <CatButton
                 key={c.id}
                 label={c.nombre}
-                svgNombre={categorias[i]?.nombre}
+                svgNombre={c.nombre}
                 active={categoriaId === c.id}
                 onClick={() => setCategoriaId(c.id)}
               />

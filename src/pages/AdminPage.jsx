@@ -61,9 +61,24 @@ export default function AdminPage() {
   const handleSubirFoto = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
+
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    const MAX_SIZE_MB = 5
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      showToast('Formato no válido. Usá JPG, PNG, WEBP o GIF.')
+      if (fileRef.current) fileRef.current.value = ''
+      return
+    }
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      showToast(`La imagen no puede superar ${MAX_SIZE_MB}MB.`)
+      if (fileRef.current) fileRef.current.value = ''
+      return
+    }
+
     setUploading(true)
 
-    const ext = file.name.split('.').pop()
+    const mimeMap = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' }
+    const ext = mimeMap[file.type] ?? 'jpg'
     const path = `${lugarSeleccionado.id}/${Date.now()}.${ext}`
 
     const { error: uploadError } = await supabase.storage
@@ -108,12 +123,14 @@ export default function AdminPage() {
   }
 
   const handleEliminarFoto = async (imagen) => {
-    // Extraer path del bucket desde la URL pública
-    const url = imagen.ruta_imagen
+    const url = imagen.ruta_imagen ?? ''
     const bucketPrefix = '/object/public/lugares-fotos/'
-    const path = url.substring(url.indexOf(bucketPrefix) + bucketPrefix.length)
+    const idx = url.indexOf(bucketPrefix)
 
-    await supabase.storage.from('lugares-fotos').remove([path])
+    if (idx !== -1) {
+      const path = url.substring(idx + bucketPrefix.length)
+      await supabase.storage.from('lugares-fotos').remove([path])
+    }
     await supabase.from('imagenes_lugar').delete().eq('id', imagen.id)
     showToast('Foto eliminada')
     cargarImagenes(lugarSeleccionado.id)

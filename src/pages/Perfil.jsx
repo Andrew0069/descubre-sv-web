@@ -17,10 +17,13 @@ export default function Perfil() {
   const [success, setSuccess] = useState('')
 
   useEffect(() => {
+    let cancelled = false
     supabase.auth.getSession().then(({ data }) => {
+      if (cancelled) return
       if (!data.session) { navigate('/login'); return }
       setSession(data.session)
     })
+    return () => { cancelled = true }
   }, [navigate])
 
   useEffect(() => {
@@ -77,7 +80,8 @@ export default function Perfil() {
     let nuevaFotoUrl = avatarUrl
 
     if (avatarFile) {
-      const ext = avatarFile.name.split('.').pop()
+      const mimeMap = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' }
+      const ext = mimeMap[avatarFile.type] ?? 'jpg'
       const path = `${session.user.id}/avatar.${ext}`
       const { error: uploadError } = await supabase.storage
         .from('avatares')
