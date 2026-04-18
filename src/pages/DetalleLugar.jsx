@@ -123,7 +123,13 @@ export default function DetalleLugar() {
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const fotosRef = useRef([])
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [respuestaAbierta, setRespuestaAbierta] = useState(null) // resena_id activo
+  const [respuestaTexto, setRespuestaTexto] = useState('')
+  const [respuestaLoading, setRespuestaLoading] = useState(false)
+  const [respuestas, setRespuestas] = useState({}) // { [resena_id]: [...] }
   const [loginMensaje, setLoginMensaje] = useState('')
+  const [esFavorito, setEsFavorito] = useState(false)
+  const [favoritosCount, setFavoritosCount] = useState(0)
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' })
@@ -249,8 +255,62 @@ export default function DetalleLugar() {
 
     setImagenes(imagenesRows ?? [])
     setResenas(resenasRows ?? [])
+
+    const idsResenas = (resenasRows ?? []).map((r) => r.id)
+    if (idsResenas.length > 0) {
+      const { data: respData } = await supabase
+        .from('respuestas_resena')
+        .select('*, usuarios(nombre)')
+        .in('resena_id', idsResenas)
+        .order('created_at', { ascending: true })
+      const rmap = {}
+      for (const rr of respData ?? []) {
+        if (!rmap[rr.resena_id]) rmap[rr.resena_id] = []
+        rmap[rr.resena_id].push(rr)
+      }
+      setRespuestas(rmap)
+    }
+
+    // --- Favoritos: check user status + total count ---
+    if (sess) {
+      const { data: usuarioData } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('auth_id', sess.user.id)
+        .single()
+      if (usuarioData) {
+        const { data: favData } = await supabase
+          .from('favoritos')
+          .select('id')
+          .eq('lugar_id', id)
+          .eq('usuario_id', usuarioData.id)
+          .maybeSingle()
+        setEsFavorito(!!favData)
+      }
+    }
+    const { count: favCount } = await supabase
+      .from('favoritos')
+      .select('*', { count: 'exact', head: true })
+      .eq('lugar_id', id)
+    setFavoritosCount(favCount || 0)
+
     setLoading(false)
   }, [id])
+
+  const cargarRespuestas = useCallback(async (resenaIds) => {
+    if (!resenaIds.length) return
+    const { data } = await supabase
+      .from('respuestas_resena')
+      .select('*, usuarios(nombre)')
+      .in('resena_id', resenaIds)
+      .order('created_at', { ascending: true })
+    const map = {}
+    for (const r of data ?? []) {
+      if (!map[r.resena_id]) map[r.resena_id] = []
+      map[r.resena_id].push(r)
+    }
+    setRespuestas(map)
+  }, [])
 
   useEffect(() => {
     load()
@@ -309,6 +369,38 @@ export default function DetalleLugar() {
       }
     }
   }, [userLiked, id])
+
+  const handleToggleFavorito = useCallback(async () => {
+    const { data: { session: activeSession } } = await supabase.auth.getSession()
+    if (!activeSession) {
+      setLoginMensaje('Guardá tus lugares favoritos y llevá El Salvador en el bolsillo.')
+      setShowLoginModal(true)
+      return
+    }
+    const { data: usuarioData } = await supabase
+      .from('usuarios')
+      .select('id')
+      .eq('auth_id', activeSession.user.id)
+      .single()
+    if (!usuarioData) return
+    const usuarioId = usuarioData.id
+
+    if (esFavorito) {
+      await supabase
+        .from('favoritos')
+        .delete()
+        .eq('lugar_id', id)
+        .eq('usuario_id', usuarioId)
+      setEsFavorito(false)
+      setFavoritosCount((prev) => Math.max(0, prev - 1))
+    } else {
+      await supabase
+        .from('favoritos')
+        .insert({ lugar_id: id, usuario_id: usuarioId })
+      setEsFavorito(true)
+      setFavoritosCount((prev) => prev + 1)
+    }
+  }, [esFavorito, id])
 
   const refreshLugarRatings = useCallback(async () => {
     const { data: allRows } = await supabase
@@ -419,11 +511,85 @@ export default function DetalleLugar() {
             ...prev,
             [resenaId]: (prev[resenaId] ?? 0) + 1,
           }))
+          // Notificar al dueño (si es otro usuario)
+          const resena = resenas.find((r) => r.id === resenaId)
+          if (resena && resena.usuario_id) {
+            const { data: actorRow } = await supabase
+              .from('usuarios')
+              .select('id')
+              .eq('auth_id', session.user.id)
+              .maybeSingle()
+            if (actorRow && actorRow.id !== resena.usuario_id) {
+              const { error: notifError } = await supabase.from('notificaciones').insert({
+                usuario_id: resena.usuario_id,
+                tipo: 'like',
+                resena_id: resenaId,
+                actor_id: actorRow.id,
+              })
+              console.log('[notif insert]', notifError ?? 'OK')
+            }
+          }
         }
       }
     },
-    [session, userResenaLikes],
+    [session, userResenaLikes, resenas],
   )
+
+  const handleResponder = useCallback(async (resenaId, duenioResenaId) => {
+    if (!session?.user) {
+      setLoginMensaje('Iniciá sesión para responder reseñas.')
+      setShowLoginModal(true)
+      return
+    }
+    if (!respuestaTexto.trim() || respuestaTexto.trim().length < 5) return
+    setRespuestaLoading(true)
+
+    const { data: usuarioRow } = await supabase
+      .from('usuarios')
+      .select('id, nombre')
+      .eq('auth_id', session.user.id)
+      .maybeSingle()
+
+    if (!usuarioRow) { setRespuestaLoading(false); return }
+
+    const { error } = await supabase
+      .from('respuestas_resena')
+      .insert({
+        resena_id: resenaId,
+        usuario_id: usuarioRow.id,
+        contenido: respuestaTexto.trim(),
+      })
+
+    if (error) { setRespuestaLoading(false); return }
+
+    // Notificar al dueño de la reseña (solo si es otro usuario)
+    if (duenioResenaId && duenioResenaId !== usuarioRow.id) {
+      const { error: notifError } = await supabase.from('notificaciones').insert({
+        usuario_id: duenioResenaId,
+        tipo: 'respuesta',
+        resena_id: resenaId,
+        actor_id: usuarioRow.id,
+      })
+      console.log('[notif insert]', notifError ?? 'OK')
+    }
+
+    // Actualizar respuestas localmente
+    const nuevaRespuesta = {
+      id: crypto.randomUUID(),
+      resena_id: resenaId,
+      usuario_id: usuarioRow.id,
+      contenido: respuestaTexto.trim(),
+      created_at: new Date().toISOString(),
+      usuarios: { nombre: usuarioRow.nombre ?? 'Tú' },
+    }
+    setRespuestas((prev) => ({
+      ...prev,
+      [resenaId]: [...(prev[resenaId] ?? []), nuevaRespuesta],
+    }))
+    setRespuestaTexto('')
+    setRespuestaAbierta(null)
+    setRespuestaLoading(false)
+  }, [session, respuestaTexto])
 
   const handleFotos = (e) => {
     const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -504,6 +670,7 @@ export default function DetalleLugar() {
     const { error: insertError } = await supabase.from('resenas').insert({
       lugar_id: id,
       usuario_id: usuarioRow.id,
+      titulo: resenaTexto.trim().slice(0, 60),
       contenido: resenaTexto.trim(),
       estrellas: userRating ?? 5,
       fotos: urlsFotos,
@@ -1040,7 +1207,7 @@ export default function DetalleLugar() {
         <span style={{ margin: '0 14px', color: '#d1d5db' }}>|</span>
         <button
           type="button"
-          onClick={handleToggleLike}
+          onClick={handleToggleFavorito}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -1054,8 +1221,8 @@ export default function DetalleLugar() {
             font: 'inherit',
           }}
         >
-          <HeartIcon filled={userLiked} size={15} />
-          <span style={{ fontWeight: 600 }}>{likesCount}</span>
+          <HeartIcon filled={esFavorito} size={15} />
+          <span style={{ fontWeight: 600 }}>{favoritosCount}</span>
         </button>
         <span style={{ margin: '0 14px', color: '#d1d5db' }}>|</span>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}>
@@ -1288,6 +1455,88 @@ export default function DetalleLugar() {
                         <HeartIcon filled={rUserLiked} size={14} />
                         <span style={{ fontSize: '0.78rem', fontWeight: 600 }}>{rLikeCount}</span>
                       </button>
+
+                      {/* Respuestas */}
+                      {(respuestas[r.id] ?? []).map((rep) => (
+                        <div key={rep.id} style={{
+                          marginTop: '10px',
+                          marginLeft: '20px',
+                          padding: '10px 14px',
+                          borderLeft: '2px solid #e5e7eb',
+                          borderRadius: '0 8px 8px 0',
+                          backgroundColor: '#f3f4f6',
+                        }}>
+                          <p style={{ fontSize: '0.78rem', fontWeight: 600, color: '#374151', margin: '0 0 4px' }}>
+                            {rep.usuarios?.nombre ?? 'Anónimo'}
+                            <span style={{ fontWeight: 400, color: '#9ca3af', marginLeft: '6px' }}>
+                              {formatRelativeEs(rep.created_at)}
+                            </span>
+                          </p>
+                          <p style={{ fontSize: '0.85rem', color: '#4b5563', margin: 0 }}>
+                            {rep.contenido}
+                          </p>
+                        </div>
+                      ))}
+
+                      {/* Botón responder */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRespuestaAbierta(respuestaAbierta === r.id ? null : r.id)
+                          setRespuestaTexto('')
+                        }}
+                        style={{
+                          marginTop: '8px',
+                          background: 'none',
+                          border: 'none',
+                          fontSize: '0.78rem',
+                          color: '#6b7280',
+                          cursor: 'pointer',
+                          padding: '2px 0',
+                        }}
+                      >
+                        💬 Responder
+                      </button>
+
+                      {respuestaAbierta === r.id && (
+                        <div style={{ marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                          <textarea
+                            value={respuestaTexto}
+                            onChange={(e) => setRespuestaTexto(e.target.value.slice(0, 300))}
+                            placeholder="Escribí tu respuesta..."
+                            rows={2}
+                            style={{
+                              flex: 1,
+                              padding: '8px 12px',
+                              borderRadius: '8px',
+                              border: '1.5px solid #e5e7eb',
+                              fontSize: '0.85rem',
+                              resize: 'none',
+                              fontFamily: 'inherit',
+                              outline: 'none',
+                            }}
+                          />
+                          <button
+                            type="button"
+                            disabled={respuestaLoading || respuestaTexto.trim().length < 5}
+                            onClick={() => handleResponder(r.id, r.usuario_id)}
+                            style={{
+                              backgroundColor: '#0EA5E9',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '8px',
+                              padding: '8px 14px',
+                              fontSize: '0.82rem',
+                              fontWeight: 600,
+                              cursor: respuestaLoading || respuestaTexto.trim().length < 5 ? 'not-allowed' : 'pointer',
+                              opacity: respuestaLoading || respuestaTexto.trim().length < 5 ? 0.6 : 1,
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {respuestaLoading ? '…' : 'Enviar'}
+                          </button>
+                        </div>
+                      )}
                     </li>
                   )
                 })}

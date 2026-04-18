@@ -5,6 +5,16 @@ import { useIdioma } from '../lib/idiomaContext'
 import { ordenarCategorias } from '../lib/categoriaVisual'
 import { CategoriaIconSvg } from '../components/CategoriaChip'
 import LugarCard from '../components/LugarCard'
+import { useNotificaciones } from '../lib/useNotificaciones'
+
+function formatRelativeNotif(dateString) {
+  if (!dateString) return ''
+  const diff = Math.round((Date.now() - new Date(dateString).getTime()) / 60000)
+  if (diff < 1) return 'hace un momento'
+  if (diff < 60) return `hace ${diff} min`
+  if (diff < 1440) return `hace ${Math.round(diff / 60)}h`
+  return `hace ${Math.round(diff / 1440)}d`
+}
 
 const HERO_OVERLAY =
   'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.30) 60%, rgba(0,0,0,0.45) 100%)'
@@ -76,6 +86,8 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [toast, setToast] = useState(null)
   const [user, setUser] = useState(null)
+  const [campanaOpen, setCampanaOpen] = useState(false)
+  const { noLeidas, notificaciones, marcarTodasLeidas } = useNotificaciones(user)
   const { idioma } = useIdioma()
   const navigate = useNavigate()
 
@@ -139,13 +151,22 @@ export default function Home() {
     return () => clearTimeout(timer)
   }, [searchInput])
 
+  useEffect(() => {
+    if (!campanaOpen) return
+    const handler = (e) => {
+      if (!e.target.closest('[data-campana]')) setCampanaOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [campanaOpen])
+
   const loadLugares = useCallback(async () => {
     setLoading(true)
     setError(null)
 
     let lugaresQuery = supabase
       .from('lugares')
-      .select('id, nombre, categoria_id, subtipo, destacado, imagen_principal, precio_entrada, updated_at, categorias(nombre), departamentos(nombre), imagenes_lugar(ruta_imagen)')
+      .select('id, nombre, categoria_id, subtipo, destacado, imagen_principal, precio_entrada, updated_at, categorias(nombre), departamentos(nombre), imagenes_lugar(ruta_imagen), favoritos(count)')
 
     const { data, error: err } = await lugaresQuery
       .order('destacado', { ascending: false, nullsFirst: false })
@@ -268,7 +289,7 @@ export default function Home() {
         top: 0,
         zIndex: 50,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', position: 'relative', width: '100%' }}>
           <Link to="/" style={{ fontSize: '1.1rem', fontWeight: '700', color: '#111827', letterSpacing: '-0.02em', textDecoration: 'none' }}>
             Descubre<span style={{ color: '#0EA5E9' }}>SV</span>
           </Link>
@@ -294,6 +315,119 @@ export default function Home() {
             <span style={{ width: '20px', height: '1.5px', backgroundColor: '#374151', borderRadius: '2px', display: 'block', transition: 'all 0.2s' }} />
             <span style={{ width: '20px', height: '1.5px', backgroundColor: '#374151', borderRadius: '2px', display: 'block', transition: 'all 0.2s' }} />
           </button>
+
+          {user && (
+            <div style={{ position: 'relative', marginLeft: 'auto' }} data-campana>
+              <button
+                type="button"
+                onClick={() => {
+                  setCampanaOpen((prev) => !prev)
+                  if (!campanaOpen) marcarTodasLeidas()
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '6px',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative',
+                }}
+                aria-label="Notificaciones"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="#374151" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                {noLeidas > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '2px',
+                    right: '2px',
+                    backgroundColor: '#ef4444',
+                    color: '#fff',
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    borderRadius: '50%',
+                    width: '16px',
+                    height: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    lineHeight: 1,
+                  }}>
+                    {noLeidas > 9 ? '9+' : noLeidas}
+                  </span>
+                )}
+              </button>
+
+              {campanaOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '44px',
+                  right: '0',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '12px',
+                  boxShadow: '0 8px 30px rgba(0,0,0,0.1)',
+                  width: '300px',
+                  zIndex: 100,
+                  overflow: 'hidden',
+                }}>
+                  <div style={{
+                    padding: '12px 16px',
+                    borderBottom: '1px solid #f3f4f6',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    color: '#111827',
+                  }}>
+                    Notificaciones
+                  </div>
+
+                  {notificaciones.length === 0 ? (
+                    <div style={{ padding: '24px 16px', textAlign: 'center', color: '#9ca3af', fontSize: '0.85rem' }}>
+                      Sin notificaciones
+                    </div>
+                  ) : (
+                    <ul style={{ listStyle: 'none', margin: 0, padding: 0, maxHeight: '320px', overflowY: 'auto' }}>
+                      {notificaciones.map((n) => (
+                        <li
+                          key={n.id}
+                          onClick={() => {
+                            if (n.resena?.lugar_id) {
+                              setCampanaOpen(false)
+                              navigate(`/lugar/${n.resena.lugar_id}`)
+                            }
+                          }}
+                          style={{
+                            padding: '12px 16px',
+                            borderBottom: '1px solid #f9fafb',
+                            backgroundColor: n.leida ? '#ffffff' : 'rgba(14,165,233,0.05)',
+                            fontSize: '0.82rem',
+                            color: '#374151',
+                            lineHeight: 1.5,
+                            cursor: n.resena?.lugar_id ? 'pointer' : 'default',
+                          }}
+                          onMouseEnter={(e) => { if (n.resena?.lugar_id) e.currentTarget.style.backgroundColor = '#f9fafb' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = n.leida ? '#ffffff' : 'rgba(14,165,233,0.05)' }}
+                        >
+                          {n.tipo === 'respuesta'
+                            ? `💬 ${n.actor?.nombre ?? 'Alguien'} respondió tu reseña`
+                            : `❤️ ${n.actor?.nombre ?? 'Alguien'} dio like a tu reseña`}
+                          <div style={{ fontSize: '0.72rem', color: '#9ca3af', marginTop: '2px' }}>
+                            {formatRelativeNotif(n.created_at)}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {menuOpen && (
             <div style={{
@@ -341,6 +475,31 @@ export default function Home() {
               <div style={{ height: '1px', backgroundColor: '#f3f4f6', margin: '0.4rem 0.5rem' }} />
               {user ? (
                 <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      navigate('/favoritos')
+                    }}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '0.65rem 1rem',
+                      fontSize: '0.9rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.07)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                  >
+                    ♥ Mis Favoritos
+                  </button>
                   <button
                     type="button"
                     onClick={() => {
@@ -655,7 +814,7 @@ export default function Home() {
               </p>
             </div>
 
-{categoriaId === 'c0000000-0000-0000-0000-000000000009' && (
+            {categoriaId === 'c0000000-0000-0000-0000-000000000009' && (
               <div style={{
                 display: 'flex',
                 gap: '0',

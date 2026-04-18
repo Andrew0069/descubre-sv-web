@@ -35,8 +35,7 @@ export default function LugarCard({ lugar, isFeatured }) {
   const imagenRelacionada = lugar.imagenes_lugar?.find((foto) => foto?.ruta_imagen?.trim())?.ruta_imagen
   const img = resolveImageUrl(imagenPrincipal || imagenRelacionada, 'lugares-fotos')
   const showImage = Boolean(img) && !imageError
-  const hearts = Number(lugar.promedio_estrellas) || 0
-  const heartsText = Number.isInteger(hearts) ? String(hearts) : hearts.toFixed(1)
+  const favoritosCount = lugar.favoritos?.[0]?.count ?? 0
   const precio = lugar.precio_entrada ?? null
   const catBg = cat ? getGradiente(cat.nombre) : TROPICAL_GRADIENT
 
@@ -199,7 +198,7 @@ export default function LugarCard({ lugar, isFeatured }) {
             </span>
           )}
           <span style={{ fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#ef4444', marginLeft: 'auto' }}>
-            ❤️ <span style={{ fontWeight: 600 }}>{heartsText}</span>
+            ❤️ <span style={{ fontWeight: 600 }}>{favoritosCount}</span>
           </span>
         </div>
       </Link>
