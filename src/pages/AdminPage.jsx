@@ -244,8 +244,35 @@ export default function AdminPage() {
       await supabase.storage.from('lugares-fotos').remove([path])
     }
     await supabase.from('imagenes_lugar').delete().eq('id', imagen.id)
+
+    // Si eliminas la portada, limpiarla
+    if (imagen.ruta_imagen === lugarSeleccionado.imagen_principal) {
+      await supabase.from('lugares').update({ imagen_principal: null }).eq('id', lugarSeleccionado.id)
+      setLugarSeleccionado((prev) => ({ ...prev, imagen_principal: null }))
+    }
+
     showToast('Foto eliminada')
     cargarImagenes(lugarSeleccionado.id)
+  }
+
+  const handleSetPortada = async (imagen) => {
+    const { error } = await supabase
+      .from('lugares')
+      .update({ imagen_principal: imagen.ruta_imagen })
+      .eq('id', lugarSeleccionado.id)
+
+    if (error) {
+      showToast('Error al actualizar portada')
+      return
+    }
+
+    setLugarSeleccionado((prev) => ({ ...prev, imagen_principal: imagen.ruta_imagen }))
+    setLugares((prev) =>
+      prev.map((l) =>
+        l.id === lugarSeleccionado.id ? { ...l, imagen_principal: imagen.ruta_imagen } : l
+      )
+    )
+    showToast('✓ Foto de portada actualizada')
   }
 
   if (checking) {
@@ -368,28 +395,61 @@ export default function AdminPage() {
                   </div>
                 ) : (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '1rem' }}>
-                    {imagenes.map((img) => (
-                      <div key={img.id} style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '4/3' }}>
-                        <img
-                          src={resolveImageUrl(img.ruta_imagen, 'lugares-fotos')}
-                          alt=""
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleEliminarFoto(img)}
-                          style={{
-                            position: 'absolute', top: '8px', right: '8px',
-                            backgroundColor: 'rgba(239,68,68,0.9)', color: '#fff',
-                            border: 'none', borderRadius: '50%', width: '28px', height: '28px',
-                            cursor: 'pointer', display: 'flex', alignItems: 'center',
-                            justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700,
-                          }}
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))}
+                    {imagenes.map((img) => {
+                      const esPortada = img.ruta_imagen === lugarSeleccionado.imagen_principal
+                      return (
+                        <div key={img.id} style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '4/3' }}>
+                          <img
+                            src={resolveImageUrl(img.ruta_imagen, 'lugares-fotos')}
+                            alt=""
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+
+                          {/* Indicador de portada actual */}
+                          {esPortada && (
+                            <div style={{
+                              position: 'absolute', bottom: '8px', left: '8px',
+                              backgroundColor: 'rgba(16,185,129,0.92)', color: '#fff',
+                              fontSize: '0.7rem', fontWeight: 700, padding: '3px 8px',
+                              borderRadius: '20px', pointerEvents: 'none',
+                            }}>
+                              ★ Portada
+                            </div>
+                          )}
+
+                          {/* Botón set portada */}
+                          {!esPortada && (
+                            <button
+                              type="button"
+                              onClick={() => handleSetPortada(img)}
+                              style={{
+                                position: 'absolute', bottom: '8px', left: '8px',
+                                backgroundColor: 'rgba(0,0,0,0.55)', color: '#fff',
+                                border: 'none', borderRadius: '20px', padding: '3px 8px',
+                                fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer',
+                              }}
+                            >
+                              ★ Usar portada
+                            </button>
+                          )}
+
+                          {/* Botón eliminar */}
+                          <button
+                            type="button"
+                            onClick={() => handleEliminarFoto(img)}
+                            style={{
+                              position: 'absolute', top: '8px', right: '8px',
+                              backgroundColor: 'rgba(239,68,68,0.9)', color: '#fff',
+                              border: 'none', borderRadius: '50%', width: '28px', height: '28px',
+                              cursor: 'pointer', display: 'flex', alignItems: 'center',
+                              justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700,
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
               </>

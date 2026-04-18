@@ -97,8 +97,8 @@ export default function Home() {
     menuAcceder: idioma === 'en' ? 'Sign in' : 'Acceder',
     menuCerrar: idioma === 'en' ? 'Sign out' : 'Cerrar sesión',
     menuPerfil: idioma === 'en' ? 'My profile' : '👤 Mi perfil',
-    footerTagline: idioma === 'en' ? 'El Salvador, from a curated perspective.' : 'El Salvador, desde una mirada curada.',
-    footerCopy: idioma === 'en' ? '© 2026 DescubreSV · Made in El Salvador 🇸🇻' : '© 2026 DescubreSV · Hecho en El Salvador 🇸🇻',
+    footerTagline: idioma === 'en' ? 'What tourists don\'t see. Yet.' : 'Lo que los turistas no ven. Todavía.',
+    footerCopy: idioma === 'en' ? '© 2026 DescubreSV · Your local guide, always.' : '© 2026 DescubreSV · Tu guía local, siempre.',
     menuPrivacidad: idioma === 'en' ? 'Privacy' : 'Privacidad',
     menuTerminos: idioma === 'en' ? 'Terms' : 'Términos',
     menuContacto: idioma === 'en' ? 'Contact' : 'Contacto',
@@ -231,9 +231,6 @@ export default function Home() {
           break
         case 'Términos':
           showToast(t.terminosProx)
-          break
-        case 'Contacto':
-          showToast(t.contactoProx)
           break
         default:
           break
@@ -797,7 +794,6 @@ export default function Home() {
                 { key: 'Sugerir lugar', label: t.menuAgregar },
                 { key: 'Privacidad', label: t.menuPrivacidad },
                 { key: 'Términos', label: t.menuTerminos },
-                { key: 'Contacto', label: t.menuContacto },
               ].map(({ key, label }) => (
                 <button
                   key={key}
