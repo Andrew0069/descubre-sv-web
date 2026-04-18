@@ -643,16 +643,31 @@ export default function Home() {
             </div>
 
 {categoriaId === 'c0000000-0000-0000-0000-000000000009' && (
-              <div className="mb-6 flex gap-2 overflow-x-auto pb-2 pt-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:-none] [scrollbar-width:none]">
+              <div style={{
+                display: 'flex',
+                gap: '0',
+                borderBottom: '1px solid #e5e7eb',
+                marginBottom: '1.5rem',
+                marginTop: '0.5rem',
+              }}>
                 {['Todos', 'Hotel', 'Hostal', 'Airbnb'].map((sub) => (
                   <button
                     key={sub}
                     type="button"
                     onClick={() => setFiltroSubtipo(sub)}
-                    className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${filtroSubtipo === sub
-                      ? 'bg-sky-500 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
+                    style={{
+                      padding: '0.6rem 1.25rem',
+                      fontSize: '0.875rem',
+                      fontWeight: filtroSubtipo === sub ? '600' : '400',
+                      color: filtroSubtipo === sub ? '#111827' : '#6b7280',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      borderBottom: filtroSubtipo === sub ? '2px solid #111827' : '2px solid transparent',
+                      marginBottom: '-1px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      whiteSpace: 'nowrap',
+                    }}
                   >
                     {sub}
                   </button>
