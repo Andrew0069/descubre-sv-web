@@ -22,7 +22,7 @@ export function LugarImagePlaceholder({ categoriaNombre, iconSize = 36 }) {
   )
 }
 
-export default function LugarCard({ lugar }) {
+export default function LugarCard({ lugar, isFeatured }) {
   const [hovered, setHovered] = useState(false)
   const [heartHover, setHeartHover] = useState(false)
   const [imageError, setImageError] = useState(false)
@@ -36,6 +36,7 @@ export default function LugarCard({ lugar }) {
   const heartsText = Number.isInteger(hearts) ? String(hearts) : hearts.toFixed(1)
   const precio = lugar.precio_entrada ?? null
   const catBg = cat ? getGradiente(cat.nombre) : TROPICAL_GRADIENT
+  const cardHeight = isFeatured ? '340px' : '220px'
 
   useEffect(() => {
     setImageError(false)
@@ -53,21 +54,31 @@ export default function LugarCard({ lugar }) {
         transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
         transition: 'transform 0.25s ease, box-shadow 0.25s ease',
         cursor: 'pointer',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
       {/* Image */}
-      <div style={{ position: 'relative', height: '220px', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', height: cardHeight, flexShrink: 0, overflow: 'hidden' }}>
         <Link to={`/lugar/${lugar.id}`} style={{ display: 'block', width: '100%', height: '100%' }}>
           {showImage ? (
             <img
               src={img}
               alt=""
-              width={400}
-              height={220}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-              loading="lazy"
+              width={isFeatured ? 600 : 400}
+              height={isFeatured ? 340 : 220}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                display: 'block',
+                transform: hovered ? 'scale(1.05)' : 'scale(1)',
+                transition: 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+              }}
+              loading={isFeatured ? 'eager' : 'lazy'}
               decoding="async"
               onError={(e) => {
                 e.target.onerror = null;
@@ -76,32 +87,47 @@ export default function LugarCard({ lugar }) {
             />
           ) : (
             <div style={{ width: '100%', height: '100%', background: TROPICAL_GRADIENT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <CategoriaIconSvg nombre={cat?.nombre} active={false} onDark size={44} />
+              <CategoriaIconSvg nombre={cat?.nombre} active={false} onDark size={isFeatured ? 64 : 44} />
             </div>
           )}
         </Link>
 
-        {/* Category badge */}
-        {cat && (
-          <span style={{
-            position: 'absolute',
-            top: '12px',
-            left: '12px',
-            zIndex: 5,
-            display: 'inline-block',
-            padding: '4px 12px',
-            borderRadius: '20px',
-            fontSize: '0.7rem',
-            fontWeight: 600,
-            letterSpacing: '0.05em',
-            color: '#ffffff',
-            background: catBg,
-            backdropFilter: 'blur(4px)',
-            pointerEvents: 'none',
-          }}>
-            {cat.nombre}
-          </span>
-        )}
+        {/* Badges */}
+        <div style={{ position: 'absolute', top: '12px', left: '12px', zIndex: 5, display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+          {cat && (
+            <span style={{
+              display: 'inline-block',
+              padding: '4px 12px',
+              borderRadius: '20px',
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              letterSpacing: '0.05em',
+              color: '#ffffff',
+              background: catBg,
+              backdropFilter: 'blur(4px)',
+              pointerEvents: 'none',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            }}>
+              {cat.nombre}
+            </span>
+          )}
+          {lugar.destacado && (
+            <span style={{
+              display: 'inline-block',
+              padding: '4px 10px',
+              borderRadius: '20px',
+              fontSize: '0.7rem',
+              fontWeight: 700,
+              color: '#111827',
+              background: '#F5C842',
+              backdropFilter: 'blur(4px)',
+              pointerEvents: 'none',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            }}>
+              ⭐ Destacado
+            </span>
+          )}
+        </div>
 
         {/* Heart button */}
         <button

@@ -1,12 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import EditLugarForm from '../components/EditLugarForm'
 
 export default function AdminPage() {
   const navigate = useNavigate()
   const [checking, setChecking] = useState(true)
   const [lugares, setLugares] = useState([])
   const [lugarSeleccionado, setLugarSeleccionado] = useState(null)
+  const [formData, setFormData] = useState({
+    nombre: '',
+    descripcion: '',
+    precio_entrada: '',
+    subtipo: 'Hotel',
+    destacado: false,
+  })
   const [imagenes, setImagenes] = useState([])
   const [uploading, setUploading] = useState(false)
   const [toast, setToast] = useState(null)
@@ -38,7 +46,15 @@ export default function AdminPage() {
     if (checking) return
     supabase
       .from('lugares')
-      .select('id, nombre, imagen_principal')
+      .select(`
+        id,
+        nombre,
+        descripcion,
+        precio_entrada,
+        subtipo,
+        destacado,
+        imagen_principal
+      `)
       .order('nombre', { ascending: true })
       .then(({ data }) => setLugares(data ?? []))
   }, [checking])
@@ -47,7 +63,11 @@ export default function AdminPage() {
   const cargarImagenes = useCallback(async (lugarId) => {
     const { data } = await supabase
       .from('imagenes_lugar')
-      .select('*')
+      .select(`
+        id,
+        lugar_id,
+        ruta_imagen
+      `)
       .eq('lugar_id', lugarId)
       .order('id', { ascending: true })
     setImagenes(data ?? [])
@@ -56,6 +76,97 @@ export default function AdminPage() {
   const handleSeleccionarLugar = (lugar) => {
     setLugarSeleccionado(lugar)
     cargarImagenes(lugar.id)
+  }
+
+  useEffect(() => {
+    if (!lugarSeleccionado) {
+      setFormData({
+        nombre: '',
+        descripcion: '',
+        precio_entrada: '',
+        subtipo: 'Hotel',
+        destacado: false,
+      })
+      return
+    }
+
+    setFormData({
+      nombre: lugarSeleccionado.nombre ?? '',
+      descripcion: lugarSeleccionado.descripcion ?? '',
+      precio_entrada: lugarSeleccionado.precio_entrada ?? '',
+      subtipo: lugarSeleccionado.subtipo ?? 'Hotel',
+      destacado: lugarSeleccionado.destacado ?? false,
+    })
+  }, [lugarSeleccionado])
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleCancelarEdicion = () => {
+    if (!lugarSeleccionado) return
+    setFormData({
+      nombre: lugarSeleccionado.nombre ?? '',
+      descripcion: lugarSeleccionado.descripcion ?? '',
+      precio_entrada: lugarSeleccionado.precio_entrada ?? '',
+      subtipo: lugarSeleccionado.subtipo ?? 'Hotel',
+      destacado: lugarSeleccionado.destacado ?? false,
+    })
+  }
+
+  const handleToggleDestacado = () => {
+    setFormData((prev) => ({ ...prev, destacado: !prev.destacado }))
+  }
+
+  const handleUpdateLugar = async () => {
+    if (!lugarSeleccionado) return
+
+    if (!formData.nombre.trim()) {
+      alert('El nombre es obligatorio')
+      return
+    }
+
+    if ((formData.descripcion ?? '').trim().length < 20) {
+      alert('La descripción debe tener al menos 20 caracteres')
+      return
+    }
+
+    if (!formData.subtipo) {
+      alert('El subtipo es obligatorio')
+      return
+    }
+
+    const { error } = await supabase
+      .from('lugares')
+      .update({
+        nombre: formData.nombre,
+        descripcion: formData.descripcion,
+        precio_entrada: formData.precio_entrada,
+        subtipo: formData.subtipo,
+        destacado: formData.destacado,
+      })
+      .eq('id', lugarSeleccionado.id)
+
+    if (error) {
+      console.error(error)
+      alert('Error al actualizar')
+      return
+    }
+
+    const payload = {
+      nombre: formData.nombre,
+      descripcion: formData.descripcion,
+      precio_entrada: formData.precio_entrada,
+      subtipo: formData.subtipo,
+      destacado: formData.destacado,
+    }
+    const lugarActualizado = { ...lugarSeleccionado, ...payload }
+    setLugarSeleccionado(lugarActualizado)
+    setLugares((prev) => prev.map((lugar) => (
+      lugar.id === lugarSeleccionado.id ? { ...lugar, ...payload } : lugar
+    )))
+    alert('Lugar actualizado')
   }
 
   const handleSubirFoto = async (e) => {
@@ -240,6 +351,14 @@ export default function AdminPage() {
                     />
                   </label>
                 </div>
+
+                <EditLugarForm
+                  formData={formData}
+                  onChange={handleFormChange}
+                  onToggleDestacado={handleToggleDestacado}
+                  onSave={handleUpdateLugar}
+                  onCancel={handleCancelarEdicion}
+                />
 
                 {imagenes.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '3rem 1rem', border: '2px dashed #e5e7eb', borderRadius: '12px', color: '#9ca3af' }}>

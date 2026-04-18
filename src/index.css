@@ -22,6 +22,15 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Animacion sutil para listados */
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.35s ease-out forwards;
+}
+
 /* Hero glass search: placeholder legible sobre fondo oscuro */
 .hero-glass-input::placeholder {
   color: rgba(255, 255, 255, 0.55);

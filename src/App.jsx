@@ -27,7 +27,7 @@ function AnimatedRoutes() {
   return (
     <>
       <style>{`
-        @keyframes fadeInUp {
+        @keyframes fadeInUpToast {
           from { opacity: 0; transform: translateX(-50%) translateY(10px); }
           to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }

@@ -390,7 +390,8 @@ export default function DetalleLugar() {
   const handleToggleResenaLike = useCallback(
     async (resenaId) => {
       if (!session?.user) {
-        setToast('Inicia sesión para dar like')
+        setLoginMensaje('Iniciá sesión para dar like a reseñas.')
+        setShowLoginModal(true)
         return
       }
       const liked = !!userResenaLikes[resenaId]

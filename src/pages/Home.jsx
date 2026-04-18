@@ -70,6 +70,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [categoriaId, setCategoriaId] = useState(null)
+  const [filtroSubtipo, setFiltroSubtipo] = useState('Todos')
   const [searchInput, setSearchInput] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
@@ -142,14 +143,24 @@ export default function Home() {
     setLoading(true)
     setError(null)
 
+    let lugaresQuery = supabase
+      .from('lugares')
+      .select('id, nombre, categoria_id, subtipo, imagen_principal, precio_entrada, categorias(nombre), departamentos(nombre)')
+      .eq('destacado', true)
+
+    if (filtroSubtipo !== 'Todos') {
+      lugaresQuery = lugaresQuery.eq('subtipo', filtroSubtipo)
+    }
+
     const [
       { data, error: err },
       { data: likeRows },
     ] = await Promise.all([
-      supabase
-        .from('lugares')
-        .select('*, categorias(*), departamentos(*)')
-        .order('nombre', { ascending: true }),
+      lugaresQuery
+        .order('destacado', { ascending: false })
+        .order('likes', { ascending: false })
+        .order('updated_at', { ascending: false })
+        .limit(6),
       supabase
         .from('likes_lugar')
         .select('lugar_id, rating'),
@@ -182,7 +193,7 @@ export default function Home() {
 
     setLugares(withStats)
     setLoading(false)
-  }, [])
+  }, [filtroSubtipo])
 
   useEffect(() => {
     loadLugares()
@@ -221,6 +232,7 @@ export default function Home() {
   const handleVerTodos = (e) => {
     e.preventDefault()
     setCategoriaId(null)
+    setFiltroSubtipo('Todos')
     setSearchInput('')
     setDebouncedSearch('')
     scrollToLugares()
@@ -660,29 +672,54 @@ export default function Home() {
               </p>
             </div>
 
-            <div id="lugares">
+            <div className="mb-6 flex gap-2 overflow-x-auto pb-2 pt-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:-none] [scrollbar-width:none]">
+              {['Todos', 'Hotel', 'Hostal', 'Airbnb', 'Restaurante', 'Bar', 'Atracción'].map((sub) => (
+                <button
+                  key={sub}
+                  type="button"
+                  onClick={() => setFiltroSubtipo(sub)}
+                  className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                    filtroSubtipo === sub
+                      ? 'bg-sky-500 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {sub}
+                </button>
+              ))}
+            </div>
+
+            <div id="lugares" style={{ minHeight: '650px' }}>
               {loading ? (
                 <p className="py-12 text-center text-[#999999]">{t.cargando}</p>
               ) : filtrados.length === 0 ? (
-                <p className="rounded-[14px] border border-dashed border-[#E8E8E8] bg-white px-6 py-14 text-center text-[#999999]">
-                  {t.noResults}
+                <p className="animate-fade-in-up rounded-[14px] border border-dashed border-[#E8E8E8] bg-white px-6 py-14 text-center text-[#999999]">
+                  {filtroSubtipo !== 'Todos'
+                    ? (idioma === 'en' ? 'No places in this category yet.' : 'No hay lugares en esta categoría aún.')
+                    : t.noResults}
                 </p>
               ) : (
-                <ul style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                  gap: '1.75rem',
-                  listStyle: 'none',
-                  padding: 0,
-                  paddingTop: '32px',
-                  margin: 0,
-                }}
+                <ul
+                  key={`${categoriaId}-${filtroSubtipo}-${debouncedSearch}`}
+                  className="animate-fade-in-up grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 pt-[32px] m-0 p-0 list-none grid-flow-row-dense"
+
+
+
+
+
+
+
+
+
                 >
-                  {filtrados.map((lugar) => (
-                    <li key={lugar.id}>
-                      <LugarCard lugar={lugar} />
+                  {filtrados.map((lugar, index) => {
+                    const isFeatured = index === 0;
+                    return (
+                    <li key={lugar.id} className={isFeatured ? 'md:col-span-2 md:row-span-2' : ''}>
+                      <LugarCard lugar={lugar} isFeatured={isFeatured} />
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               )}
             </div>
@@ -774,7 +811,7 @@ export default function Home() {
             fontWeight: '500',
             zIndex: 999,
             boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-            animation: 'fadeInUp 0.25s ease',
+            animation: 'fadeInUpToast 0.25s ease',
           }}
           role="status"
         >
