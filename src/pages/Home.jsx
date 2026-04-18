@@ -147,10 +147,6 @@ export default function Home() {
       .from('lugares')
       .select('id, nombre, categoria_id, subtipo, destacado, imagen_principal, precio_entrada, updated_at, categorias(nombre), departamentos(nombre), imagenes_lugar(ruta_imagen)')
 
-    if (filtroSubtipo !== 'Todos') {
-      lugaresQuery = lugaresQuery.eq('subtipo', filtroSubtipo)
-    }
-
     const { data, error: err } = await lugaresQuery
       .order('destacado', { ascending: false, nullsFirst: false })
       .order('updated_at', { ascending: false })
@@ -164,7 +160,7 @@ export default function Home() {
 
     setLugares(data ?? [])
     setLoading(false)
-  }, [filtroSubtipo])
+  }, [])
 
   useEffect(() => {
     loadLugares()
@@ -193,12 +189,15 @@ export default function Home() {
     if (categoriaId) {
       list = list.filter((l) => l.categoria_id === categoriaId)
     }
+    if (filtroSubtipo !== 'Todos') {
+      list = list.filter((l) => l.subtipo === filtroSubtipo)
+    }
     if (debouncedSearch) {
       const q = debouncedSearch.toLowerCase()
       list = list.filter((l) => l.nombre?.toLowerCase().includes(q))
     }
     return list
-  }, [lugares, categoriaId, debouncedSearch])
+  }, [lugares, categoriaId, filtroSubtipo, debouncedSearch])
 
   const handleVerTodos = (e) => {
     e.preventDefault()
@@ -542,7 +541,7 @@ export default function Home() {
               label={t.todos}
               emoji="🗺️"
               active={categoriaId === null}
-              onClick={() => setCategoriaId(null)}
+              onClick={() => { setCategoriaId(null); setFiltroSubtipo('Todos') }}
             />
             {categorias.map((c) => (
               <CatButton
@@ -550,7 +549,7 @@ export default function Home() {
                 label={c.nombre}
                 svgNombre={c.nombre}
                 active={categoriaId === c.id}
-                onClick={() => setCategoriaId(c.id)}
+                onClick={() => { setCategoriaId(c.id); setFiltroSubtipo('Todos') }}
               />
             ))}
           </div>
@@ -643,21 +642,23 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="mb-6 flex gap-2 overflow-x-auto pb-2 pt-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:-none] [scrollbar-width:none]">
-              {['Todos', 'Hotel', 'Hostal', 'Airbnb', 'Restaurante', 'Bar', 'Atracción'].map((sub) => (
-                <button
-                  key={sub}
-                  type="button"
-                  onClick={() => setFiltroSubtipo(sub)}
-                  className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${filtroSubtipo === sub
-                    ? 'bg-sky-500 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                >
-                  {sub}
-                </button>
-              ))}
-            </div>
+{categoriaId === 'c0000000-0000-0000-0000-000000000009' && (
+              <div className="mb-6 flex gap-2 overflow-x-auto pb-2 pt-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:-none] [scrollbar-width:none]">
+                {['Todos', 'Hotel', 'Hostal', 'Airbnb'].map((sub) => (
+                  <button
+                    key={sub}
+                    type="button"
+                    onClick={() => setFiltroSubtipo(sub)}
+                    className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${filtroSubtipo === sub
+                      ? 'bg-sky-500 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                  >
+                    {sub}
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div id="lugares" style={{ minHeight: '650px' }}>
               {loading ? (
@@ -685,7 +686,7 @@ export default function Home() {
                   {filtrados.map((lugar, index) => {
                     const isFeatured = index === 0;
                     return (
-                      <li key={lugar.id} className={isFeatured ? 'md:col-span-2 md:row-span-2' : ''}>
+                      <li key={lugar.id} className={isFeatured ? 'md:col-span-2' : ''}>
                         <LugarCard lugar={lugar} isFeatured={isFeatured} />
                       </li>
                     );

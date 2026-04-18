@@ -39,7 +39,6 @@ export default function LugarCard({ lugar, isFeatured }) {
   const heartsText = Number.isInteger(hearts) ? String(hearts) : hearts.toFixed(1)
   const precio = lugar.precio_entrada ?? null
   const catBg = cat ? getGradiente(cat.nombre) : TROPICAL_GRADIENT
-  const cardHeight = isFeatured ? '340px' : '220px'
 
   useEffect(() => {
     setImageError(false)
@@ -65,14 +64,12 @@ export default function LugarCard({ lugar, isFeatured }) {
       onMouseLeave={() => setHovered(false)}
     >
       {/* Image */}
-      <div style={{ position: 'relative', height: cardHeight, flexShrink: 0, overflow: 'hidden' }}>
+      <div style={{ position: 'relative', width: '100%', aspectRatio: isFeatured ? '16/7' : '4/3', flexShrink: 0, overflow: 'hidden' }}>
         <Link to={`/lugar/${lugar.id}`} style={{ display: 'block', width: '100%', height: '100%' }}>
           {showImage ? (
             <img
               src={img}
               alt=""
-              width={isFeatured ? 600 : 400}
-              height={isFeatured ? 340 : 220}
               style={{
                 width: '100%',
                 height: '100%',
