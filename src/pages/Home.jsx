@@ -242,6 +242,22 @@ export default function Home() {
     [scrollToLugares, showToast, navigate, t.guiasProx, t.privacidadProx, t.terminosProx, t.contactoProx],
   )
 
+  const sugerencias = useMemo(() => {
+    if (filtrados.length > 0) return []
+    return lugares
+      .filter((l) => {
+        if (categoriaId && l.categoria_id === categoriaId) return true
+        return false
+      })
+      .slice(0, 3)
+      .concat(
+        lugares
+          .filter((l) => !categoriaId || l.categoria_id !== categoriaId)
+          .slice(0, Math.max(0, 3 - lugares.filter((l) => categoriaId && l.categoria_id === categoriaId).length))
+      )
+      .slice(0, 3)
+  }, [filtrados, lugares, categoriaId])
+
   return (
     <div className="min-h-screen pb-16" style={{ background: 'var(--bg)' }}>
       <header style={{
@@ -679,11 +695,49 @@ export default function Home() {
               {loading ? (
                 <p className="py-12 text-center text-[#999999]">{t.cargando}</p>
               ) : filtrados.length === 0 ? (
-                <p className="animate-fade-in-up rounded-[14px] border border-dashed border-[#E8E8E8] bg-white px-6 py-14 text-center text-[#999999]">
-                  {filtroSubtipo !== 'Todos'
-                    ? (idioma === 'en' ? 'No places in this category yet.' : 'No hay lugares en esta categoría aún.')
-                    : t.noResults}
-                </p>
+                <div className="animate-fade-in-up" style={{ padding: '3rem 0' }}>
+                  <div style={{
+                    textAlign: 'center',
+                    marginBottom: sugerencias.length > 0 ? '2.5rem' : '0',
+                  }}>
+                    <span style={{ fontSize: '2rem', display: 'block', marginBottom: '0.75rem' }}>🔍</span>
+                    <p style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', marginBottom: '0.35rem' }}>
+                      {idioma === 'en' ? 'No results found' : 'Sin resultados'}
+                    </p>
+                    <p style={{ fontSize: '0.85rem', color: '#9ca3af' }}>
+                      {filtroSubtipo !== 'Todos'
+                        ? (idioma === 'en' ? `No ${filtroSubtipo} listings yet.` : `Aún no hay lugares de tipo ${filtroSubtipo}.`)
+                        : (idioma === 'en' ? 'Try a different search or category.' : 'Probá con otra búsqueda o categoría.')}
+                    </p>
+                  </div>
+
+                  {sugerencias.length > 0 && (
+                    <div>
+                      <p style={{
+                        fontSize: '0.78rem',
+                        fontWeight: '600',
+                        letterSpacing: '0.12em',
+                        textTransform: 'uppercase',
+                        color: '#9ca3af',
+                        textAlign: 'center',
+                        marginBottom: '1.25rem',
+                      }}>
+                        {idioma === 'en' ? 'You might like' : 'Quizás te interese'}
+                      </p>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                        gap: '1rem',
+                        maxWidth: '720px',
+                        margin: '0 auto',
+                      }}>
+                        {sugerencias.map((lugar) => (
+                          <LugarCard key={lugar.id} lugar={lugar} isFeatured={false} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <ul
                   key={`${categoriaId}-${filtroSubtipo}-${debouncedSearch}`}
