@@ -7,6 +7,7 @@ import ResetPassword from './pages/ResetPassword'
 import Perfil from './pages/Perfil'
 import SugerirLugar from './pages/SugerirLugar'
 import NotFound from './pages/NotFound'
+import AdminPage from './pages/AdminPage'
 
 function AnimatedRoutes() {
   const location = useLocation()
@@ -61,6 +62,7 @@ function AnimatedRoutes() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/perfil" element={<Perfil />} />
           <Route path="/sugerir-lugar" element={<SugerirLugar />} />
+          <Route path="/admin" element={<AdminPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>

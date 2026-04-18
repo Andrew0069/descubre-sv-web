@@ -140,6 +140,17 @@ function IconRestaurantes({ stroke, size = 22 }) {
   )
 }
 
+function IconAlojamiento({ stroke, size = 22 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M2 4v16" stroke={stroke} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M2 8h18a2 2 0 0 1 2 2v10" stroke={stroke} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M2 17h20" stroke={stroke} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 8v9" stroke={stroke} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 const ICON_BY_NAME = {
   Playas: IconPlayas,
   'Montañas y Volcanes': IconMontanas,
@@ -151,6 +162,7 @@ const ICON_BY_NAME = {
   'Mercados y Artesanías': IconMercados,
   'Vida Nocturna': IconVidaNocturna,
   Restaurantes: IconRestaurantes,
+  Alojamiento: IconAlojamiento,
 }
 
 const EN_TO_ES = {
@@ -164,6 +176,7 @@ const EN_TO_ES = {
   'Markets and Crafts': 'Mercados y Artesanías',
   'Night Life': 'Vida Nocturna',
   'Restaurants': 'Restaurantes',
+  'Accommodation': 'Alojamiento',
 }
 
 export function CategoriaIconSvg({ nombre, active, size = 22, onDark = false }) {

@@ -10,6 +10,7 @@ export const gradientes = {
   Miradores: 'linear-gradient(160deg, #FDE68A, #D97706)',
   'Mercados y Artesanías': 'linear-gradient(160deg, #F9A8D4, #9D174D)',
   'Vida Nocturna': 'linear-gradient(160deg, #A78BFA, #4C1D95)',
+  Alojamiento: 'linear-gradient(160deg, #FDBA74, #C2410C)',
 }
 
 export const gradienteDefault = 'linear-gradient(160deg, #60A5FA, #1E3A8A)'
@@ -25,6 +26,7 @@ const EN_TO_ES = {
   'Markets and Crafts': 'Mercados y Artesanías',
   'Night Life': 'Vida Nocturna',
   'Restaurants': 'Restaurantes',
+  'Accommodation': 'Alojamiento',
 }
 
 export function getGradiente(categoriaNombre) {
@@ -45,6 +47,7 @@ export const ORDEN_CATEGORIAS = [
   'Mercados y Artesanías',
   'Vida Nocturna',
   'Restaurantes',
+  'Alojamiento',
 ]
 
 export function ordenarCategorias(list) {
