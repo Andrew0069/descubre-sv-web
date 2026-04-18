@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { getGradiente } from '../lib/categoriaVisual'
 import { CategoriaIconSvg } from './CategoriaChip'
 import { useIdioma } from '../lib/idiomaContext'
+import LoginModal from './LoginModal'
 
 const TROPICAL_GRADIENT = 'linear-gradient(135deg, #0EA5E9 0%, #06b6d4 50%, #f59e0b 100%)'
 
@@ -32,6 +33,7 @@ export default function LugarCard({ lugar }) {
   const [hovered, setHovered] = useState(false)
   const [heartHover, setHeartHover] = useState(false)
   const [imageError, setImageError] = useState(false)
+  const [showLoginModal, setShowLoginModal] = useState(false)
   const { idioma } = useIdioma()
 
   const cat = lugar.categorias
@@ -112,7 +114,7 @@ export default function LugarCard({ lugar }) {
         <button
           type="button"
           aria-label="Guardar en favoritos"
-          onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowLoginModal(true) }}
           onMouseEnter={() => setHeartHover(true)}
           onMouseLeave={() => setHeartHover(false)}
           style={{
@@ -180,6 +182,12 @@ export default function LugarCard({ lugar }) {
           </span>
         </div>
       </Link>
+      {showLoginModal && (
+        <LoginModal
+          mensaje="Guardá tus lugares favoritos y llevá El Salvador en el bolsillo."
+          onClose={() => setShowLoginModal(false)}
+        />
+      )}
     </div>
   )
 }
