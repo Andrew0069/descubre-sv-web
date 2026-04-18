@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getGradiente } from '../lib/categoriaVisual'
+import { resolveImageUrl } from '../lib/imageUrl'
 import { CategoriaIconSvg } from './CategoriaChip'
 import LoginModal from './LoginModal'
 
@@ -30,7 +31,9 @@ export default function LugarCard({ lugar, isFeatured }) {
 
   const cat = lugar.categorias
   const dep = lugar.departamentos
-  const img = lugar.imagen_principal?.trim()
+  const imagenPrincipal = lugar.imagen_principal?.trim()
+  const imagenRelacionada = lugar.imagenes_lugar?.find((foto) => foto?.ruta_imagen?.trim())?.ruta_imagen
+  const img = resolveImageUrl(imagenPrincipal || imagenRelacionada, 'lugares-fotos')
   const showImage = Boolean(img) && !imageError
   const hearts = Number(lugar.promedio_estrellas) || 0
   const heartsText = Number.isInteger(hearts) ? String(hearts) : hearts.toFixed(1)

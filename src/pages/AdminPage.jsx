@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { resolveImageUrl } from '../lib/imageUrl'
 import EditLugarForm from '../components/EditLugarForm'
 
 export default function AdminPage() {
@@ -370,7 +371,7 @@ export default function AdminPage() {
                     {imagenes.map((img) => (
                       <div key={img.id} style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '4/3' }}>
                         <img
-                          src={img.ruta_imagen}
+                          src={resolveImageUrl(img.ruta_imagen, 'lugares-fotos')}
                           alt=""
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />

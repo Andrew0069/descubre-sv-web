@@ -145,26 +145,17 @@ export default function Home() {
 
     let lugaresQuery = supabase
       .from('lugares')
-      .select('id, nombre, categoria_id, subtipo, imagen_principal, precio_entrada, categorias(nombre), departamentos(nombre)')
+      .select('id, nombre, categoria_id, subtipo, imagen_principal, precio_entrada, updated_at, categorias(nombre), departamentos(nombre), imagenes_lugar(ruta_imagen)')
       .eq('destacado', true)
 
     if (filtroSubtipo !== 'Todos') {
       lugaresQuery = lugaresQuery.eq('subtipo', filtroSubtipo)
     }
 
-    const [
-      { data, error: err },
-      { data: likeRows },
-    ] = await Promise.all([
-      lugaresQuery
-        .order('destacado', { ascending: false })
-        .order('likes', { ascending: false })
-        .order('updated_at', { ascending: false })
-        .limit(6),
-      supabase
-        .from('likes_lugar')
-        .select('lugar_id, rating'),
-    ])
+    const { data, error: err } = await lugaresQuery
+      .order('destacado', { ascending: false })
+      .order('updated_at', { ascending: false })
+      .limit(6)
 
     if (err) {
       setError(err.message)
@@ -173,25 +164,7 @@ export default function Home() {
       return
     }
 
-    // Compute average rating per lugar from likes_lugar.rating
-    const statsMap = {}
-    for (const row of likeRows ?? []) {
-      const lid = row.lugar_id
-      if (!statsMap[lid]) statsMap[lid] = { ratingSum: 0, ratingCount: 0 }
-      if (row.rating != null) {
-        statsMap[lid].ratingSum += Number(row.rating)
-        statsMap[lid].ratingCount++
-      }
-    }
-    const withStats = (data ?? []).map((lugar) => {
-      const s = statsMap[lugar.id]
-      return {
-        ...lugar,
-        promedio_estrellas: s?.ratingCount > 0 ? s.ratingSum / s.ratingCount : null,
-      }
-    })
-
-    setLugares(withStats)
+    setLugares(data ?? [])
     setLoading(false)
   }, [filtroSubtipo])
 

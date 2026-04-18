@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { resolveImageUrl } from '../lib/imageUrl'
 import { getGradiente } from '../lib/categoriaVisual'
 import { useIdioma } from '../lib/idiomaContext'
 import LoginModal from '../components/LoginModal'
@@ -560,10 +561,12 @@ export default function DetalleLugar() {
 
   const cat = lugar.categorias
   const dep = lugar.departamentos
-  const img = lugar.imagen_principal?.trim()
+  const img = resolveImageUrl(lugar.imagen_principal, 'lugares-fotos')
   const totalResenas = resenas.length
   const entrada = lugar.precio_entrada ?? null
-  const urlsDesdeTabla = (imagenes ?? []).map((i) => i.ruta_imagen).filter(Boolean)
+  const urlsDesdeTabla = (imagenes ?? [])
+    .map((i) => resolveImageUrl(i.ruta_imagen, 'lugares-fotos'))
+    .filter(Boolean)
   const fotosCarousel = urlsDesdeTabla.length > 0
     ? urlsDesdeTabla
     : (img ? [img] : [])
@@ -720,7 +723,7 @@ export default function DetalleLugar() {
             {t.volver}
           </Link>
 
-          {fotosCarousel.length < 3 ? (
+          {fotosCarousel.length === 0 ? (
             <div style={{
               height: '480px',
               borderRadius: '16px',
@@ -739,6 +742,10 @@ export default function DetalleLugar() {
                   overflow: 'hidden',
                   cursor: 'pointer',
                   borderRadius: '16px 0 0 16px',
+                  background: '#f3f4f6',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
                 onClick={() => { setLightboxIndex(0); setLightboxOpen(true) }}
               >
@@ -761,48 +768,61 @@ export default function DetalleLugar() {
                   style={{
                     flex: 1,
                     overflow: 'hidden',
-                    cursor: 'pointer',
+                    cursor: fotosCarousel[1] ? 'pointer' : 'default',
                     borderRadius: '0 16px 0 0',
+                    background: '#f3f4f6',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
-                  onClick={() => { setLightboxIndex(1); setLightboxOpen(true) }}
+                  onClick={() => { if (fotosCarousel[1]) { setLightboxIndex(1); setLightboxOpen(true); } }}
                 >
-                  <img
-                    src={fotosCarousel[1]}
-                    alt=""
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      transition: 'transform 0.3s ease, filter 0.3s ease',
-                      display: 'block',
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.04)'; e.currentTarget.style.filter = 'brightness(0.92)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.filter = 'brightness(1)' }}
-                  />
+                  {fotosCarousel[1] ? (
+                    <img
+                      src={fotosCarousel[1]}
+                      alt=""
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        transition: 'transform 0.3s ease, filter 0.3s ease',
+                        display: 'block',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.04)'; e.currentTarget.style.filter = 'brightness(0.92)' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.filter = 'brightness(1)' }}
+                    />
+                  ) : <span style={{ fontSize: '2.5rem' }}>🏝️</span>}
                 </div>
                 <div
                   style={{
                     flex: 1,
                     overflow: 'hidden',
-                    cursor: 'pointer',
+                    cursor: fotosCarousel[2] ? 'pointer' : 'default',
                     borderRadius: '0 0 16px 0',
                     position: 'relative',
+                    background: '#f3f4f6',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
-                  onClick={() => { setLightboxIndex(2); setLightboxOpen(true) }}
+                  onClick={() => { if (fotosCarousel[2]) { setLightboxIndex(2); setLightboxOpen(true); } }}
                 >
-                  <img
-                    src={fotosCarousel[2]}
-                    alt=""
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      transition: 'transform 0.3s ease, filter 0.3s ease',
-                      display: 'block',
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.04)'; e.currentTarget.style.filter = 'brightness(0.92)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.filter = 'brightness(1)' }}
-                  />
+                  {fotosCarousel[2] ? (
+                    <img
+                      src={fotosCarousel[2]}
+                      alt=""
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        transition: 'transform 0.3s ease, filter 0.3s ease',
+                        display: 'block',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.04)'; e.currentTarget.style.filter = 'brightness(0.92)' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.filter = 'brightness(1)' }}
+                    />
+                  ) : <span style={{ fontSize: '2.5rem' }}>🏝️</span>}
+                  
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setLightboxIndex(0); setLightboxOpen(true) }}
