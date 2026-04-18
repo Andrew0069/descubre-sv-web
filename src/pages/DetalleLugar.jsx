@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { LugarImagePlaceholder } from '../components/LugarCard'
 import { getGradiente } from '../lib/categoriaVisual'
 import { useIdioma } from '../lib/idiomaContext'
 import LoginModal from '../components/LoginModal'
@@ -118,9 +117,10 @@ export default function DetalleLugar() {
   const [resenaLoading, setResenaLoading] = useState(false)
   const [resenaError, setResenaError] = useState('')
   const [resenaSuccess, setResenaSuccess] = useState(false)
-  const [imageError, setImageError] = useState(false)
   const [imagenes, setImagenes] = useState([])
-  const [carouselIndex, setCarouselIndex] = useState(0)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
+  const fotosRef = useRef([])
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [loginMensaje, setLoginMensaje] = useState('')
 
@@ -262,16 +262,17 @@ export default function DetalleLugar() {
   }, [toast])
 
   useEffect(() => {
-    setImageError(false)
-    setCarouselIndex(0)
-  }, [id])
-
-  useEffect(() => {
-    setCarouselIndex((prev) => {
-      const max = Math.max(0, imagenes.length - 1)
-      return prev > max ? 0 : prev
-    })
-  }, [imagenes])
+    if (!lightboxOpen) return
+    const handleKey = (e) => {
+      const len = fotosRef.current.length
+      if (len === 0) return
+      if (e.key === 'ArrowRight') setLightboxIndex((i) => (i + 1) % len)
+      if (e.key === 'ArrowLeft') setLightboxIndex((i) => (i - 1 + len) % len)
+      if (e.key === 'Escape') setLightboxOpen(false)
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [lightboxOpen])
 
   const handleToggleLike = useCallback(async () => {
     // Always fetch a fresh session — React state can be null on first render
@@ -565,7 +566,7 @@ export default function DetalleLugar() {
   const fotosCarousel = urlsDesdeTabla.length > 0
     ? urlsDesdeTabla
     : (img ? [img] : [])
-  const fotoActual = fotosCarousel[carouselIndex] ?? null
+  fotosRef.current = fotosCarousel
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
@@ -694,152 +695,292 @@ export default function DetalleLugar() {
       )}
 
       {/* HERO */}
-      <section style={{ position: 'relative', width: '100%', height: '380px', overflow: 'hidden' }}>
-        {fotosCarousel.length === 0 || imageError ? (
-          <div style={{ width: '100%', height: '100%' }}>
-            <LugarImagePlaceholder categoriaNombre={cat?.nombre} iconSize={56} />
-          </div>
-        ) : (
-          <img
-            key={fotoActual}
-            src={fotoActual}
-            alt=""
-            decoding="async"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'opacity 0.3s ease' }}
-            onError={() => setImageError(true)}
-          />
-        )}
+      <section style={{ background: '#ffffff' }}>
+        <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '20px 24px 0' }}>
+          <Link
+            to="/"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 14px',
+              borderRadius: '8px',
+              backgroundColor: '#f3f4f6',
+              color: '#374151',
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              textDecoration: 'none',
+              marginBottom: '16px',
+              transition: 'background-color 0.2s ease',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#e5e7eb' }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#f3f4f6' }}
+          >
+            {t.volver}
+          </Link>
 
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 60%, transparent 100%)',
-            pointerEvents: 'none',
-          }}
-        />
-
-        <Link
-          to="/"
-          style={{
-            position: 'absolute',
-            top: '16px',
-            left: '16px',
-            zIndex: 10,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '8px 16px',
-            borderRadius: '10px',
-            backgroundColor: 'rgba(255,255,255,0.15)',
-            backdropFilter: 'blur(10px)',
-            color: '#ffffff',
-            fontSize: '0.85rem',
-            fontWeight: 500,
-            textDecoration: 'none',
-            transition: 'background-color 0.2s ease',
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.25)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)' }}
-        >
-          {t.volver}
-        </Link>
-
-        {fotosCarousel.length > 1 && (
-          <div style={{
-            position: 'absolute', top: '16px', right: '16px', zIndex: 10,
-            backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)',
-            color: '#ffffff', fontSize: '0.78rem', fontWeight: 600,
-            padding: '4px 10px', borderRadius: '20px',
-          }}>
-            {carouselIndex + 1} / {fotosCarousel.length}
-          </div>
-        )}
-
-        {fotosCarousel.length > 1 && (
-          <>
-            <button
-              type="button"
-              onClick={() => setCarouselIndex((prev) => (prev - 1 + fotosCarousel.length) % fotosCarousel.length)}
-              aria-label="Foto anterior"
-              style={{
-                position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)',
-                zIndex: 10, width: '44px', height: '44px', borderRadius: '50%',
-                backgroundColor: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)',
-                backdropFilter: 'blur(12px)', color: '#ffffff',
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.28)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)' }}
-            >
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              onClick={() => setCarouselIndex((prev) => (prev + 1) % fotosCarousel.length)}
-              aria-label="Foto siguiente"
-              style={{
-                position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)',
-                zIndex: 10, width: '44px', height: '44px', borderRadius: '50%',
-                backgroundColor: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)',
-                backdropFilter: 'blur(12px)', color: '#ffffff',
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.28)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)' }}
-            >
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
-          </>
-        )}
-
-        {fotosCarousel.length > 1 && (
-          <div style={{
-            position: 'absolute', bottom: '80px', left: '50%', transform: 'translateX(-50%)',
-            zIndex: 10, display: 'flex', gap: '8px', alignItems: 'center',
-          }}>
-            {fotosCarousel.map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setCarouselIndex(i)}
-                aria-label={`Foto ${i + 1}`}
+          {fotosCarousel.length < 3 ? (
+            <div style={{
+              height: '480px',
+              borderRadius: '16px',
+              background: '#f3f4f6',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <span style={{ fontSize: '5rem' }}>🏝️</span>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: '8px', height: '480px' }}>
+              <div
                 style={{
-                  width: i === carouselIndex ? '8px' : '6px',
-                  height: i === carouselIndex ? '8px' : '6px',
-                  borderRadius: '50%', border: 'none', padding: 0, cursor: 'pointer',
-                  backgroundColor: i === carouselIndex ? '#ffffff' : 'rgba(255,255,255,0.45)',
-                  transition: 'all 0.2s ease', outline: 'none',
+                  flex: '0 0 60%',
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  borderRadius: '16px 0 0 16px',
                 }}
-              />
-            ))}
-          </div>
-        )}
-
-        <div style={{ position: 'absolute', bottom: '24px', left: '24px', right: '24px', zIndex: 10 }}>
-          {cat && (
-            <div style={{ marginBottom: '10px' }}>
-              <CategoryPill nombre={cat.nombre} />
+                onClick={() => { setLightboxIndex(0); setLightboxOpen(true) }}
+              >
+                <img
+                  src={fotosCarousel[0]}
+                  alt=""
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    transition: 'transform 0.3s ease, filter 0.3s ease',
+                    display: 'block',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.04)'; e.currentTarget.style.filter = 'brightness(0.92)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.filter = 'brightness(1)' }}
+                />
+              </div>
+              <div style={{ flex: '1', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div
+                  style={{
+                    flex: 1,
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    borderRadius: '0 16px 0 0',
+                  }}
+                  onClick={() => { setLightboxIndex(1); setLightboxOpen(true) }}
+                >
+                  <img
+                    src={fotosCarousel[1]}
+                    alt=""
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      transition: 'transform 0.3s ease, filter 0.3s ease',
+                      display: 'block',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.04)'; e.currentTarget.style.filter = 'brightness(0.92)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.filter = 'brightness(1)' }}
+                  />
+                </div>
+                <div
+                  style={{
+                    flex: 1,
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    borderRadius: '0 0 16px 0',
+                    position: 'relative',
+                  }}
+                  onClick={() => { setLightboxIndex(2); setLightboxOpen(true) }}
+                >
+                  <img
+                    src={fotosCarousel[2]}
+                    alt=""
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      transition: 'transform 0.3s ease, filter 0.3s ease',
+                      display: 'block',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.04)'; e.currentTarget.style.filter = 'brightness(0.92)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.filter = 'brightness(1)' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setLightboxIndex(0); setLightboxOpen(true) }}
+                    style={{
+                      position: 'absolute',
+                      bottom: '14px',
+                      right: '14px',
+                      backgroundColor: '#ffffff',
+                      color: '#111827',
+                      border: '1.5px solid #d1d5db',
+                      borderRadius: '8px',
+                      padding: '6px 14px',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    {idioma === 'en' ? 'See all photos' : 'Ver todas las fotos'}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
-          <h1 style={{
-            fontSize: 'clamp(1.5rem, 5vw, 2.25rem)',
-            fontWeight: 800,
-            color: '#ffffff',
-            lineHeight: 1.15,
-            textShadow: '0 2px 12px rgba(0,0,0,0.4)',
-            margin: 0,
-          }}>
-            {lugar.nombre}
-          </h1>
+
+          <div style={{ padding: '20px 0 24px' }}>
+            {cat && (
+              <div style={{ marginBottom: '10px' }}>
+                <CategoryPill nombre={cat.nombre} />
+              </div>
+            )}
+            <h1 style={{
+              fontSize: 'clamp(1.5rem, 5vw, 2.25rem)',
+              fontWeight: 800,
+              color: '#111827',
+              lineHeight: 1.15,
+              margin: 0,
+            }}>
+              {lugar.nombre}
+            </h1>
+          </div>
         </div>
       </section>
+
+      {/* LIGHTBOX */}
+      {lightboxOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 300,
+            backgroundColor: 'rgba(0,0,0,0.92)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          onClick={() => setLightboxOpen(false)}
+        >
+          <div style={{
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            color: '#fff',
+            fontSize: '0.85rem',
+            fontWeight: 600,
+            zIndex: 10,
+            backgroundColor: 'rgba(0,0,0,0.4)',
+            padding: '4px 12px',
+            borderRadius: '20px',
+            pointerEvents: 'none',
+          }}>
+            {lightboxIndex + 1} / {fotosCarousel.length}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            style={{
+              position: 'absolute',
+              top: '16px',
+              left: '20px',
+              color: '#fff',
+              background: 'rgba(255,255,255,0.12)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: '50%',
+              width: '40px',
+              height: '40px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.1rem',
+              zIndex: 10,
+            }}
+          >
+            ✕
+          </button>
+
+          <img
+            src={fotosCarousel[lightboxIndex]}
+            alt=""
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '90vw',
+              maxHeight: '85vh',
+              objectFit: 'contain',
+              borderRadius: '8px',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+              userSelect: 'none',
+            }}
+          />
+
+          {fotosCarousel.length > 1 && (
+            <>
+              <button
+                type="button"
+                aria-label="Foto anterior"
+                onClick={(e) => { e.stopPropagation(); setLightboxIndex((i) => (i - 1 + fotosCarousel.length) % fotosCarousel.length) }}
+                style={{
+                  position: 'absolute',
+                  left: '20px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#fff',
+                  background: 'rgba(255,255,255,0.15)',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  borderRadius: '50%',
+                  width: '48px',
+                  height: '48px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 10,
+                  backdropFilter: 'blur(8px)',
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                aria-label="Foto siguiente"
+                onClick={(e) => { e.stopPropagation(); setLightboxIndex((i) => (i + 1) % fotosCarousel.length) }}
+                style={{
+                  position: 'absolute',
+                  right: '20px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#fff',
+                  background: 'rgba(255,255,255,0.15)',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  borderRadius: '50%',
+                  width: '48px',
+                  height: '48px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 10,
+                  backdropFilter: 'blur(8px)',
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* INFO BAR */}
       <div style={{
