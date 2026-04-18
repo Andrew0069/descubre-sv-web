@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { getGradiente } from '../lib/categoriaVisual'
 import { resolveImageUrl } from '../lib/imageUrl'
 import { CategoriaIconSvg } from './CategoriaChip'
-import LoginModal from './LoginModal'
+import { supabase } from '../lib/supabase'
 
 const TROPICAL_GRADIENT = 'linear-gradient(135deg, #0EA5E9 0%, #06b6d4 50%, #f59e0b 100%)'
 
@@ -27,7 +27,8 @@ export default function LugarCard({ lugar, isFeatured }) {
   const [hovered, setHovered] = useState(false)
   const [heartHover, setHeartHover] = useState(false)
   const [imageError, setImageError] = useState(false)
-  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [esFavorito, setEsFavorito] = useState(false)
+  const [count, setCount] = useState(lugar.favoritos_count ?? 0)
 
   const cat = lugar.categorias
   const dep = lugar.departamentos
@@ -35,13 +36,74 @@ export default function LugarCard({ lugar, isFeatured }) {
   const imagenRelacionada = lugar.imagenes_lugar?.find((foto) => foto?.ruta_imagen?.trim())?.ruta_imagen
   const img = resolveImageUrl(imagenPrincipal || imagenRelacionada, 'lugares-fotos')
   const showImage = Boolean(img) && !imageError
-  const favoritosCount = lugar.favoritos?.[0]?.count ?? 0
   const precio = lugar.precio_entrada ?? null
   const catBg = cat ? getGradiente(cat.nombre) : TROPICAL_GRADIENT
 
   useEffect(() => {
     setImageError(false)
   }, [img, lugar.id])
+
+  // Check if the current user has this place saved as a favorite
+  useEffect(() => {
+    const checkFavorito = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      const { data: usuarioData } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('auth_id', session.user.id)
+        .single()
+
+      if (!usuarioData) return
+
+      const { data } = await supabase
+        .from('favoritos')
+        .select('id')
+        .eq('lugar_id', lugar.id)
+        .eq('usuario_id', usuarioData.id)
+        .single()
+
+      setEsFavorito(!!data)
+    }
+    checkFavorito()
+  }, [lugar.id])
+
+  const handleToggleFavoritoCard = async (e) => {
+    e.stopPropagation()
+    e.preventDefault()
+
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      // Notify Home.jsx (or any parent) to show the login modal
+      window.dispatchEvent(new CustomEvent('show-login-modal'))
+      return
+    }
+
+    const { data: usuarioData } = await supabase
+      .from('usuarios')
+      .select('id')
+      .eq('auth_id', session.user.id)
+      .single()
+
+    if (!usuarioData) return
+
+    if (esFavorito) {
+      await supabase
+        .from('favoritos')
+        .delete()
+        .eq('lugar_id', lugar.id)
+        .eq('usuario_id', usuarioData.id)
+      setEsFavorito(false)
+      setCount((prev) => Math.max(0, prev - 1))
+    } else {
+      await supabase
+        .from('favoritos')
+        .insert({ lugar_id: lugar.id, usuario_id: usuarioData.id })
+      setEsFavorito(true)
+      setCount((prev) => prev + 1)
+    }
+  }
 
   return (
     <div
@@ -132,7 +194,7 @@ export default function LugarCard({ lugar, isFeatured }) {
         <button
           type="button"
           aria-label="Guardar en favoritos"
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowLoginModal(true) }}
+          onClick={handleToggleFavoritoCard}
           onMouseEnter={() => setHeartHover(true)}
           onMouseLeave={() => setHeartHover(false)}
           style={{
@@ -158,8 +220,8 @@ export default function LugarCard({ lugar, isFeatured }) {
             width={16}
             height={16}
             viewBox="0 0 24 24"
-            fill={heartHover ? '#ef4444' : 'none'}
-            stroke={heartHover ? '#ef4444' : '#6b7280'}
+            fill={esFavorito ? '#ef4444' : heartHover ? '#ef4444' : 'none'}
+            stroke={esFavorito ? '#ef4444' : heartHover ? '#ef4444' : '#6b7280'}
             strokeWidth={2}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -197,17 +259,23 @@ export default function LugarCard({ lugar, isFeatured }) {
               🎫 <span style={{ fontWeight: 600, color: '#374151' }}>{precio}</span>
             </span>
           )}
-          <span style={{ fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#ef4444', marginLeft: 'auto' }}>
-            ❤️ <span style={{ fontWeight: 600 }}>{favoritosCount}</span>
-          </span>
+          {lugar.promedio_rating ? (
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem', fontWeight: '600', color: '#e11d48', marginLeft: 'auto' }}>
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              </svg>
+              {lugar.promedio_rating}
+            </span>
+          ) : (
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem', color: '#ccc', marginLeft: 'auto' }}>
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              </svg>
+              —
+            </span>
+          )}
         </div>
       </Link>
-      {showLoginModal && (
-        <LoginModal
-          mensaje="Guardá tus lugares favoritos y llevá El Salvador en el bolsillo."
-          onClose={() => setShowLoginModal(false)}
-        />
-      )}
     </div>
   )
 }

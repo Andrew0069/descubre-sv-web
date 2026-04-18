@@ -5,6 +5,7 @@ import { useIdioma } from '../lib/idiomaContext'
 import { ordenarCategorias } from '../lib/categoriaVisual'
 import { CategoriaIconSvg } from '../components/CategoriaChip'
 import LugarCard from '../components/LugarCard'
+import LoginModal from '../components/LoginModal'
 import { useNotificaciones } from '../lib/useNotificaciones'
 
 function formatRelativeNotif(dateString) {
@@ -87,6 +88,7 @@ export default function Home() {
   const [toast, setToast] = useState(null)
   const [user, setUser] = useState(null)
   const [campanaOpen, setCampanaOpen] = useState(false)
+  const [showLoginModal, setShowLoginModal] = useState(false)
   const { noLeidas, notificaciones, marcarTodasLeidas } = useNotificaciones(user)
   const { idioma } = useIdioma()
   const navigate = useNavigate()
@@ -136,6 +138,14 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: 'instant' })
   }, [])
 
+  // Listen for the custom event dispatched by LugarCard when an unauthenticated
+  // user taps the heart button on a card.
+  useEffect(() => {
+    const handler = () => setShowLoginModal(true)
+    window.addEventListener('show-login-modal', handler)
+    return () => window.removeEventListener('show-login-modal', handler)
+  }, [])
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
@@ -164,11 +174,9 @@ export default function Home() {
     setLoading(true)
     setError(null)
 
-    let lugaresQuery = supabase
+    const { data, error: err } = await supabase
       .from('lugares')
-      .select('id, nombre, categoria_id, subtipo, destacado, imagen_principal, precio_entrada, updated_at, categorias(nombre), departamentos(nombre), imagenes_lugar(ruta_imagen), favoritos(count)')
-
-    const { data, error: err } = await lugaresQuery
+      .select('id, nombre, categoria_id, subtipo, destacado, imagen_principal, precio_entrada, updated_at, categorias(nombre), departamentos(nombre), imagenes_lugar(ruta_imagen)')
       .order('destacado', { ascending: false, nullsFirst: false })
       .order('updated_at', { ascending: false })
 
@@ -179,7 +187,38 @@ export default function Home() {
       return
     }
 
-    setLugares(data ?? [])
+    const { data: conteosData } = await supabase
+      .from('favoritos')
+      .select('lugar_id')
+
+    const conteoPorLugar = {}
+    ;(conteosData || []).forEach((f) => {
+      conteoPorLugar[f.lugar_id] = (conteoPorLugar[f.lugar_id] || 0) + 1
+    })
+
+    const { data: ratingsData } = await supabase
+      .from('likes_lugar')
+      .select('lugar_id, rating')
+      .not('rating', 'is', null)
+
+    const promediosPorLugar = {}
+    ;(ratingsData || []).forEach(r => {
+      if (!promediosPorLugar[r.lugar_id]) {
+        promediosPorLugar[r.lugar_id] = { suma: 0, count: 0 }
+      }
+      promediosPorLugar[r.lugar_id].suma += r.rating
+      promediosPorLugar[r.lugar_id].count += 1
+    })
+
+    const lugaresConDatos = (data ?? []).map((l) => ({
+      ...l,
+      favoritos_count: conteoPorLugar[l.id] || 0,
+      promedio_rating: promediosPorLugar[l.id]
+        ? (promediosPorLugar[l.id].suma / promediosPorLugar[l.id].count).toFixed(1)
+        : null
+    }))
+
+    setLugares(lugaresConDatos)
     setLoading(false)
   }, [])
 
@@ -1012,6 +1051,12 @@ export default function Home() {
         >
           {toast}
         </div>
+      )}
+      {showLoginModal && (
+        <LoginModal
+          mensaje="Guardá tus lugares favoritos y llevá El Salvador en el bolsillo."
+          onClose={() => setShowLoginModal(false)}
+        />
       )}
     </div>
   )

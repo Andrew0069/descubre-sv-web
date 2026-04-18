@@ -371,12 +371,15 @@ export default function DetalleLugar() {
   }, [userLiked, id])
 
   const handleToggleFavorito = useCallback(async () => {
-    const { data: { session: activeSession } } = await supabase.auth.getSession()
-    if (!activeSession) {
+    console.log('handleToggleFavorito called')
+    const { data: { session } } = await supabase.auth.getSession()
+    console.log('session:', session?.user?.email)
+    if (!session) {
       setLoginMensaje('Guardá tus lugares favoritos y llevá El Salvador en el bolsillo.')
       setShowLoginModal(true)
       return
     }
+    const activeSession = session
     const { data: usuarioData } = await supabase
       .from('usuarios')
       .select('id')
