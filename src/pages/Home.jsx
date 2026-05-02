@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { checkRateLimit } from '../lib/rateLimit'
 import { useIdioma } from '../lib/idiomaContext'
-import { ordenarCategorias } from '../lib/categoriaVisual'
 import { CategoriaIconSvg } from '../components/CategoriaChip'
 import LugarCard from '../components/LugarCard'
 import LoginModal from '../components/LoginModal'
@@ -78,12 +78,14 @@ function CatButton({ label, emoji, svgNombre, active, onClick }) {
 export default function Home() {
   const [lugares, setLugares] = useState([])
   const [categorias, setCategorias] = useState([])
+  const [categoriasOtras, setCategoriasOtras] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [categoriaId, setCategoriaId] = useState(null)
   const [filtroSubtipo, setFiltroSubtipo] = useState('Todos')
   const [searchInput, setSearchInput] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [filtroBusquedaNombre, setFiltroBusquedaNombre] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const [toast, setToast] = useState(null)
   const [user, setUser] = useState(null)
@@ -99,7 +101,7 @@ export default function Home() {
     heroPlaceholder: idioma === 'en' ? 'Where do you want to go?' : '¿A dónde querés ir?',
     heroButton: idioma === 'en' ? 'Explore →' : 'Explorar →',
     heroTagline: idioma === 'en' ? 'A curated selection of experiences to better explore the country' : 'Una selección de experiencias para explorar mejor el país',
-    sectionLabel: idioma === 'en' ? 'DescubreSV Selection' : 'Selección DescubreSV',
+    sectionLabel: idioma === 'en' ? 'Spotter Selection' : 'Selección Spotter',
     sectionTitle: idioma === 'en' ? 'Discover El Salvador' : 'Descubre El Salvador',
     sectionDesc: idioma === 'en' ? 'Must-see places according to traveler experience' : 'Lugares imprescindibles según la experiencia de viajeros',
     verTodos: idioma === 'en' ? 'See selection →' : 'Ver selección →',
@@ -112,11 +114,12 @@ export default function Home() {
     menuCerrar: idioma === 'en' ? 'Sign out' : 'Cerrar sesión',
     menuPerfil: idioma === 'en' ? 'My profile' : '👤 Mi perfil',
     footerTagline: idioma === 'en' ? 'What tourists don\'t see. Yet.' : 'Lo que los turistas no ven. Todavía.',
-    footerCopy: idioma === 'en' ? '© 2026 DescubreSV · Your local guide, always.' : '© 2026 DescubreSV · Tu guía local, siempre.',
+    footerCopy: idioma === 'en' ? '© 2026 Spotter · Your local guide, always.' : '© 2026 Spotter · Tu guía local, siempre.',
     menuPrivacidad: idioma === 'en' ? 'Privacy' : 'Privacidad',
     menuTerminos: idioma === 'en' ? 'Terms' : 'Términos',
     menuContacto: idioma === 'en' ? 'Contact' : 'Contacto',
     todos: idioma === 'en' ? 'All' : 'Todos',
+    otros: idioma === 'en' ? 'Other' : 'Otros',
     cargando: idioma === 'en' ? 'Loading places...' : 'Cargando lugares…',
     sesionCerrada: idioma === 'en' ? 'Signed out' : 'Sesión cerrada',
     guiasProx: idioma === 'en' ? 'Guides — coming soon' : 'Guías — próximamente',
@@ -162,6 +165,30 @@ export default function Home() {
   }, [searchInput])
 
   useEffect(() => {
+    const q = debouncedSearch.trim()
+    if (!q) {
+      setFiltroBusquedaNombre('')
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      const identificador = session?.user?.id ?? 'anonimo'
+      const allowed = await checkRateLimit(identificador, 'busqueda')
+      if (cancelled) return
+      if (allowed === false) {
+        showToast('Demasiadas solicitudes. Espera un momento antes de continuar.')
+        setSearchInput('')
+        setDebouncedSearch('')
+        setFiltroBusquedaNombre('')
+        return
+      }
+      setFiltroBusquedaNombre(q)
+    })()
+    return () => { cancelled = true }
+  }, [debouncedSearch, showToast])
+
+  useEffect(() => {
     if (!campanaOpen) return
     const handler = (e) => {
       if (!e.target.closest('[data-campana]')) setCampanaOpen(false)
@@ -174,9 +201,19 @@ export default function Home() {
     setLoading(true)
     setError(null)
 
+    const { data: { session } } = await supabase.auth.getSession()
+    const identificadorFetch = session?.user?.id ?? 'anonimo'
+    const allowedFetch = await checkRateLimit(identificadorFetch, 'fetch_lugares')
+    if (allowedFetch === false) {
+      showToast('Demasiadas solicitudes. Espera un momento antes de continuar.')
+      setLugares([])
+      setLoading(false)
+      return
+    }
+
     const { data, error: err } = await supabase
       .from('lugares')
-      .select('id, nombre, categoria_id, subtipo, destacado, imagen_principal, precio_entrada, updated_at, categorias(nombre), departamentos(nombre), imagenes_lugar(ruta_imagen)')
+      .select('id, nombre, categoria_id, subtipo, destacado, imagen_principal, precio_entrada, updated_at, categorias(nombre), departamentos(nombre), imagenes_lugar(ruta_imagen, orden)')
       .order('destacado', { ascending: false, nullsFirst: false })
       .order('updated_at', { ascending: false })
 
@@ -220,7 +257,7 @@ export default function Home() {
 
     setLugares(lugaresConDatos)
     setLoading(false)
-  }, [])
+  }, [showToast])
 
   useEffect(() => {
     loadLugares()
@@ -231,13 +268,18 @@ export default function Home() {
       ; (async () => {
         const { data, error: err } = await supabase
           .from('categorias')
-          .select('*')
+          .select('id, nombre, es_predefinida')
           .order('nombre', { ascending: true })
         if (!cancelled) {
           if (err) {
             setCategorias([])
+            setCategoriasOtras([])
           } else {
-            setCategorias(ordenarCategorias(data ?? []))
+            const rows = data ?? []
+            const predefinidas = rows.filter((c) => c.es_predefinida === true)
+            const otras = rows.filter((c) => c.es_predefinida === false)
+            setCategorias(predefinidas)
+            setCategoriasOtras(otras)
           }
         }
       })()
@@ -246,18 +288,21 @@ export default function Home() {
 
   const filtrados = useMemo(() => {
     let list = lugares
-    if (categoriaId) {
+    if (categoriaId === 'OTROS') {
+      const idsOtras = categoriasOtras.map((c) => c.id)
+      list = list.filter((l) => idsOtras.includes(l.categoria_id))
+    } else if (categoriaId) {
       list = list.filter((l) => l.categoria_id === categoriaId)
     }
     if (filtroSubtipo !== 'Todos') {
       list = list.filter((l) => l.subtipo === filtroSubtipo)
     }
-    if (debouncedSearch) {
-      const q = debouncedSearch.toLowerCase()
+    if (filtroBusquedaNombre) {
+      const q = filtroBusquedaNombre.toLowerCase()
       list = list.filter((l) => l.nombre?.toLowerCase().includes(q))
     }
     return list
-  }, [lugares, categoriaId, filtroSubtipo, debouncedSearch])
+  }, [lugares, categoriaId, filtroSubtipo, filtroBusquedaNombre, categoriasOtras])
 
   const handleVerTodos = (e) => {
     e.preventDefault()
@@ -265,6 +310,7 @@ export default function Home() {
     setFiltroSubtipo('Todos')
     setSearchInput('')
     setDebouncedSearch('')
+    setFiltroBusquedaNombre('')
     scrollToLugares()
   }
 
@@ -329,8 +375,22 @@ export default function Home() {
         zIndex: 50,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', position: 'relative', width: '100%' }}>
-          <Link to="/" style={{ fontSize: '1.1rem', fontWeight: '700', color: '#111827', letterSpacing: '-0.02em', textDecoration: 'none' }}>
-            Descubre<span style={{ color: '#0EA5E9' }}>SV</span>
+          <Link
+            to="/"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}
+            aria-label="Spotter"
+          >
+            <svg viewBox="0 0 200 48" height="36" xmlns="http://www.w3.org/2000/svg">
+              <path d="M22 2 C13 2, 5 10, 5 20 C5 33, 22 48, 22 48 C22 48, 39 33, 39 20 C39 10 31 2, 22 2 Z" fill="#F5A623" />
+              <circle cx="22" cy="19" r="10" fill="#1a1a2e" />
+              <path d="M10 19 C13 14, 18 14, 22 19 C26 24, 31 24, 34 19" fill="none" stroke="#F5A623" strokeWidth="2" strokeLinecap="round" />
+              <path d="M11 24 C14 20, 18 20, 22 24 C26 28, 30 28, 33 24" fill="none" stroke="#F5A623" strokeWidth="1.2" strokeLinecap="round" opacity="0.45" />
+              <circle cx="33" cy="8" r="2.5" fill="#F5A623" opacity="0.4" />
+              <text x="46" y="30" fontFamily="Georgia, serif" fontSize="26" fontWeight="700" letterSpacing="-1" fill="#1a1a2e">
+                <tspan fill="#F5A623">S</tspan><tspan fill="#1a1a2e">potter</tspan>
+              </text>
+            </svg>
           </Link>
 
           <button
@@ -763,6 +823,14 @@ export default function Home() {
                 onClick={() => { setCategoriaId(c.id); setFiltroSubtipo('Todos') }}
               />
             ))}
+            {categoriasOtras.length > 0 && (
+              <CatButton
+                label={t.otros}
+                svgNombre=""
+                active={categoriaId === 'OTROS'}
+                onClick={() => { setCategoriaId('OTROS'); setFiltroSubtipo('Todos') }}
+              />
+            )}
           </div>
         </section>
 
@@ -935,7 +1003,7 @@ export default function Home() {
                 </div>
               ) : (
                 <ul
-                  key={`${categoriaId}-${filtroSubtipo}-${debouncedSearch}`}
+                  key={`${categoriaId}-${filtroSubtipo}-${filtroBusquedaNombre}`}
                   className="animate-fade-in-up grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 pt-[32px] m-0 p-0 list-none grid-flow-row-dense"
 
 
@@ -977,7 +1045,7 @@ export default function Home() {
           }}>
             <div>
               <span style={{ fontSize: '1rem', fontWeight: '700', color: '#111827', letterSpacing: '-0.02em' }}>
-                Descubre<span style={{ color: '#0EA5E9' }}>SV</span>
+                <span style={{ color: '#F5A623' }}>S</span>potter
               </span>
               <p style={{ fontSize: '0.78rem', color: '#9ca3af', marginTop: '0.25rem', fontStyle: 'italic' }}>
                 {t.footerTagline}

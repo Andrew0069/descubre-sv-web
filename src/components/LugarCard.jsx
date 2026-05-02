@@ -33,7 +33,10 @@ export default function LugarCard({ lugar, isFeatured }) {
   const cat = lugar.categorias
   const dep = lugar.departamentos
   const imagenPrincipal = lugar.imagen_principal?.trim()
-  const imagenRelacionada = lugar.imagenes_lugar?.find((foto) => foto?.ruta_imagen?.trim())?.ruta_imagen
+  const imagenRelacionada = lugar.imagenes_lugar
+    ?.slice()
+    .sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
+    .find((foto) => foto?.ruta_imagen?.trim())?.ruta_imagen
   const img = resolveImageUrl(imagenPrincipal || imagenRelacionada, 'lugares-fotos')
   const showImage = Boolean(img) && !imageError
   const precio = lugar.precio_entrada ?? null

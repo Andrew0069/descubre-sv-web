@@ -125,7 +125,7 @@ export default function SugerirLugar() {
             </h1>
             <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '1.75rem', lineHeight: 1.5 }}>
               Necesitás una cuenta para sugerir un nuevo lugar en{' '}
-              <span style={{ color: '#0EA5E9', fontWeight: 700 }}>DescubreSV</span>.
+              <span style={{ fontWeight: 700 }}><span style={{ color: '#F5A623' }}>S</span>potter</span>.
             </p>
             <Link
               to="/login"
@@ -212,7 +212,7 @@ export default function SugerirLugar() {
           </h1>
           <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '1.75rem', lineHeight: 1.5 }}>
             ¿Conocés un rincón que debería estar en{' '}
-            <span style={{ color: '#0EA5E9', fontWeight: 700 }}>DescubreSV</span>? Contanos.
+            <span style={{ fontWeight: 700 }}><span style={{ color: '#F5A623' }}>S</span>potter</span>? Contanos.
           </p>
 
           <form onSubmit={handleSubmit}>
@@ -413,7 +413,7 @@ export default function SugerirLugar() {
         </div>
 
         <p style={{ textAlign: 'center', color: '#64748b', fontSize: '0.78rem', marginTop: '1.5rem' }}>
-          © 2026 DescubreSV · Hecho en El Salvador 🇸🇻
+          © 2026 Spotter · Hecho en El Salvador 🇸🇻
         </p>
       </div>
     </div>

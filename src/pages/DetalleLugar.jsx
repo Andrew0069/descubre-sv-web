@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { checkRateLimit } from '../lib/rateLimit'
 import { resolveImageUrl } from '../lib/imageUrl'
 import { getGradiente } from '../lib/categoriaVisual'
 import { useIdioma } from '../lib/idiomaContext'
@@ -209,7 +210,7 @@ export default function DetalleLugar() {
         .from('imagenes_lugar')
         .select('*')
         .eq('lugar_id', id)
-        .order('id', { ascending: true }),
+        .order('orden', { ascending: true }),
     ])
 
     const allLikes = allLikesRows ?? []
@@ -545,6 +546,13 @@ export default function DetalleLugar() {
       return
     }
     if (!respuestaTexto.trim() || respuestaTexto.trim().length < 5) return
+
+    const allowedRespuesta = await checkRateLimit(session.user.id, 'crear_respuesta')
+    if (allowedRespuesta === false) {
+      setToast('Demasiadas solicitudes. Espera un momento antes de continuar.')
+      return
+    }
+
     setRespuestaLoading(true)
 
     const { data: usuarioRow } = await supabase
@@ -642,6 +650,19 @@ export default function DetalleLugar() {
       setResenaError(t.errorResena)
       return
     }
+
+    const { data: { session: activeSession } } = await supabase.auth.getSession()
+    if (!activeSession?.user) {
+      setResenaError('Iniciá sesión para publicar una reseña.')
+      return
+    }
+
+    const allowedResena = await checkRateLimit(activeSession.user.id, 'crear_resena')
+    if (allowedResena === false) {
+      setToast('Demasiadas solicitudes. Espera un momento antes de continuar.')
+      return
+    }
+
     setResenaLoading(true)
 
     // Subir fotos
@@ -661,7 +682,7 @@ export default function DetalleLugar() {
     const { data: usuarioRow } = await supabase
       .from('usuarios')
       .select('id')
-      .eq('auth_id', session.user.id)
+      .eq('auth_id', activeSession.user.id)
       .maybeSingle()
 
     if (!usuarioRow) {

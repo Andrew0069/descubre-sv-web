@@ -151,6 +151,14 @@ function IconAlojamiento({ stroke, size = 22 }) {
   )
 }
 
+function IconOtros({ stroke, size = 22 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" stroke={stroke} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 const ICON_BY_NAME = {
   Playas: IconPlayas,
   'Montañas y Volcanes': IconMontanas,
@@ -182,7 +190,7 @@ const EN_TO_ES = {
 export function CategoriaIconSvg({ nombre, active, size = 22, onDark = false }) {
   const stroke = onDark ? '#FFFFFF' : active ? STROKE_ACTIVE : STROKE_IDLE
   const nombreEs = EN_TO_ES[nombre] ?? nombre
-  const Icon = (nombreEs && ICON_BY_NAME[nombreEs]) || IconTodos
+  const Icon = (nombreEs && ICON_BY_NAME[nombreEs]) || IconOtros
   return <Icon stroke={stroke} size={size} />
 }
 

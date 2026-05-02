@@ -54,7 +54,7 @@ export default function ResetPassword() {
         textAlign: 'center',
       }}>
         <h1 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#111827', marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>
-          Descubre<span style={{ color: '#0EA5E9' }}>SV</span>
+          <span style={{ color: '#F5A623' }}>S</span>potter
         </h1>
         <p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '2rem' }}>
           Ingresá tu nueva contraseña

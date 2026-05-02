@@ -1,11 +1,54 @@
 const SUBTIPOS = ['Hotel', 'Hostal', 'Airbnb', 'Restaurante', 'Bar', 'Atracción']
 
-export default function EditLugarForm({ formData, onChange, onToggleDestacado, onSave, onCancel }) {
+const fieldStyle = {
+  width: '100%',
+  minHeight: '42px',
+  border: '1px solid #d1d5db',
+  borderRadius: '8px',
+  padding: '10px 12px',
+  fontSize: '0.9rem',
+  lineHeight: 1.45,
+  color: '#111827',
+  backgroundColor: '#ffffff',
+  outline: 'none',
+  boxSizing: 'border-box',
+}
+
+const labelStyle = {
+  display: 'block',
+  marginBottom: '7px',
+  fontSize: '0.82rem',
+  fontWeight: 700,
+  color: '#374151',
+}
+
+export default function EditLugarForm({ formData, categorias = [], onChange, onToggleDestacado, onSave, onCancel }) {
   return (
-    <div className="mb-6 rounded-xl border border-gray-200 bg-gray-50 p-4">
-      <div className="grid gap-4">
+    <div style={{
+      border: '1px solid #e5e7eb',
+      borderRadius: '10px',
+      backgroundColor: '#ffffff',
+      overflow: 'hidden',
+    }}>
+      <div style={{ padding: '18px 20px', borderBottom: '1px solid #f3f4f6' }}>
+        <p style={{
+          margin: '0 0 4px',
+          fontSize: '0.74rem',
+          fontWeight: 800,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: '#9ca3af',
+        }}>
+          Información del lugar
+        </p>
+        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#111827' }}>
+          Datos editables
+        </h3>
+      </div>
+
+      <div style={{ padding: '20px', display: 'grid', gap: '18px' }}>
         <div>
-          <label className="mb-1.5 block text-[0.85rem] font-semibold text-gray-700">
+          <label style={labelStyle}>
             Nombre
           </label>
           <input
@@ -13,26 +56,67 @@ export default function EditLugarForm({ formData, onChange, onToggleDestacado, o
             name="nombre"
             value={formData.nombre}
             onChange={onChange}
-            className="w-full rounded-lg border border-gray-300 p-2.5 text-sm outline-none transition-colors focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+            style={fieldStyle}
           />
         </div>
 
         <div>
-          <label className="mb-1.5 block text-[0.85rem] font-semibold text-gray-700">
+          <label style={labelStyle}>
             Descripción
           </label>
           <textarea
             name="descripcion"
             value={formData.descripcion}
             onChange={onChange}
-            rows={4}
-            className="w-full resize-y rounded-lg border border-gray-300 p-2.5 text-sm outline-none transition-colors focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+            rows={5}
+            style={{
+              ...fieldStyle,
+              minHeight: '120px',
+              resize: 'vertical',
+            }}
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label style={labelStyle}>
+            Categoría
+          </label>
+          <select
+            name="categoria_id"
+            value={formData.categoria_id ?? ''}
+            onChange={onChange}
+            style={fieldStyle}
+          >
+            {categorias.map((categoria) => (
+              <option key={categoria.id} value={categoria.id}>{categoria.nombre}</option>
+            ))}
+            <option value="__nueva__">+ Crear nueva categoría...</option>
+          </select>
+        </div>
+
+        {formData.categoria_id === '__nueva__' && (
           <div>
-            <label className="mb-1.5 block text-[0.85rem] font-semibold text-gray-700">
+            <label style={labelStyle}>
+              Nombre de la nueva categoría
+            </label>
+            <input
+              type="text"
+              name="nueva_categoria_nombre"
+              value={formData.nueva_categoria_nombre ?? ''}
+              onChange={onChange}
+              style={fieldStyle}
+            />
+          </div>
+        )}
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+          gap: '16px',
+          alignItems: 'end',
+        }}>
+          <div style={{ minWidth: 0 }}>
+            <label style={labelStyle}>
               Precio entrada
             </label>
             <input
@@ -40,62 +124,135 @@ export default function EditLugarForm({ formData, onChange, onToggleDestacado, o
               name="precio_entrada"
               value={formData.precio_entrada}
               onChange={onChange}
-              className="w-full rounded-lg border border-gray-300 p-2.5 text-sm outline-none transition-colors focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+              style={fieldStyle}
             />
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-[0.85rem] font-semibold text-gray-700">
+          <div style={{ minWidth: 0 }}>
+            <label style={labelStyle}>
               Subtipo
             </label>
             <select
               name="subtipo"
               value={formData.subtipo}
               onChange={onChange}
-              className="w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm outline-none transition-colors focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+              style={fieldStyle}
             >
+              <option value="">-- Sin subtipo --</option>
               {SUBTIPOS.map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
           </div>
-        </div>
 
-        <label className="flex cursor-pointer items-center gap-3 pt-1">
-          <div className="relative">
-            <input
-              type="checkbox"
-              checked={formData.destacado}
-              onChange={onToggleDestacado}
-              className="sr-only"
-            />
-            <div className={`h-6 w-11 rounded-full transition-colors ${formData.destacado ? 'bg-sky-500' : 'bg-gray-300'}`} />
-            <div className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${formData.destacado ? 'translate-x-5' : 'translate-x-0'}`} />
-          </div>
-          <span className="text-[0.85rem] font-semibold text-gray-700">
-            Destacado
-            <span className={`ml-2 text-xs font-medium ${formData.destacado ? 'text-sky-500' : 'text-gray-400'}`}>
-              {formData.destacado ? 'Activo' : 'Inactivo'}
+          <label style={{
+            minHeight: '42px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            padding: '10px 12px',
+            border: '1px solid #e5e7eb',
+            borderRadius: '8px',
+            backgroundColor: '#f9fafb',
+            cursor: 'pointer',
+            boxSizing: 'border-box',
+            minWidth: 0,
+          }}>
+            <span style={{
+              minWidth: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '2px',
+              color: '#374151',
+              fontSize: '0.84rem',
+              fontWeight: 800,
+              lineHeight: 1.2,
+            }}>
+              Destacado
+              <span style={{
+                color: formData.destacado ? '#0EA5E9' : '#9ca3af',
+                fontSize: '0.74rem',
+                fontWeight: 700,
+              }}>
+                {formData.destacado ? 'Activo' : 'Inactivo'}
+              </span>
             </span>
-          </span>
-        </label>
-
-        <div className="flex items-center gap-3 pt-2">
-          <button
-            type="button"
-            onClick={onSave}
-            className="rounded-lg bg-sky-500 px-4 py-2 text-[0.85rem] font-semibold text-white transition-colors hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
-          >
-            Guardar cambios
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-[0.85rem] font-semibold text-gray-600 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2"
-          >
-            Cancelar
-          </button>
+            <span style={{ position: 'relative', width: '44px', height: '24px', flexShrink: 0 }}>
+              <input
+                type="checkbox"
+                checked={formData.destacado}
+                onChange={onToggleDestacado}
+                style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+              />
+              <span style={{
+                position: 'absolute',
+                inset: 0,
+                borderRadius: '999px',
+                backgroundColor: formData.destacado ? '#0EA5E9' : '#d1d5db',
+                transition: 'background-color 0.15s ease',
+              }} />
+              <span style={{
+                position: 'absolute',
+                top: '2px',
+                left: formData.destacado ? '22px' : '2px',
+                width: '20px',
+                height: '20px',
+                borderRadius: '999px',
+                backgroundColor: '#ffffff',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.22)',
+                transition: 'left 0.15s ease',
+              }} />
+            </span>
+          </label>
         </div>
+      </div>
+
+      <div style={{
+        display: 'flex',
+        justifyContent: 'flex-end',
+        gap: '10px',
+        padding: '14px 20px',
+        borderTop: '1px solid #f3f4f6',
+        backgroundColor: '#f9fafb',
+        flexWrap: 'wrap',
+      }}>
+        <button
+          type="button"
+          onClick={onCancel}
+          style={{
+            minWidth: '104px',
+            border: '1px solid #d1d5db',
+            borderRadius: '8px',
+            backgroundColor: '#ffffff',
+            color: '#4b5563',
+            padding: '9px 14px',
+            fontSize: '0.84rem',
+            fontWeight: 800,
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          onClick={onSave}
+          style={{
+            minWidth: '148px',
+            border: '1px solid #0EA5E9',
+            borderRadius: '8px',
+            backgroundColor: '#0EA5E9',
+            color: '#ffffff',
+            padding: '9px 16px',
+            fontSize: '0.84rem',
+            fontWeight: 800,
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Guardar cambios
+        </button>
       </div>
     </div>
   )
