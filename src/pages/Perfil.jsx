@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { getUsuarioCompleto, updateUsuarioPerfil, updateUsuarioFoto } from '../services/usuariosService'
 import { resolveImageUrl } from '../lib/imageUrl'
 import Loader from '../components/Loader'
 import './Perfil.css'
@@ -73,9 +74,7 @@ export default function Perfil() {
     if (!sess) return
     setLoading(true)
 
-    const { data: u } = await supabase
-      .from('usuarios').select('*')
-      .eq('auth_id', sess.user.id).maybeSingle()
+    const u = await getUsuarioCompleto(sess.user.id)
     if (!u) { setLoading(false); return }
     setPerfil(u)
     setEditNombre(u.nombre || '')
@@ -127,10 +126,7 @@ export default function Perfil() {
       setMsg({ type: 'error', text: 'La descripción no puede superar 200 caracteres.' }); return
     }
     setSaving(true)
-    const { error } = await supabase
-      .from('usuarios')
-      .update({ nombre: editNombre.trim(), bio: editBio.trim() })
-      .eq('auth_id', session.user.id)
+    const { error } = await updateUsuarioPerfil(session.user.id, editNombre.trim(), editBio.trim())
     setSaving(false)
     if (error) { setMsg({ type: 'error', text: 'Error al guardar.' }); return }
     setPerfil(p => ({ ...p, nombre: editNombre.trim(), bio: editBio.trim() }))
@@ -158,7 +154,7 @@ export default function Perfil() {
     if (upErr) { setMsg({ type: 'error', text: 'Error subiendo foto.' }); setSaving(false); return }
     const { data: urlD } = supabase.storage.from('avatares').getPublicUrl(path)
     const url = urlD.publicUrl
-    await supabase.from('usuarios').update({ foto_perfil: url }).eq('auth_id', session.user.id)
+    await updateUsuarioFoto(session.user.id, url)
     setPerfil(p => ({ ...p, foto_perfil: url }))
     setPhotoFile(null); setPhotoPreview('')
     setSaving(false)
@@ -168,7 +164,7 @@ export default function Perfil() {
 
   const handleRemovePhoto = async () => {
     setSaving(true); setMsg(null)
-    await supabase.from('usuarios').update({ foto_perfil: '' }).eq('auth_id', session.user.id)
+    await updateUsuarioFoto(session.user.id, '')
     setPerfil(p => ({ ...p, foto_perfil: '' }))
     setSaving(false)
     setMsg({ type: 'success', text: 'Foto eliminada.' })

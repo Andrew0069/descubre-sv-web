@@ -6,6 +6,7 @@ import { resolveImageUrl } from '../lib/imageUrl'
 import { getGradiente } from '../lib/categoriaVisual'
 import { useIdioma } from '../lib/idiomaContext'
 import { filterProfanity } from '../lib/profanityFilter'
+import { getUsuarioId, getUsuarioPerfil } from '../services/usuariosService'
 import LoginModal from '../components/LoginModal'
 import Loader from '../components/Loader'
 
@@ -150,6 +151,7 @@ export default function DetalleLugar() {
   const [userResenaLikes, setUserResenaLikes] = useState({})
   const [modalOpen, setModalOpen] = useState(false)
   const [session, setSession] = useState(null)
+  const [authReady, setAuthReady] = useState(false)
   const [resenaTitulo, setResenaTitulo] = useState('')
   const [resenaTexto, setResenaTexto] = useState('')
   const [resenaFotos, setResenaFotos] = useState([])
@@ -183,6 +185,7 @@ export default function DetalleLugar() {
     const initSession = async () => {
       const { data } = await supabase.auth.getSession()
       setSession(data.session ?? null)
+      setAuthReady(true)
     }
     initSession()
 
@@ -217,14 +220,12 @@ export default function DetalleLugar() {
 
     setLugar(lugarRow)
 
-    const { data: { session: sess } } = await supabase.auth.getSession()
-
-    const userLikePromise = sess?.user?.id
+    const userLikePromise = session?.user?.id
       ? supabase
         .from('likes_lugar')
         .select('rating')
         .eq('lugar_id', id)
-        .eq('user_id', sess.user.id)
+        .eq('user_id', session.user.id)
         .maybeSingle()
       : Promise.resolve({ data: null })
 
@@ -278,11 +279,11 @@ export default function DetalleLugar() {
         const rid = row.resena_id
         likeCountMap[rid] = (likeCountMap[rid] ?? 0) + 1
       }
-      if (sess?.user?.id) {
+      if (session?.user?.id) {
         const { data: myResenaLikes } = await supabase
           .from('likes_resena')
           .select('resena_id')
-          .eq('user_id', sess.user.id)
+          .eq('user_id', session.user.id)
           .in('resena_id', ids)
         for (const row of myResenaLikes ?? []) {
           userLikedMap[row.resena_id] = true
@@ -311,18 +312,14 @@ export default function DetalleLugar() {
     }
 
     // --- Favoritos: check user status + total count ---
-    if (sess) {
-      const { data: usuarioData } = await supabase
-        .from('usuarios')
-        .select('id')
-        .eq('auth_id', sess.user.id)
-        .maybeSingle()
-      if (usuarioData) {
+    if (session) {
+      const usuarioId = await getUsuarioId(session.user.id)
+      if (usuarioId) {
         const { data: favData } = await supabase
           .from('favoritos')
           .select('id')
           .eq('lugar_id', id)
-          .eq('usuario_id', usuarioData.id)
+          .eq('usuario_id', usuarioId)
           .maybeSingle()
         setEsFavorito(!!favData)
       }
@@ -334,17 +331,13 @@ export default function DetalleLugar() {
     setFavoritosCount(favCount || 0)
 
     // Track visit in historial_visitas
-    if (sess) {
-      const { data: uRow } = await supabase
-        .from('usuarios')
-        .select('id')
-        .eq('auth_id', sess.user.id)
-        .maybeSingle()
-      if (uRow) {
+    if (session) {
+      const usuarioId = await getUsuarioId(session.user.id)
+      if (usuarioId) {
         supabase
           .from('historial_visitas')
           .upsert(
-            { usuario_id: uRow.id, lugar_id: id, visited_at: new Date().toISOString() },
+            { usuario_id: usuarioId, lugar_id: id, visited_at: new Date().toISOString() },
             { onConflict: 'usuario_id,lugar_id' }
           )
           .then(({ error: hErr }) => {
@@ -354,7 +347,7 @@ export default function DetalleLugar() {
     }
 
     setLoading(false)
-  }, [id])
+  }, [id, session])
 
   const cargarRespuestas = useCallback(async (resenaIds) => {
     if (!resenaIds.length) return
@@ -395,14 +388,12 @@ export default function DetalleLugar() {
   }, [lightboxOpen])
 
   const handleToggleLike = useCallback(async () => {
-    // Always fetch a fresh session — React state can be null on first render
-    const { data: { session: activeSession } } = await supabase.auth.getSession()
-    if (!activeSession?.user) {
+    if (!session?.user) {
       setLoginMensaje('Guardá tus lugares favoritos y llevá El Salvador en el bolsillo.')
       setShowLoginModal(true)
       return
     }
-    const uid = activeSession.user.id
+    const uid = session.user.id
     if (userLiked) {
       const { error } = await supabase
         .from('likes_lugar')
@@ -427,25 +418,17 @@ export default function DetalleLugar() {
         setLikesCount((c) => c + 1)
       }
     }
-  }, [userLiked, id])
+  }, [userLiked, id, session])
 
   const handleToggleFavorito = useCallback(async () => {
-    console.log('handleToggleFavorito called')
-    const { data: { session } } = await supabase.auth.getSession()
-    console.log('session:', session?.user?.email)
     if (!session) {
       setLoginMensaje('Guardá tus lugares favoritos y llevá El Salvador en el bolsillo.')
       setShowLoginModal(true)
       return
     }
     const activeSession = session
-    const { data: usuarioData } = await supabase
-      .from('usuarios')
-      .select('id')
-      .eq('auth_id', activeSession.user.id)
-      .maybeSingle()
-    if (!usuarioData) return
-    const usuarioId = usuarioData.id
+    const usuarioId = await getUsuarioId(activeSession.user.id)
+    if (!usuarioId) return
 
     if (esFavorito) {
       await supabase
@@ -462,7 +445,7 @@ export default function DetalleLugar() {
       setEsFavorito(true)
       setFavoritosCount((prev) => prev + 1)
     }
-  }, [esFavorito, id])
+  }, [esFavorito, id, session])
 
   const refreshLugarRatings = useCallback(async () => {
     const { data: allRows } = await supabase
@@ -480,13 +463,12 @@ export default function DetalleLugar() {
         : null,
     )
 
-    const { data: { session: s } } = await supabase.auth.getSession()
-    if (s?.user?.id) {
+    if (session?.user?.id) {
       const { data: mine } = await supabase
         .from('likes_lugar')
         .select('rating')
         .eq('lugar_id', id)
-        .eq('user_id', s.user.id)
+        .eq('user_id', session.user.id)
         .maybeSingle()
       setUserLiked(!!mine)
       setUserRating(mine?.rating != null ? Number(mine.rating) : null)
@@ -494,17 +476,16 @@ export default function DetalleLugar() {
       setUserLiked(false)
       setUserRating(null)
     }
-  }, [id])
+  }, [id, session])
 
   const handleRatingClick = useCallback(
     async (valor) => {
-      const { data: { session: activeSession } } = await supabase.auth.getSession()
-      if (!activeSession?.user) {
+      if (!session?.user) {
         setLoginMensaje('Iniciá sesión para calificar este lugar.')
         setShowLoginModal(true)
         return
       }
-      const uid = activeSession.user.id
+      const uid = session.user.id
       const prevRating = userRating
 
       if (userRating === valor) {
@@ -539,7 +520,7 @@ export default function DetalleLugar() {
         }
       }
     },
-    [userRating, id, refreshLugarRatings],
+    [userRating, id, refreshLugarRatings, session],
   )
 
   const handleToggleResenaLike = useCallback(
@@ -576,19 +557,14 @@ export default function DetalleLugar() {
           // Notificar al dueño (si es otro usuario)
           const resena = resenas.find((r) => r.id === resenaId)
           if (resena && resena.usuario_id) {
-            const { data: actorRow } = await supabase
-              .from('usuarios')
-              .select('id')
-              .eq('auth_id', session.user.id)
-              .maybeSingle()
-            if (actorRow && actorRow.id !== resena.usuario_id) {
+            const actorId = await getUsuarioId(session.user.id)
+            if (actorId && actorId !== resena.usuario_id) {
               const { error: notifError } = await supabase.from('notificaciones').insert({
                 usuario_id: resena.usuario_id,
                 tipo: 'like',
                 resena_id: resenaId,
-                actor_id: actorRow.id,
+                actor_id: actorId,
               })
-              console.log('[notif insert]', notifError ?? 'OK')
             }
           }
         }
@@ -598,8 +574,7 @@ export default function DetalleLugar() {
   )
 
   const handleResponder = useCallback(async (resenaId, duenioResenaId) => {
-    const { data: { session: activeSession } } = await supabase.auth.getSession()
-    if (!activeSession?.user) {
+    if (!session?.user) {
       setLoginMensaje('Iniciá sesión para responder reseñas.')
       setShowLoginModal(true)
       return
@@ -608,7 +583,7 @@ export default function DetalleLugar() {
     const texto = respuestaTexto.trim()
     if (!texto || texto.length < 5) return
 
-    const allowedRespuesta = await checkRateLimit(activeSession.user.id, 'crear_respuesta')
+    const allowedRespuesta = await checkRateLimit(session.user.id, 'crear_respuesta')
     if (allowedRespuesta === false) {
       setToast('Demasiadas solicitudes. Espera un momento antes de continuar.')
       return
@@ -616,11 +591,7 @@ export default function DetalleLugar() {
 
     setRespuestaLoading(true)
 
-    const { data: usuarioRow } = await supabase
-      .from('usuarios')
-      .select('id, nombre, avatar_url')
-      .eq('auth_id', activeSession.user.id)
-      .maybeSingle()
+    const usuarioRow = await getUsuarioPerfil(session.user.id)
 
     if (!usuarioRow) { setRespuestaLoading(false); return }
 
@@ -667,7 +638,7 @@ export default function DetalleLugar() {
     setRespuestaTexto('')
     setRespuestaAbierta(null)
     setRespuestaLoading(false)
-  }, [respuestaTexto])
+  }, [respuestaTexto, session])
 
   const handleFotos = (e) => {
     const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -718,13 +689,12 @@ export default function DetalleLugar() {
       return
     }
 
-    const { data: { session: activeSession } } = await supabase.auth.getSession()
-    if (!activeSession?.user) {
+    if (!session?.user) {
       setResenaError('Iniciá sesión para publicar una reseña.')
       return
     }
 
-    const allowedResena = await checkRateLimit(activeSession.user.id, 'crear_resena')
+    const allowedResena = await checkRateLimit(session.user.id, 'crear_resena')
     if (allowedResena === false) {
       setToast('Demasiadas solicitudes. Espera un momento antes de continuar.')
       return
@@ -746,11 +716,7 @@ export default function DetalleLugar() {
     }
 
     // Insertar reseña
-    const { data: usuarioRow } = await supabase
-      .from('usuarios')
-      .select('id, nombre, avatar_url')
-      .eq('auth_id', activeSession.user.id)
-      .maybeSingle()
+    const usuarioRow = await getUsuarioPerfil(session.user.id)
 
     if (!usuarioRow) {
       setResenaError('No se encontró tu perfil. Intentá cerrar sesión y volver a entrar.')

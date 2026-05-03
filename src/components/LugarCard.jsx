@@ -4,6 +4,7 @@ import { getCategoriaBadgeBackground, getGradiente } from '../lib/categoriaVisua
 import { resolveImageUrl } from '../lib/imageUrl'
 import { CategoriaIconSvg } from './CategoriaChip'
 import { supabase } from '../lib/supabase'
+import { getUsuarioId } from '../services/usuariosService'
 
 const TROPICAL_GRADIENT = 'linear-gradient(135deg, #0EA5E9 0%, #06b6d4 50%, #f59e0b 100%)'
 
@@ -82,19 +83,15 @@ function LugarCard({ lugar, isFeatured }) {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
 
-      const { data: usuarioData } = await supabase
-        .from('usuarios')
-        .select('id')
-        .eq('auth_id', session.user.id)
-        .maybeSingle()
+      const usuarioId = await getUsuarioId(session.user.id)
 
-      if (!usuarioData) return
+      if (!usuarioId) return
 
       const { data } = await supabase
         .from('favoritos')
         .select('id')
         .eq('lugar_id', lugar.id)
-        .eq('usuario_id', usuarioData.id)
+        .eq('usuario_id', usuarioId)
         .maybeSingle()
 
       setEsFavorito(!!data)
@@ -113,26 +110,22 @@ function LugarCard({ lugar, isFeatured }) {
       return
     }
 
-    const { data: usuarioData } = await supabase
-      .from('usuarios')
-      .select('id')
-      .eq('auth_id', session.user.id)
-      .maybeSingle()
+    const usuarioId = await getUsuarioId(session.user.id)
 
-    if (!usuarioData) return
+    if (!usuarioId) return
 
     if (esFavorito) {
       await supabase
         .from('favoritos')
         .delete()
         .eq('lugar_id', lugar.id)
-        .eq('usuario_id', usuarioData.id)
+        .eq('usuario_id', usuarioId)
       setEsFavorito(false)
       setCount((prev) => Math.max(0, prev - 1))
     } else {
       await supabase
         .from('favoritos')
-        .insert({ lugar_id: lugar.id, usuario_id: usuarioData.id })
+        .insert({ lugar_id: lugar.id, usuario_id: usuarioId })
       setEsFavorito(true)
       setCount((prev) => prev + 1)
     }

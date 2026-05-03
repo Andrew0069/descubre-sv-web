@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { getUsuarioBloqueado } from '../services/usuariosService'
 import { normalizeEmail, validateSignupEmail, validateStrongPassword } from '../lib/authValidation'
 
 const MSG_BLOQUEO =
@@ -47,18 +48,14 @@ export default function Login() {
     }
     let cancelled = false
     const t = setTimeout(async () => {
-      const { data, error: qErr } = await supabase
-        .from('usuarios')
-        .select('bloqueado')
-        .eq('email', normalized)
-        .maybeSingle()
+      const { data: userData, error: qErr } = await getUsuarioBloqueado(normalized)
       if (cancelled) return
       if (qErr) {
         console.error('[Login] bloqueado check:', qErr)
         setCuentaBloqueada(false)
         return
       }
-      setCuentaBloqueada(data?.bloqueado === true)
+      setCuentaBloqueada(userData?.bloqueado === true)
     }, 400)
     return () => {
       cancelled = true

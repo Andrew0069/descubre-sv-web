@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { getUsuarioId } from '../services/usuariosService'
 
 const initialForm = {
   nombre: '',
@@ -50,15 +51,7 @@ export default function SugerirLugar() {
     setLoading(true)
 
     // Get internal usuario_id
-    let usuarioId = null
-    if (session?.user?.id) {
-      const { data: uData } = await supabase
-        .from('usuarios')
-        .select('id')
-        .eq('auth_id', session.user.id)
-        .maybeSingle()
-      if (uData) usuarioId = uData.id
-    }
+    const usuarioId = session?.user?.id ? await getUsuarioId(session.user.id) : null
 
     const payload = {
       nombre,

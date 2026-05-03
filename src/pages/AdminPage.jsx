@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { getUsuarioAdmin, getUsuarioId } from '../services/usuariosService'
 import { resolveImageUrl } from '../lib/imageUrl'
 import EditLugarForm from '../components/EditLugarForm'
 
@@ -600,11 +601,7 @@ export default function AdminPage() {
     const check = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) { navigate('/'); return }
-      const { data: usuario } = await supabase
-        .from('usuarios')
-        .select('id, is_admin')
-        .eq('auth_id', session.user.id)
-        .maybeSingle()
+      const usuario = await getUsuarioAdmin(session.user.id)
       if (!usuario?.is_admin) { navigate('/'); return }
       setAdminId(usuario.id)
       setChecking(false)
@@ -803,14 +800,10 @@ export default function AdminPage() {
       return
     }
 
-    const { data: usuario, error: usuarioError } = await supabase
-      .from('usuarios')
-      .select('id')
-      .eq('auth_id', user.id)
-      .maybeSingle()
+    const usuario = await getUsuarioId(user.id)
 
-    if (usuarioError || !usuario?.id) {
-      console.error(usuarioError)
+    if (!usuario) {
+      console.error('Error: no se pudo encontrar id del usuario')
       showToast('Error al crear el lugar')
       setCreatingLugar(false)
       return
@@ -869,7 +862,7 @@ export default function AdminPage() {
       destacado: newLugarForm.destacado,
       latitud: Number(newLugarForm.latitud) || 0,
       longitud: Number(newLugarForm.longitud) || 0,
-      usuario_id: usuario.id,
+      usuario_id: usuario,
       aprobado: true,
       promedio_estrellas: 0,
       total_resenas: 0,

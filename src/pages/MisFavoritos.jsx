@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { getUsuarioId } from '../services/usuariosService'
 import { resolveImageUrl } from '../lib/imageUrl'
 import { getGradiente } from '../lib/categoriaVisual'
 import { CategoriaIconSvg } from '../components/CategoriaChip'
@@ -140,13 +141,9 @@ export default function MisFavoritos() {
       }
 
       // Get internal usuario_id
-      const { data: usuarioData } = await supabase
-        .from('usuarios')
-        .select('id')
-        .eq('auth_id', sess.user.id)
-        .maybeSingle()
+      const usuarioId = await getUsuarioId(sess.user.id)
 
-      if (!usuarioData) {
+      if (!usuarioId) {
         setLoading(false)
         return
       }
@@ -155,7 +152,7 @@ export default function MisFavoritos() {
       const { data } = await supabase
         .from('favoritos')
         .select('lugar_id, lugares(id, nombre, descripcion, imagen_principal, precio_entrada, departamentos(nombre))')
-        .eq('usuario_id', usuarioData.id)
+        .eq('usuario_id', usuarioId)
         .order('created_at', { ascending: false })
 
       setFavoritos(data ?? [])
