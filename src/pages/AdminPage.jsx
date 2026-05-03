@@ -30,6 +30,8 @@ const DEPARTAMENTOS = [
   { label: 'Usulután', value: 'b0000000-0000-0000-0000-000000000005' },
 ]
 
+const DEFAULT_CATEGORY_COLOR = '#2196F3'
+
 const emptyNewLugarForm = {
   nombre: '',
   descripcion: '',
@@ -37,6 +39,8 @@ const emptyNewLugarForm = {
   departamento_id: DEPARTAMENTOS[0].value,
   categoria_id: '',
   nueva_categoria_nombre: '',
+  categoria_color: DEFAULT_CATEGORY_COLOR,
+  nueva_categoria_color: DEFAULT_CATEGORY_COLOR,
   precio_entrada: '',
   subtipo: '',
   destacado: false,
@@ -213,7 +217,13 @@ function NewLugarForm({ formData, categorias = [], isSaving, onChange, onToggleD
         </div>
 
         {formData.categoria_id === '__nueva__' && (
-          <div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr) 120px',
+            gap: '16px',
+            alignItems: 'end',
+          }}>
+            <div>
             <label style={createLabelStyle}>
               Nombre de la nueva categoría
             </label>
@@ -223,6 +233,34 @@ function NewLugarForm({ formData, categorias = [], isSaving, onChange, onToggleD
               value={formData.nueva_categoria_nombre}
               onChange={onChange}
               style={createFieldStyle}
+            />
+            </div>
+            <div>
+              <label style={createLabelStyle}>
+                Color
+              </label>
+              <input
+                type="color"
+                name="nueva_categoria_color"
+                value={formData.nueva_categoria_color || DEFAULT_CATEGORY_COLOR}
+                onChange={onChange}
+                style={{ ...createFieldStyle, padding: '4px 6px', cursor: 'pointer' }}
+              />
+            </div>
+          </div>
+        )}
+
+        {formData.categoria_id !== '__nueva__' && (
+          <div>
+            <label style={createLabelStyle}>
+              Color de la categoria
+            </label>
+            <input
+              type="color"
+              name="categoria_color"
+              value={formData.categoria_color || DEFAULT_CATEGORY_COLOR}
+              onChange={onChange}
+              style={{ ...createFieldStyle, width: '120px', padding: '4px 6px', cursor: 'pointer' }}
             />
           </div>
         )}
@@ -429,6 +467,8 @@ export default function AdminPage() {
     descripcion: '',
     categoria_id: '',
     nueva_categoria_nombre: '',
+    categoria_color: DEFAULT_CATEGORY_COLOR,
+    nueva_categoria_color: DEFAULT_CATEGORY_COLOR,
     precio_entrada: '',
     subtipo: '',
     destacado: false,
@@ -453,7 +493,7 @@ export default function AdminPage() {
   const cargarCategorias = useCallback(async () => {
     const { data, error } = await supabase
       .from('categorias')
-      .select('id, nombre')
+      .select('id, nombre, color')
       .order('nombre')
 
     if (error) {
@@ -612,7 +652,11 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (newLugarForm.categoria_id || categorias.length === 0) return
-    setNewLugarForm((prev) => ({ ...prev, categoria_id: categorias[0].id }))
+    setNewLugarForm((prev) => ({
+      ...prev,
+      categoria_id: categorias[0].id,
+      categoria_color: categorias[0].color || DEFAULT_CATEGORY_COLOR,
+    }))
   }, [categorias, newLugarForm.categoria_id])
 
   useEffect(() => {
@@ -659,6 +703,8 @@ export default function AdminPage() {
         descripcion: '',
         categoria_id: '',
         nueva_categoria_nombre: '',
+        categoria_color: DEFAULT_CATEGORY_COLOR,
+        nueva_categoria_color: DEFAULT_CATEGORY_COLOR,
         precio_entrada: '',
         subtipo: '',
         destacado: false,
@@ -666,34 +712,62 @@ export default function AdminPage() {
       return
     }
 
+    const categoria = categorias.find((item) => item.id === lugarSeleccionado.categoria_id)
     setFormData({
       nombre: lugarSeleccionado.nombre ?? '',
       descripcion: lugarSeleccionado.descripcion ?? '',
       categoria_id: lugarSeleccionado.categoria_id ?? '',
       nueva_categoria_nombre: '',
+      categoria_color: categoria?.color || DEFAULT_CATEGORY_COLOR,
+      nueva_categoria_color: DEFAULT_CATEGORY_COLOR,
       precio_entrada: lugarSeleccionado.precio_entrada ?? '',
       subtipo: lugarSeleccionado.subtipo ?? '',
       destacado: lugarSeleccionado.destacado ?? false,
     })
-  }, [lugarSeleccionado])
+  }, [categorias, lugarSeleccionado])
 
   const handleFormChange = (e) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setFormData((prev) => {
+      if (name === 'categoria_id') {
+        const categoria = categorias.find((item) => item.id === value)
+        return {
+          ...prev,
+          categoria_id: value,
+          categoria_color: categoria?.color || DEFAULT_CATEGORY_COLOR,
+          nueva_categoria_color: DEFAULT_CATEGORY_COLOR,
+        }
+      }
+      return { ...prev, [name]: value }
+    })
   }
 
   const handleNewLugarChange = (e) => {
     const { name, value } = e.target
-    setNewLugarForm((prev) => ({ ...prev, [name]: value }))
+    setNewLugarForm((prev) => {
+      if (name === 'categoria_id') {
+        const categoria = categorias.find((item) => item.id === value)
+        return {
+          ...prev,
+          categoria_id: value,
+          categoria_color: categoria?.color || DEFAULT_CATEGORY_COLOR,
+          nueva_categoria_color: DEFAULT_CATEGORY_COLOR,
+        }
+      }
+      return { ...prev, [name]: value }
+    })
   }
 
   const handleCancelarEdicion = () => {
     if (!lugarSeleccionado) return
+    const categoria = categorias.find((item) => item.id === lugarSeleccionado.categoria_id)
     setFormData({
       nombre: lugarSeleccionado.nombre ?? '',
       descripcion: lugarSeleccionado.descripcion ?? '',
       categoria_id: lugarSeleccionado.categoria_id ?? '',
       nueva_categoria_nombre: '',
+      categoria_color: categoria?.color || DEFAULT_CATEGORY_COLOR,
+      nueva_categoria_color: DEFAULT_CATEGORY_COLOR,
       precio_entrada: lugarSeleccionado.precio_entrada ?? '',
       subtipo: lugarSeleccionado.subtipo ?? '',
       destacado: lugarSeleccionado.destacado ?? false,
@@ -754,8 +828,11 @@ export default function AdminPage() {
 
       const { data: categoriaCreada, error: categoriaError } = await supabase
         .from('categorias')
-        .insert({ nombre: nombreNuevaCategoria })
-        .select('id, nombre')
+        .insert({
+          nombre: nombreNuevaCategoria,
+          color: newLugarForm.nueva_categoria_color || DEFAULT_CATEGORY_COLOR,
+        })
+        .select('id, nombre, color')
         .single()
 
       if (categoriaError || !categoriaCreada?.id) {
@@ -766,6 +843,18 @@ export default function AdminPage() {
       }
 
       categoriaId = categoriaCreada.id
+      await cargarCategorias()
+    } else if (categoriaId && newLugarForm.categoria_color) {
+      const { error: colorError } = await supabase
+        .from('categorias')
+        .update({ color: newLugarForm.categoria_color })
+        .eq('id', categoriaId)
+      if (colorError) {
+        console.error(colorError)
+        showToast('Error al actualizar el color de la categoria')
+        setCreatingLugar(false)
+        return
+      }
       await cargarCategorias()
     }
 
@@ -859,8 +948,11 @@ export default function AdminPage() {
 
       const { data: categoriaCreada, error: categoriaError } = await supabase
         .from('categorias')
-        .insert({ nombre: nombreNuevaCategoria })
-        .select('id, nombre')
+        .insert({
+          nombre: nombreNuevaCategoria,
+          color: formData.nueva_categoria_color || DEFAULT_CATEGORY_COLOR,
+        })
+        .select('id, nombre, color')
         .single()
 
       if (categoriaError || !categoriaCreada?.id) {
@@ -870,6 +962,17 @@ export default function AdminPage() {
       }
 
       categoriaId = categoriaCreada.id
+      await cargarCategorias()
+    } else if (categoriaId && formData.categoria_color) {
+      const { error: colorError } = await supabase
+        .from('categorias')
+        .update({ color: formData.categoria_color })
+        .eq('id', categoriaId)
+      if (colorError) {
+        console.error(colorError)
+        showToast('Error al actualizar el color de la categoria')
+        return
+      }
       await cargarCategorias()
     }
 
@@ -909,6 +1012,8 @@ export default function AdminPage() {
       ...prev,
       categoria_id: payload.categoria_id ?? '',
       nueva_categoria_nombre: '',
+      categoria_color: formData.categoria_color || DEFAULT_CATEGORY_COLOR,
+      nueva_categoria_color: DEFAULT_CATEGORY_COLOR,
     }))
     setLugarSeleccionado(lugarActualizado)
     setLugares((prev) => prev.map((lugar) => (
@@ -921,6 +1026,12 @@ export default function AdminPage() {
     if (!lugarSeleccionado || deletingLugar) return
     setDeletingLugar(true)
 
+    if (!adminId) {
+      showToast('No se encontro el admin autenticado')
+      setDeletingLugar(false)
+      return
+    }
+
     const bucketPrefix = '/object/public/lugares-fotos/'
 
     const { data: imgs } = await supabase
@@ -928,26 +1039,41 @@ export default function AdminPage() {
       .select('ruta_imagen')
       .eq('lugar_id', lugarSeleccionado.id)
 
-    if (imgs && imgs.length > 0) {
-      const paths = imgs
-        .map((img) => {
-          const idx = (img.ruta_imagen ?? '').indexOf(bucketPrefix)
-          return idx !== -1 ? img.ruta_imagen.substring(idx + bucketPrefix.length) : null
-        })
-        .filter(Boolean)
-      if (paths.length > 0) {
-        await supabase.storage.from('lugares-fotos').remove(paths)
-      }
+    const paths = (imgs ?? [])
+      .map((img) => {
+        const value = img.ruta_imagen ?? ''
+        const idx = value.indexOf(bucketPrefix)
+        return idx !== -1 ? value.substring(idx + bucketPrefix.length) : value
+      })
+      .filter(Boolean)
+
+    const { error: ownerError } = await supabase
+      .from('lugares')
+      .update({ usuario_id: adminId })
+      .eq('id', lugarSeleccionado.id)
+
+    if (ownerError) {
+      console.error(ownerError)
+      showToast('Error al preparar el lugar para eliminar')
+      setDeletingLugar(false)
+      return
     }
 
-    await supabase.from('imagenes_lugar').delete().eq('lugar_id', lugarSeleccionado.id)
+    const { data: deletedRows, error: deleteError } = await supabase
+      .from('lugares')
+      .delete()
+      .eq('id', lugarSeleccionado.id)
+      .select('id')
 
-    const { error } = await supabase.from('lugares').delete().eq('id', lugarSeleccionado.id)
-    if (error) {
-      console.error(error)
+    if (deleteError || !deletedRows?.length) {
+      console.error(deleteError ?? new Error('No se elimino ninguna fila'))
       showToast('Error al eliminar el lugar')
       setDeletingLugar(false)
       return
+    }
+
+    if (paths.length > 0) {
+      await supabase.storage.from('lugares-fotos').remove(paths)
     }
 
     await insertAdminLog({

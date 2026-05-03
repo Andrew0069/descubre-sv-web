@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getGradiente } from '../lib/categoriaVisual'
+import { getCategoriaBadgeBackground, getGradiente } from '../lib/categoriaVisual'
 import { resolveImageUrl } from '../lib/imageUrl'
 import { CategoriaIconSvg } from './CategoriaChip'
 import { supabase } from '../lib/supabase'
@@ -40,7 +40,7 @@ export default function LugarCard({ lugar, isFeatured }) {
   const img = resolveImageUrl(imagenPrincipal || imagenRelacionada, 'lugares-fotos')
   const showImage = Boolean(img) && !imageError
   const precio = lugar.precio_entrada ?? null
-  const catBg = cat ? getGradiente(cat.nombre) : TROPICAL_GRADIENT
+  const catBg = cat ? getCategoriaBadgeBackground(cat) : TROPICAL_GRADIENT
 
   useEffect(() => {
     setImageError(false)

@@ -23,6 +23,7 @@ const HERO_OVERLAY =
 function CatButton({ label, emoji, svgNombre, active, onClick }) {
   const ref = useRef(null)
   const [hov, setHov] = useState(false)
+  const [pressed, setPressed] = useState(false)
 
   useEffect(() => {
     if (active && ref.current) {
@@ -31,10 +32,18 @@ function CatButton({ label, emoji, svgNombre, active, onClick }) {
   }, [active])
 
   const bg = active
-    ? 'rgba(14,165,233,0.1)'
+    ? 'rgba(14,165,233,0.13)'
     : hov
-      ? 'rgba(14,165,233,0.06)'
+      ? 'rgba(14,165,233,0.07)'
       : 'transparent'
+
+  const scale = pressed ? 0.88 : hov ? 1.07 : 1
+
+  const shadow = active
+    ? '0 2px 8px rgba(14,165,233,0.18)'
+    : hov
+      ? '0 2px 8px rgba(0,0,0,0.08)'
+      : 'none'
 
   return (
     <button
@@ -42,7 +51,11 @@ function CatButton({ label, emoji, svgNombre, active, onClick }) {
       type="button"
       onClick={onClick}
       onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
+      onMouseLeave={() => { setHov(false); setPressed(false) }}
+      onMouseDown={() => setPressed(true)}
+      onMouseUp={() => setPressed(false)}
+      onTouchStart={() => setPressed(true)}
+      onTouchEnd={() => setPressed(false)}
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -55,7 +68,11 @@ function CatButton({ label, emoji, svgNombre, active, onClick }) {
         borderBottom: active ? '2px solid #0EA5E9' : '2px solid transparent',
         cursor: 'pointer',
         flexShrink: 0,
-        transition: 'background-color 0.2s ease',
+        transform: `scale(${scale})`,
+        boxShadow: shadow,
+        transition: 'background-color 0.18s ease, transform 0.12s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s ease, border-color 0.18s ease',
+        userSelect: 'none',
+        WebkitTapHighlightColor: 'transparent',
       }}
     >
       {emoji ? (
@@ -65,9 +82,10 @@ function CatButton({ label, emoji, svgNombre, active, onClick }) {
       )}
       <span style={{
         fontSize: '0.72rem',
-        fontWeight: 500,
-        color: active ? '#0EA5E9' : '#6b7280',
+        fontWeight: active ? 600 : 500,
+        color: active ? '#0EA5E9' : hov ? '#0EA5E9' : '#6b7280',
         whiteSpace: 'nowrap',
+        transition: 'color 0.18s ease',
       }}>
         {label}
       </span>
@@ -213,7 +231,7 @@ export default function Home() {
 
     const { data, error: err } = await supabase
       .from('lugares')
-      .select('id, nombre, categoria_id, subtipo, destacado, imagen_principal, precio_entrada, updated_at, categorias(nombre), departamentos(nombre), imagenes_lugar(ruta_imagen, orden)')
+      .select('id, nombre, categoria_id, subtipo, destacado, imagen_principal, precio_entrada, updated_at, categorias(nombre, color), departamentos(nombre), imagenes_lugar(ruta_imagen, orden)')
       .order('destacado', { ascending: false, nullsFirst: false })
       .order('updated_at', { ascending: false })
 
@@ -268,7 +286,7 @@ export default function Home() {
       ; (async () => {
         const { data, error: err } = await supabase
           .from('categorias')
-          .select('id, nombre, es_predefinida')
+          .select('id, nombre, color, es_predefinida')
           .order('nombre', { ascending: true })
         if (!cancelled) {
           if (err) {
@@ -333,10 +351,10 @@ export default function Home() {
           navigate('/sugerir-lugar')
           break
         case 'Privacidad':
-          showToast(t.privacidadProx)
+          navigate('/privacidad')
           break
         case 'Términos':
-          showToast(t.terminosProx)
+          navigate('/terminos')
           break
         default:
           break

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { normalizeEmail, validateSignupEmail, validateStrongPassword } from '../lib/authValidation'
 
 const MSG_BLOQUEO =
   "Tu cuenta ha sido bloqueada por seguridad. Usa '¿Olvidaste tu contraseña?' para desbloquearla."
@@ -39,7 +40,7 @@ export default function Login() {
   const [cuentaBloqueada, setCuentaBloqueada] = useState(false)
 
   useEffect(() => {
-    const normalized = email.trim().toLowerCase()
+    const normalized = normalizeEmail(email)
     if (!normalized.includes('@')) {
       setCuentaBloqueada(false)
       return
@@ -83,7 +84,21 @@ export default function Login() {
     }
 
     if (isSignUp) {
-      const { error: signUpErr } = await supabase.auth.signUp({ email, password })
+      const emailError = validateSignupEmail(email)
+      if (emailError) {
+        setError(emailError)
+        setLoading(false)
+        return
+      }
+
+      const passwordError = validateStrongPassword(password)
+      if (passwordError) {
+        setError(passwordError)
+        setLoading(false)
+        return
+      }
+
+      const { error: signUpErr } = await supabase.auth.signUp({ email: normalizeEmail(email), password })
       if (signUpErr) setError(signUpErr.message)
       else setSuccess('¡Cuenta creada! Revisá tu correo para confirmar.')
       setLoading(false)
@@ -94,7 +109,7 @@ export default function Login() {
     if (signInErr) {
       if (esCredencialesInvalidasAuth(signInErr)) {
         const { data: rpcData, error: rpcErr } = await supabase.rpc('registrar_intento_fallido', {
-          p_email: email.trim().toLowerCase(),
+          p_email: normalizeEmail(email),
         })
         if (rpcErr) {
           console.error('[Login] registrar_intento_fallido:', rpcErr)

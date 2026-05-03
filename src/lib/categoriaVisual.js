@@ -35,6 +35,15 @@ export function getGradiente(categoriaNombre) {
   return gradientes[nombre] ?? gradienteDefault
 }
 
+export function isHexColor(value) {
+  return /^#[0-9A-Fa-f]{6}$/.test(String(value ?? ''))
+}
+
+export function getCategoriaBadgeBackground(categoria) {
+  if (isHexColor(categoria?.color)) return categoria.color
+  return getGradiente(categoria?.nombre)
+}
+
 /** Orden visual de chips (coincide con el diseño). */
 export const ORDEN_CATEGORIAS = [
   'Playas',

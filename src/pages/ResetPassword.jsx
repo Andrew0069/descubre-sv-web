@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { validateStrongPassword } from '../lib/authValidation'
 
 export default function ResetPassword() {
   const navigate = useNavigate()
@@ -14,7 +15,8 @@ export default function ResetPassword() {
     setError('')
     if (!password || !confirm) { setError('Completá ambos campos.'); return }
     if (password !== confirm) { setError('Las contraseñas no coinciden.'); return }
-    if (password.length < 6) { setError('Mínimo 6 caracteres.'); return }
+    const passwordError = validateStrongPassword(password)
+    if (passwordError) { setError(passwordError); return }
 
     setLoading(true)
     const { error } = await supabase.auth.updateUser({ password })

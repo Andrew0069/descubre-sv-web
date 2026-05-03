@@ -9,6 +9,8 @@ import SugerirLugar from './pages/SugerirLugar'
 import NotFound from './pages/NotFound'
 import AdminPage from './pages/AdminPage'
 import MisFavoritos from './pages/MisFavoritos'
+import PrivacyPage from './pages/PrivacyPage'
+import TermsPage from './pages/TermsPage'
 
 function AnimatedRoutes() {
   const location = useLocation()
@@ -65,6 +67,8 @@ function AnimatedRoutes() {
           <Route path="/sugerir-lugar" element={<SugerirLugar />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/favoritos" element={<MisFavoritos />} />
+          <Route path="/privacidad" element={<PrivacyPage />} />
+          <Route path="/terminos" element={<TermsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>

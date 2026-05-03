@@ -5,6 +5,7 @@ import { checkRateLimit } from '../lib/rateLimit'
 import { resolveImageUrl } from '../lib/imageUrl'
 import { getGradiente } from '../lib/categoriaVisual'
 import { useIdioma } from '../lib/idiomaContext'
+import { filterProfanity } from '../lib/profanityFilter'
 import LoginModal from '../components/LoginModal'
 
 function formatRelativeEs(dateString) {
@@ -563,12 +564,14 @@ export default function DetalleLugar() {
 
     if (!usuarioRow) { setRespuestaLoading(false); return }
 
+    const contenidoRespuesta = filterProfanity(respuestaTexto.trim())
+
     const { error } = await supabase
       .from('respuestas_resena')
       .insert({
         resena_id: resenaId,
         usuario_id: usuarioRow.id,
-        contenido: respuestaTexto.trim(),
+        contenido: contenidoRespuesta,
       })
 
     if (error) { setRespuestaLoading(false); return }
@@ -589,7 +592,7 @@ export default function DetalleLugar() {
       id: crypto.randomUUID(),
       resena_id: resenaId,
       usuario_id: usuarioRow.id,
-      contenido: respuestaTexto.trim(),
+      contenido: contenidoRespuesta,
       created_at: new Date().toISOString(),
       usuarios: { nombre: usuarioRow.nombre ?? 'Tú' },
     }
@@ -691,11 +694,13 @@ export default function DetalleLugar() {
       return
     }
 
+    const contenidoResena = filterProfanity(resenaTexto.trim())
+
     const { error: insertError } = await supabase.from('resenas').insert({
       lugar_id: id,
       usuario_id: usuarioRow.id,
-      titulo: resenaTexto.trim().slice(0, 60),
-      contenido: resenaTexto.trim(),
+      titulo: contenidoResena.slice(0, 60),
+      contenido: contenidoResena,
       estrellas: userRating ?? 5,
       fotos: urlsFotos,
     })
