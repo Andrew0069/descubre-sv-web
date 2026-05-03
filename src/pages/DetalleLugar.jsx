@@ -33,6 +33,41 @@ function formatRelativeEs(dateString) {
 }
 
 
+function AvatarImg({ src, nombre, size = 36, fontSize = '0.85rem' }) {
+  const [failed, setFailed] = useState(false)
+  const inicial = (nombre || '?').charAt(0).toUpperCase()
+
+  if (!src || failed) {
+    return (
+      <div style={{
+        width: `${size}px`, height: `${size}px`,
+        borderRadius: '50%', backgroundColor: '#0EA5E9',
+        color: '#ffffff', display: 'flex',
+        alignItems: 'center', justifyContent: 'center',
+        fontSize, fontWeight: 700, flexShrink: 0,
+      }}>
+        {inicial}
+      </div>
+    )
+  }
+
+  return (
+    <img
+      src={src}
+      alt={nombre}
+      referrerPolicy="no-referrer"
+      crossOrigin="anonymous"
+      onError={() => setFailed(true)}
+      style={{
+        width: `${size}px`, height: `${size}px`,
+        borderRadius: '50%', objectFit: 'cover',
+        flexShrink: 0, border: '2px solid #e5e7eb',
+      }}
+    />
+  )
+}
+
+
 function HeartIcon({ filled = false, size = 16 }) {
   return (
     <svg
@@ -114,6 +149,7 @@ export default function DetalleLugar() {
   const [userResenaLikes, setUserResenaLikes] = useState({})
   const [modalOpen, setModalOpen] = useState(false)
   const [session, setSession] = useState(null)
+  const [resenaTitulo, setResenaTitulo] = useState('')
   const [resenaTexto, setResenaTexto] = useState('')
   const [resenaFotos, setResenaFotos] = useState([])
   const [resenaPreview, setResenaPreview] = useState([])
@@ -199,7 +235,7 @@ export default function DetalleLugar() {
     ] = await Promise.all([
       supabase
         .from('resenas')
-        .select('*, usuarios(nombre)')
+        .select('*, usuarios(nombre, avatar_url)')
         .eq('lugar_id', id)
         .order('created_at', { ascending: false }),
       supabase
@@ -262,7 +298,7 @@ export default function DetalleLugar() {
     if (idsResenas.length > 0) {
       const { data: respData } = await supabase
         .from('respuestas_resena')
-        .select('*, usuarios(nombre)')
+        .select('*, usuarios(nombre, avatar_url)')
         .in('resena_id', idsResenas)
         .order('created_at', { ascending: true })
       const rmap = {}
@@ -279,7 +315,7 @@ export default function DetalleLugar() {
         .from('usuarios')
         .select('id')
         .eq('auth_id', sess.user.id)
-        .single()
+        .maybeSingle()
       if (usuarioData) {
         const { data: favData } = await supabase
           .from('favoritos')
@@ -303,7 +339,7 @@ export default function DetalleLugar() {
     if (!resenaIds.length) return
     const { data } = await supabase
       .from('respuestas_resena')
-      .select('*, usuarios(nombre)')
+      .select('*, usuarios(nombre, avatar_url)')
       .in('resena_id', resenaIds)
       .order('created_at', { ascending: true })
     const map = {}
@@ -386,7 +422,7 @@ export default function DetalleLugar() {
       .from('usuarios')
       .select('id')
       .eq('auth_id', activeSession.user.id)
-      .single()
+      .maybeSingle()
     if (!usuarioData) return
     const usuarioId = usuarioData.id
 
@@ -541,14 +577,17 @@ export default function DetalleLugar() {
   )
 
   const handleResponder = useCallback(async (resenaId, duenioResenaId) => {
-    if (!session?.user) {
+    const { data: { session: activeSession } } = await supabase.auth.getSession()
+    if (!activeSession?.user) {
       setLoginMensaje('Iniciá sesión para responder reseñas.')
       setShowLoginModal(true)
       return
     }
-    if (!respuestaTexto.trim() || respuestaTexto.trim().length < 5) return
 
-    const allowedRespuesta = await checkRateLimit(session.user.id, 'crear_respuesta')
+    const texto = respuestaTexto.trim()
+    if (!texto || texto.length < 5) return
+
+    const allowedRespuesta = await checkRateLimit(activeSession.user.id, 'crear_respuesta')
     if (allowedRespuesta === false) {
       setToast('Demasiadas solicitudes. Espera un momento antes de continuar.')
       return
@@ -558,13 +597,13 @@ export default function DetalleLugar() {
 
     const { data: usuarioRow } = await supabase
       .from('usuarios')
-      .select('id, nombre')
-      .eq('auth_id', session.user.id)
+      .select('id, nombre, avatar_url')
+      .eq('auth_id', activeSession.user.id)
       .maybeSingle()
 
     if (!usuarioRow) { setRespuestaLoading(false); return }
 
-    const contenidoRespuesta = filterProfanity(respuestaTexto.trim())
+    const contenidoRespuesta = filterProfanity(texto)
 
     const { error } = await supabase
       .from('respuestas_resena')
@@ -574,27 +613,31 @@ export default function DetalleLugar() {
         contenido: contenidoRespuesta,
       })
 
-    if (error) { setRespuestaLoading(false); return }
+    if (error) {
+      console.error('[handleResponder] insert error:', error)
+      setRespuestaLoading(false)
+      return
+    }
 
-    // Notificar al dueño de la reseña (solo si es otro usuario)
     if (duenioResenaId && duenioResenaId !== usuarioRow.id) {
-      const { error: notifError } = await supabase.from('notificaciones').insert({
+      await supabase.from('notificaciones').insert({
         usuario_id: duenioResenaId,
         tipo: 'respuesta',
         resena_id: resenaId,
         actor_id: usuarioRow.id,
       })
-      console.log('[notif insert]', notifError ?? 'OK')
     }
 
-    // Actualizar respuestas localmente
     const nuevaRespuesta = {
       id: crypto.randomUUID(),
       resena_id: resenaId,
       usuario_id: usuarioRow.id,
       contenido: contenidoRespuesta,
       created_at: new Date().toISOString(),
-      usuarios: { nombre: usuarioRow.nombre ?? 'Tú' },
+      usuarios: {
+        nombre: usuarioRow.nombre ?? 'Tú',
+        avatar_url: usuarioRow.avatar_url ?? null,
+      },
     }
     setRespuestas((prev) => ({
       ...prev,
@@ -603,7 +646,7 @@ export default function DetalleLugar() {
     setRespuestaTexto('')
     setRespuestaAbierta(null)
     setRespuestaLoading(false)
-  }, [session, respuestaTexto])
+  }, [respuestaTexto])
 
   const handleFotos = (e) => {
     const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -684,7 +727,7 @@ export default function DetalleLugar() {
     // Insertar reseña
     const { data: usuarioRow } = await supabase
       .from('usuarios')
-      .select('id')
+      .select('id, nombre, avatar_url')
       .eq('auth_id', activeSession.user.id)
       .maybeSingle()
 
@@ -695,11 +738,14 @@ export default function DetalleLugar() {
     }
 
     const contenidoResena = filterProfanity(resenaTexto.trim())
+    const tituloResena = resenaTitulo.trim()
+      ? filterProfanity(resenaTitulo.trim()).slice(0, 80)
+      : null
 
     const { error: insertError } = await supabase.from('resenas').insert({
       lugar_id: id,
       usuario_id: usuarioRow.id,
-      titulo: contenidoResena.slice(0, 60),
+      titulo: tituloResena,
       contenido: contenidoResena,
       estrellas: userRating ?? 5,
       fotos: urlsFotos,
@@ -711,16 +757,33 @@ export default function DetalleLugar() {
       return
     }
 
+    const nuevaResena = {
+      id: crypto.randomUUID(),
+      lugar_id: id,
+      usuario_id: usuarioRow.id,
+      titulo: tituloResena,
+      contenido: contenidoResena,
+      estrellas: userRating ?? 5,
+      fotos: urlsFotos,
+      created_at: new Date().toISOString(),
+      usuarios: {
+        nombre: usuarioRow.nombre ?? '',
+        avatar_url: usuarioRow.avatar_url ?? null,
+      },
+    }
+    setResenas((prev) => [nuevaResena, ...prev])
+    setResenaLikeCounts((prev) => ({ ...prev, [nuevaResena.id]: 0 }))
+
     setResenaSuccess(true)
     setResenaLoading(false)
     setTimeout(() => {
       setModalOpen(false)
+      setResenaTitulo('')
       setResenaTexto('')
       setResenaFotos([])
       setResenaPreview([])
       setResenaSuccess(false)
-      load()
-    }, 1500)
+    }, 800)
   }
 
   if (loading) {
@@ -800,7 +863,7 @@ export default function DetalleLugar() {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: '1rem',
         }}
-          onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false) }}
+          onClick={(e) => { if (e.target === e.currentTarget) { setModalOpen(false); setResenaTitulo(''); setResenaTexto('') } }}
         >
           <div style={{
             backgroundColor: '#ffffff', borderRadius: '16px',
@@ -812,27 +875,43 @@ export default function DetalleLugar() {
               <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827', margin: 0 }}>
                 {t.modalTitulo}
               </h2>
-              <button type="button" onClick={() => setModalOpen(false)}
+              <button type="button" onClick={() => { setModalOpen(false); setResenaTitulo(''); setResenaTexto('') }}
                 style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#9ca3af' }}>
                 ✕
               </button>
             </div>
 
-            <p style={{ fontSize: '0.85rem', color: '#6b7280', marginBottom: '1rem' }}>
+            <p style={{ fontSize: '0.85rem', color: '#6b7280', marginBottom: '1.25rem' }}>
               📍 {lugar.nombre}
             </p>
 
+            {/* Campo título */}
+            <input
+              type="text"
+              value={resenaTitulo}
+              onChange={(e) => setResenaTitulo(e.target.value.slice(0, 80))}
+              placeholder={idioma === 'en' ? 'Title (optional)' : 'Título (opcional)'}
+              style={{
+                width: '100%', padding: '0.75rem 1rem', borderRadius: '10px',
+                border: '1.5px solid #e5e7eb', fontSize: '0.93rem',
+                outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box',
+                color: '#111827', background: '#fafafa', marginBottom: '0.75rem',
+              }}
+            />
+
+            {/* Campo contenido */}
             <textarea
               value={resenaTexto}
               onChange={(e) => setResenaTexto(e.target.value.slice(0, 1000))}
               placeholder={t.modalPlaceholder}
               rows={5}
+              className="resena-textarea"
               style={{
-                width: '100%', padding: '0.85rem', borderRadius: '10px',
-                border: '1.5px solid #e5e7eb', fontSize: '0.92rem',
-                lineHeight: 1.6, resize: 'vertical', outline: 'none',
+                width: '100%', padding: '0.9rem 1rem', borderRadius: '10px',
+                border: '1.5px solid #e5e7eb', fontSize: '0.93rem',
+                lineHeight: 1.65, resize: 'vertical', outline: 'none',
                 fontFamily: 'inherit', boxSizing: 'border-box',
-                color: '#111827',
+                color: '#111827', background: '#fafafa',
               }}
             />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
@@ -1393,11 +1472,10 @@ export default function DetalleLugar() {
                 </p>
               </div>
             ) : (
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column' }}>
                 {resenas.map((r) => {
                   const nombre = r.usuarios?.nombre?.trim()
                   const autor = nombre || t.anonimo
-                  const inicial = autor.charAt(0).toUpperCase()
                   const rLikeCount = resenaLikeCounts[r.id] ?? 0
                   const rUserLiked = !!userResenaLikes[r.id]
 
@@ -1405,167 +1483,187 @@ export default function DetalleLugar() {
                     <li
                       key={r.id}
                       style={{
-                        padding: '16px',
-                        borderRadius: '10px',
-                        border: '1px solid #f3f4f6',
-                        backgroundColor: '#fafafa',
+                        padding: '20px 0',
+                        borderBottom: '1px solid #f3f4f6',
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                        <div style={{
-                          width: '36px',
-                          height: '36px',
-                          borderRadius: '50%',
-                          backgroundColor: '#0EA5E9',
-                          color: '#ffffff',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.85rem',
-                          fontWeight: 700,
-                          flexShrink: 0,
-                        }}>
-                          {inicial}
-                        </div>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                        {/* Avatar */}
+                        <AvatarImg
+                          src={r.usuarios?.avatar_url}
+                          nombre={autor}
+                          size={42}
+                          fontSize="1rem"
+                        />
+
+                        {/* Columna derecha: todo el contenido */}
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontSize: '0.88rem', fontWeight: 600, color: '#111827', margin: 0 }}>
+                          {/* Nombre + fecha */}
+                          <p style={{ fontSize: '0.92rem', fontWeight: 700, color: '#111827', margin: '0 0 1px' }}>
                             {autor}
                           </p>
                           <time style={{ fontSize: '0.75rem', color: '#9ca3af' }} dateTime={r.created_at}>
                             {formatRelativeEs(r.created_at)}
                           </time>
+
+                          {/* Título en negrita */}
+                          {r.titulo && (
+                            <p style={{ fontSize: '0.9rem', fontWeight: 700, color: '#111827', margin: '10px 0 4px' }}>
+                              {r.titulo}
+                            </p>
+                          )}
+
+                          {/* Contenido */}
+                          <p style={{ fontSize: '0.875rem', color: '#4b5563', lineHeight: 1.65, margin: '0 0 10px' }}>
+                            {r.contenido}
+                          </p>
+
+                          {/* Fotos */}
+                          {r.fotos && r.fotos.length > 0 && (
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                              {r.fotos.map((url, i) => (
+                                <img
+                                  key={i}
+                                  src={url}
+                                  alt=""
+                                  loading="lazy"
+                                  decoding="async"
+                                  style={{
+                                    height: '120px',
+                                    width: 'auto',
+                                    maxWidth: '200px',
+                                    objectFit: 'cover',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                  }}
+                                  onClick={() => window.open(url, '_blank')}
+                                />
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Acciones: like + responder */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleResenaLike(r.id)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                color: rUserLiked ? '#ef4444' : '#9ca3af',
+                                background: 'none',
+                                border: 'none',
+                                padding: 0,
+                                cursor: 'pointer',
+                                font: 'inherit',
+                                fontSize: '0.8rem',
+                                fontWeight: 600,
+                              }}
+                            >
+                              <HeartIcon filled={rUserLiked} size={14} />
+                              {rLikeCount > 0 && <span>{rLikeCount}</span>}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRespuestaAbierta(respuestaAbierta === r.id ? null : r.id)
+                                setRespuestaTexto('')
+                              }}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '0.8rem',
+                                color: '#9ca3af',
+                                cursor: 'pointer',
+                                padding: 0,
+                                fontWeight: 600,
+                              }}
+                            >
+                              Responder
+                            </button>
+                          </div>
+
+                          {/* Input responder */}
+                          {respuestaAbierta === r.id && (
+                            <div style={{ marginTop: '10px', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                              <textarea
+                                value={respuestaTexto}
+                                onChange={(e) => setRespuestaTexto(e.target.value.slice(0, 300))}
+                                placeholder="Escribí tu respuesta..."
+                                rows={2}
+                                className="respuesta-textarea"
+                                style={{
+                                  flex: 1,
+                                  padding: '8px 12px',
+                                  borderRadius: '8px',
+                                  border: '1.5px solid #e5e7eb',
+                                  fontSize: '0.85rem',
+                                  resize: 'none',
+                                  fontFamily: 'inherit',
+                                  outline: 'none',
+                                  background: '#fafafa',
+                                }}
+                              />
+                              <button
+                                type="button"
+                                disabled={respuestaLoading || respuestaTexto.trim().length < 5}
+                                onClick={() => handleResponder(r.id, r.usuario_id)}
+                                style={{
+                                  backgroundColor: '#0EA5E9',
+                                  color: '#fff',
+                                  border: 'none',
+                                  borderRadius: '8px',
+                                  padding: '8px 14px',
+                                  fontSize: '0.82rem',
+                                  fontWeight: 600,
+                                  cursor: respuestaLoading || respuestaTexto.trim().length < 5 ? 'not-allowed' : 'pointer',
+                                  opacity: respuestaLoading || respuestaTexto.trim().length < 5 ? 0.6 : 1,
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {respuestaLoading ? '…' : 'Enviar'}
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Respuestas */}
+                          {(respuestas[r.id] ?? []).map((rep) => {
+                            const repNombre = rep.usuarios?.nombre?.trim() || 'Anónimo'
+                            return (
+                              <div key={rep.id} style={{
+                                marginTop: '12px',
+                                padding: '10px 14px',
+                                borderLeft: '2px solid #0EA5E9',
+                                borderRadius: '0 8px 8px 0',
+                                backgroundColor: '#f0f9ff',
+                                display: 'flex',
+                                gap: '8px',
+                                alignItems: 'flex-start',
+                              }}>
+                                <AvatarImg
+                                  src={rep.usuarios?.avatar_url}
+                                  nombre={repNombre}
+                                  size={26}
+                                  fontSize="0.65rem"
+                                />
+                                <div style={{ flex: 1 }}>
+                                  <p style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0284c7', margin: '0 0 3px' }}>
+                                    {repNombre}
+                                    <span style={{ fontWeight: 400, color: '#9ca3af', marginLeft: '6px' }}>
+                                      {formatRelativeEs(rep.created_at)}
+                                    </span>
+                                  </p>
+                                  <p style={{ fontSize: '0.84rem', color: '#374151', margin: 0, lineHeight: 1.5 }}>
+                                    {rep.contenido}
+                                  </p>
+                                </div>
+                              </div>
+                            )
+                          })}
                         </div>
                       </div>
-
-
-                      <p style={{ fontSize: '0.88rem', color: '#4b5563', lineHeight: 1.6, margin: '0 0 10px' }}>
-                        {r.contenido}
-                      </p>
-
-                      {r.fotos && r.fotos.length > 0 && (
-                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
-                          {r.fotos.map((url, i) => (
-                            <img
-                              key={i}
-                              src={url}
-                              alt=""
-                              loading="lazy"
-                              decoding="async"
-                              style={{
-                                height: '140px',
-                                width: 'auto',
-                                maxWidth: '220px',
-                                objectFit: 'cover',
-                                borderRadius: '10px',
-                                cursor: 'pointer',
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                              }}
-                              onClick={() => window.open(url, '_blank')}
-                            />
-                          ))}
-                        </div>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => handleToggleResenaLike(r.id)}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          color: '#ef4444',
-                          background: 'none',
-                          border: 'none',
-                          padding: 0,
-                          cursor: 'pointer',
-                          font: 'inherit',
-                        }}
-                      >
-                        <HeartIcon filled={rUserLiked} size={14} />
-                        <span style={{ fontSize: '0.78rem', fontWeight: 600 }}>{rLikeCount}</span>
-                      </button>
-
-                      {/* Respuestas */}
-                      {(respuestas[r.id] ?? []).map((rep) => (
-                        <div key={rep.id} style={{
-                          marginTop: '10px',
-                          marginLeft: '20px',
-                          padding: '10px 14px',
-                          borderLeft: '2px solid #e5e7eb',
-                          borderRadius: '0 8px 8px 0',
-                          backgroundColor: '#f3f4f6',
-                        }}>
-                          <p style={{ fontSize: '0.78rem', fontWeight: 600, color: '#374151', margin: '0 0 4px' }}>
-                            {rep.usuarios?.nombre ?? 'Anónimo'}
-                            <span style={{ fontWeight: 400, color: '#9ca3af', marginLeft: '6px' }}>
-                              {formatRelativeEs(rep.created_at)}
-                            </span>
-                          </p>
-                          <p style={{ fontSize: '0.85rem', color: '#4b5563', margin: 0 }}>
-                            {rep.contenido}
-                          </p>
-                        </div>
-                      ))}
-
-                      {/* Botón responder */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setRespuestaAbierta(respuestaAbierta === r.id ? null : r.id)
-                          setRespuestaTexto('')
-                        }}
-                        style={{
-                          marginTop: '8px',
-                          background: 'none',
-                          border: 'none',
-                          fontSize: '0.78rem',
-                          color: '#6b7280',
-                          cursor: 'pointer',
-                          padding: '2px 0',
-                        }}
-                      >
-                        💬 Responder
-                      </button>
-
-                      {respuestaAbierta === r.id && (
-                        <div style={{ marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                          <textarea
-                            value={respuestaTexto}
-                            onChange={(e) => setRespuestaTexto(e.target.value.slice(0, 300))}
-                            placeholder="Escribí tu respuesta..."
-                            rows={2}
-                            style={{
-                              flex: 1,
-                              padding: '8px 12px',
-                              borderRadius: '8px',
-                              border: '1.5px solid #e5e7eb',
-                              fontSize: '0.85rem',
-                              resize: 'none',
-                              fontFamily: 'inherit',
-                              outline: 'none',
-                            }}
-                          />
-                          <button
-                            type="button"
-                            disabled={respuestaLoading || respuestaTexto.trim().length < 5}
-                            onClick={() => handleResponder(r.id, r.usuario_id)}
-                            style={{
-                              backgroundColor: '#0EA5E9',
-                              color: '#fff',
-                              border: 'none',
-                              borderRadius: '8px',
-                              padding: '8px 14px',
-                              fontSize: '0.82rem',
-                              fontWeight: 600,
-                              cursor: respuestaLoading || respuestaTexto.trim().length < 5 ? 'not-allowed' : 'pointer',
-                              opacity: respuestaLoading || respuestaTexto.trim().length < 5 ? 0.6 : 1,
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {respuestaLoading ? '…' : 'Enviar'}
-                          </button>
-                        </div>
-                      )}
                     </li>
                   )
                 })}

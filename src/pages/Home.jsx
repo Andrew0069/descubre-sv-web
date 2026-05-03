@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { checkRateLimit } from '../lib/rateLimit'
 import { useIdioma } from '../lib/idiomaContext'
 import { CategoriaIconSvg } from '../components/CategoriaChip'
-import LugarCard from '../components/LugarCard'
+import LugarCard, { LugarCardSkeleton } from '../components/LugarCard'
 import LoginModal from '../components/LoginModal'
 import { useNotificaciones } from '../lib/useNotificaciones'
 
@@ -20,7 +20,7 @@ function formatRelativeNotif(dateString) {
 const HERO_OVERLAY =
   'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.30) 60%, rgba(0,0,0,0.45) 100%)'
 
-function CatButton({ label, emoji, svgNombre, active, onClick }) {
+function CatButton({ label, emoji, svgNombre, active, onClick, compact }) {
   const ref = useRef(null)
   const [hov, setHov] = useState(false)
   const [pressed, setPressed] = useState(false)
@@ -45,6 +45,8 @@ function CatButton({ label, emoji, svgNombre, active, onClick }) {
       ? '0 2px 8px rgba(0,0,0,0.08)'
       : 'none'
 
+  const iconSize = compact ? 18 : 24
+
   return (
     <button
       ref={ref}
@@ -60,8 +62,8 @@ function CatButton({ label, emoji, svgNombre, active, onClick }) {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '4px',
-        padding: '0.6rem 1.1rem',
+        gap: compact ? '2px' : '4px',
+        padding: compact ? '0.3rem 0.8rem' : '0.6rem 1.1rem',
         borderRadius: '12px',
         backgroundColor: bg,
         border: 'none',
@@ -70,22 +72,26 @@ function CatButton({ label, emoji, svgNombre, active, onClick }) {
         flexShrink: 0,
         transform: `scale(${scale})`,
         boxShadow: shadow,
-        transition: 'background-color 0.18s ease, transform 0.12s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s ease, border-color 0.18s ease',
+        transition: 'background-color 0.18s ease, transform 0.12s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s ease, border-color 0.18s ease, padding 0.3s cubic-bezier(0.22,1,0.36,1), gap 0.3s cubic-bezier(0.22,1,0.36,1)',
         userSelect: 'none',
         WebkitTapHighlightColor: 'transparent',
       }}
     >
       {emoji ? (
-        <span style={{ fontSize: '24px', lineHeight: 1 }}>{emoji}</span>
+        <span style={{
+          fontSize: `${iconSize}px`,
+          lineHeight: 1,
+          transition: 'font-size 0.3s cubic-bezier(0.22,1,0.36,1)',
+        }}>{emoji}</span>
       ) : (
-        <CategoriaIconSvg nombre={svgNombre} active={active} size={24} />
+        <CategoriaIconSvg nombre={svgNombre} active={active} size={iconSize} />
       )}
       <span style={{
-        fontSize: '0.72rem',
+        fontSize: compact ? '0.62rem' : '0.72rem',
         fontWeight: active ? 600 : 500,
         color: active ? '#0EA5E9' : hov ? '#0EA5E9' : '#6b7280',
         whiteSpace: 'nowrap',
-        transition: 'color 0.18s ease',
+        transition: 'color 0.18s ease, font-size 0.3s cubic-bezier(0.22,1,0.36,1)',
       }}>
         {label}
       </span>
@@ -109,6 +115,8 @@ export default function Home() {
   const [user, setUser] = useState(null)
   const [campanaOpen, setCampanaOpen] = useState(false)
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [isCatBarSticky, setIsCatBarSticky] = useState(false)
+  const catSentinelRef = useRef(null)
   const { noLeidas, notificaciones, marcarTodasLeidas } = useNotificaciones(user)
   const { idioma } = useIdioma()
   const navigate = useNavigate()
@@ -157,6 +165,18 @@ export default function Home() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [])
+
+  // Sticky category bar detection via IntersectionObserver
+  useEffect(() => {
+    const sentinel = catSentinelRef.current
+    if (!sentinel) return
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsCatBarSticky(!entry.isIntersecting),
+      { threshold: 0, rootMargin: '-60px 0px 0px 0px' }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
   }, [])
 
   // Listen for the custom event dispatched by LugarCard when an unauthenticated
@@ -414,6 +434,7 @@ export default function Home() {
           <button
             type="button"
             onClick={() => setMenuOpen(!menuOpen)}
+            className="btn-spring"
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -423,7 +444,6 @@ export default function Home() {
               border: 'none',
               borderRadius: '8px',
               cursor: 'pointer',
-              transition: 'background-color 0.2s ease',
             }}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.08)' }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = menuOpen ? 'rgba(14,165,233,0.08)' : 'transparent' }}
@@ -742,7 +762,7 @@ export default function Home() {
               }}
               style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: 0 }}
             >
-              <div style={{
+              <div className="search-spring" style={{
                 display: 'flex',
                 alignItems: 'center',
                 backgroundColor: 'rgba(255,255,255,0.12)',
@@ -779,6 +799,7 @@ export default function Home() {
                 />
                 <button
                   type="submit"
+                  className="btn-spring"
                   style={{
                     backgroundColor: '#F5C842',
                     color: '#111827',
@@ -790,7 +811,6 @@ export default function Home() {
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
                     letterSpacing: '0.02em',
-                    transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#e6b800' }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#F5C842' }}
@@ -813,17 +833,32 @@ export default function Home() {
           </div>
         </section>
 
-        <section style={{ padding: '16px 16px 0' }}>
+        {/* Sentinel: invisible element to detect when category bar leaves viewport */}
+        <div ref={catSentinelRef} style={{ height: 0, margin: 0, padding: 0 }} aria-hidden />
+
+        <section
+          className={`cat-bar-section${isCatBarSticky ? ' cat-bar-sticky-enter' : ''}`}
+          style={{
+            padding: isCatBarSticky ? '6px 16px' : '16px 16px 0',
+            position: 'sticky',
+            top: '60px',
+            zIndex: 40,
+            backgroundColor: isCatBarSticky ? '#ffffff' : 'transparent',
+            boxShadow: isCatBarSticky ? '0 2px 12px rgba(0,0,0,0.08)' : 'none',
+            borderBottom: isCatBarSticky ? '1px solid #e5e7eb' : '1px solid transparent',
+          }}
+        >
           <div
             className="cat-bar-scroll"
             style={{
               backgroundColor: '#ffffff',
-              borderRadius: '16px',
-              boxShadow: '0 2px 16px rgba(0,0,0,0.07)',
-              padding: '0.5rem 1rem',
+              borderRadius: isCatBarSticky ? '0' : '16px',
+              boxShadow: isCatBarSticky ? 'none' : '0 2px 16px rgba(0,0,0,0.07)',
+              padding: isCatBarSticky ? '0.2rem 0.5rem' : '0.5rem 1rem',
               overflowX: 'auto',
               display: 'flex',
               gap: '0',
+              transition: 'border-radius 0.3s ease, padding 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s ease',
             }}
           >
             <CatButton
@@ -831,6 +866,7 @@ export default function Home() {
               emoji="🗺️"
               active={categoriaId === null}
               onClick={() => { setCategoriaId(null); setFiltroSubtipo('Todos') }}
+              compact={isCatBarSticky}
             />
             {categorias.map((c) => (
               <CatButton
@@ -839,6 +875,7 @@ export default function Home() {
                 svgNombre={c.nombre}
                 active={categoriaId === c.id}
                 onClick={() => { setCategoriaId(c.id); setFiltroSubtipo('Todos') }}
+                compact={isCatBarSticky}
               />
             ))}
             {categoriasOtras.length > 0 && (
@@ -847,6 +884,7 @@ export default function Home() {
                 svgNombre=""
                 active={categoriaId === 'OTROS'}
                 onClick={() => { setCategoriaId('OTROS'); setFiltroSubtipo('Todos') }}
+                compact={isCatBarSticky}
               />
             )}
           </div>
@@ -903,6 +941,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={handleVerTodos}
+                  className="btn-spring"
                   style={{
                     backgroundColor: '#F5C842',
                     color: '#111827',
@@ -914,7 +953,6 @@ export default function Home() {
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
                     letterSpacing: '0.01em',
-                    transition: 'all 0.2s ease',
                     boxShadow: '0 2px 8px rgba(245,200,66,0.35)',
                   }}
                   onMouseEnter={(e) => {
@@ -974,7 +1012,19 @@ export default function Home() {
 
             <div id="lugares" style={{ minHeight: '650px' }}>
               {loading ? (
-                <p className="py-12 text-center text-[#999999]">{t.cargando}</p>
+                <ul
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 pt-[32px] m-0 p-0 list-none grid-flow-row-dense"
+                  aria-label={t.cargando}
+                >
+                  {Array.from({ length: 6 }).map((_, index) => {
+                    const isFeatured = index === 0
+                    return (
+                      <li key={index} className={isFeatured ? 'md:col-span-2' : ''}>
+                        <LugarCardSkeleton isFeatured={isFeatured} />
+                      </li>
+                    )
+                  })}
+                </ul>
               ) : filtrados.length === 0 ? (
                 <div className="animate-fade-in-up" style={{ padding: '3rem 0' }}>
                   <div style={{

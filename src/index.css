@@ -31,6 +31,17 @@ body {
   animation: fadeInUp 0.35s ease-out forwards;
 }
 
+@keyframes skeletonPulse {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+.skeleton-block {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 37%, #f3f4f6 63%);
+  background-size: 400% 100%;
+  animation: skeletonPulse 1.25s ease-in-out infinite;
+}
+
 /* Hero glass search: placeholder legible sobre fondo oscuro */
 .hero-glass-input::placeholder {
   color: rgba(255, 255, 255, 0.55);
@@ -44,12 +55,67 @@ body {
   display: none;
 }
 
+/* Sticky category bar entrance animation */
+@keyframes stickySlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.cat-bar-sticky-enter {
+  animation: stickySlideIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Smooth transitions for the sticky wrapper */
+.cat-bar-section {
+  transition: padding 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+              background-color 0.3s ease,
+              box-shadow 0.3s ease,
+              border-color 0.3s ease;
+}
+
 /* DetalleLugar: two-column layout on desktop */
 @media (min-width: 768px) {
   .detalle-body-grid {
     grid-template-columns: 3fr 2fr !important;
   }
 }
+
+/* Focus ring para textareas de reseña y respuesta */
+.resena-textarea {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.resena-textarea:focus {
+  border-color: #0EA5E9 !important;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12);
+}
+.respuesta-textarea {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.respuesta-textarea:focus {
+  border-color: #0EA5E9 !important;
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.1);
+}
+
+/* Spring press animation — igual que CatButton del filtro */
+.btn-spring {
+  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1),
+              background-color 0.18s ease,
+              box-shadow 0.18s ease !important;
+}
+.btn-spring:hover  { transform: scale(1.07) !important; }
+.btn-spring:active { transform: scale(0.88) !important; }
+
+/* Spring sutil para el buscador */
+.search-spring {
+  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+.search-spring:hover,
+.search-spring:focus-within { transform: scale(1.015) !important; }
 
 /* Foto + overlay: textura grain en ::after (hero) */
 .hero-photo-section::after {

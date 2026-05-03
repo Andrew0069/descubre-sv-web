@@ -833,7 +833,7 @@ export default function AdminPage() {
           color: newLugarForm.nueva_categoria_color || DEFAULT_CATEGORY_COLOR,
         })
         .select('id, nombre, color')
-        .single()
+        .maybeSingle()
 
       if (categoriaError || !categoriaCreada?.id) {
         console.error(categoriaError)
@@ -913,7 +913,7 @@ export default function AdminPage() {
       .from('lugares')
       .select('*')
       .eq('id', lugarCreado.id)
-      .single()
+      .maybeSingle()
 
     await cargarLugares()
 
@@ -953,7 +953,7 @@ export default function AdminPage() {
           color: formData.nueva_categoria_color || DEFAULT_CATEGORY_COLOR,
         })
         .select('id, nombre, color')
-        .single()
+        .maybeSingle()
 
       if (categoriaError || !categoriaCreada?.id) {
         console.error(categoriaError)
@@ -1138,10 +1138,10 @@ export default function AdminPage() {
         orden: imagenes.length,
       })
       .select('id')
-      .single()
+      .maybeSingle()
 
-    if (insertError) {
-      showToast(`Error al guardar: ${insertError.message}`)
+    if (insertError || !imagenInsertada) {
+      showToast(insertError ? `Error al guardar: ${insertError.message}` : 'Error al guardar la imagen')
     } else {
       await insertAdminLog({
         accion: 'CREATE',

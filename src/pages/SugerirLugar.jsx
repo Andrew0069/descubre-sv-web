@@ -413,7 +413,7 @@ export default function SugerirLugar() {
         </div>
 
         <p style={{ textAlign: 'center', color: '#64748b', fontSize: '0.78rem', marginTop: '1.5rem' }}>
-          © 2026 Spotter · Hecho en El Salvador 🇸🇻
+          © 2026 Spotter · Tu guía local, siempre.
         </p>
       </div>
     </div>

@@ -87,8 +87,8 @@ export default function LoginModal({ mensaje, onClose }) {
         </button>
 
         <p style={{ fontSize: '0.78rem', color: '#9ca3af', margin: 0 }}>
-          <span style={{ fontWeight: 700 }}><span style={{ color: '#F5A623' }}>S</span>potter</span>
-          {' '}· Turismo local, desde adentro 🇸🇻
+          © 2026 <span style={{ fontWeight: 700 }}><span style={{ color: '#F5A623' }}>S</span>potter</span>
+          {' '}· Tu guía local, siempre.
         </p>
       </div>
     </div>

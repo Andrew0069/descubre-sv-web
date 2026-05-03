@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getCategoriaBadgeBackground, getGradiente } from '../lib/categoriaVisual'
 import { resolveImageUrl } from '../lib/imageUrl'
@@ -23,7 +23,37 @@ export function LugarImagePlaceholder({ categoriaNombre, iconSize = 36 }) {
   )
 }
 
-export default function LugarCard({ lugar, isFeatured }) {
+export function LugarCardSkeleton({ isFeatured = false }) {
+  return (
+    <div
+      className="lugar-card-skeleton"
+      aria-hidden="true"
+      style={{
+        borderRadius: '16px',
+        overflow: 'hidden',
+        backgroundColor: '#ffffff',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <div style={{ position: 'relative', width: '100%', height: '200px', flexShrink: 0, overflow: 'hidden' }}>
+        <div className="skeleton-block" style={{ width: '100%', height: '100%' }} />
+      </div>
+      <div style={{ display: 'block', padding: '1rem 1.1rem 1.2rem' }}>
+        <div className="skeleton-block" style={{ width: '70%', height: '16px', borderRadius: '6px', marginBottom: '8px' }} />
+        <div className="skeleton-block" style={{ width: '46%', height: '12px', borderRadius: '6px', marginBottom: '14px' }} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className="skeleton-block" style={{ width: '34%', height: '13px', borderRadius: '6px' }} />
+          <div className="skeleton-block" style={{ width: '42px', height: '14px', borderRadius: '6px' }} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function LugarCard({ lugar, isFeatured }) {
   const [hovered, setHovered] = useState(false)
   const [heartHover, setHeartHover] = useState(false)
   const [imageError, setImageError] = useState(false)
@@ -37,7 +67,7 @@ export default function LugarCard({ lugar, isFeatured }) {
     ?.slice()
     .sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
     .find((foto) => foto?.ruta_imagen?.trim())?.ruta_imagen
-  const img = resolveImageUrl(imagenPrincipal || imagenRelacionada, 'lugares-fotos')
+  const img = resolveImageUrl(imagenPrincipal || imagenRelacionada, 'lugares-fotos', { transform: { width: isFeatured ? 800 : 400, height: 267, resize: 'cover' } })
   const showImage = Boolean(img) && !imageError
   const precio = lugar.precio_entrada ?? null
   const catBg = cat ? getCategoriaBadgeBackground(cat) : TROPICAL_GRADIENT
@@ -56,7 +86,7 @@ export default function LugarCard({ lugar, isFeatured }) {
         .from('usuarios')
         .select('id')
         .eq('auth_id', session.user.id)
-        .single()
+        .maybeSingle()
 
       if (!usuarioData) return
 
@@ -65,7 +95,7 @@ export default function LugarCard({ lugar, isFeatured }) {
         .select('id')
         .eq('lugar_id', lugar.id)
         .eq('usuario_id', usuarioData.id)
-        .single()
+        .maybeSingle()
 
       setEsFavorito(!!data)
     }
@@ -87,7 +117,7 @@ export default function LugarCard({ lugar, isFeatured }) {
       .from('usuarios')
       .select('id')
       .eq('auth_id', session.user.id)
-      .single()
+      .maybeSingle()
 
     if (!usuarioData) return
 
@@ -128,21 +158,24 @@ export default function LugarCard({ lugar, isFeatured }) {
       onMouseLeave={() => setHovered(false)}
     >
       {/* Image */}
-      <div style={{ position: 'relative', width: '100%', aspectRatio: isFeatured ? '16/7' : '4/3', flexShrink: 0, overflow: 'hidden' }}>
+      <div style={{ position: 'relative', width: '100%', height: '200px', flexShrink: 0, overflow: 'hidden' }}>
         <Link to={`/lugar/${lugar.id}`} style={{ display: 'block', width: '100%', height: '100%' }}>
           {showImage ? (
             <img
               src={img}
               alt=""
               style={{
+                position: 'absolute',
+                inset: 0,
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
+                objectPosition: 'center',
                 display: 'block',
                 transform: hovered ? 'scale(1.05)' : 'scale(1)',
                 transition: 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
               }}
-              loading={isFeatured ? 'eager' : 'lazy'}
+              loading="lazy"
               decoding="async"
               onError={(e) => {
                 e.target.onerror = null;
@@ -282,3 +315,5 @@ export default function LugarCard({ lugar, isFeatured }) {
     </div>
   )
 }
+
+export default memo(LugarCard)

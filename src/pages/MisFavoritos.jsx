@@ -144,7 +144,7 @@ export default function MisFavoritos() {
         .from('usuarios')
         .select('id')
         .eq('auth_id', sess.user.id)
-        .single()
+        .maybeSingle()
 
       if (!usuarioData) {
         setLoading(false)
