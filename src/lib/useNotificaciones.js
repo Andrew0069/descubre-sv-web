@@ -18,7 +18,7 @@ export function useNotificaciones(user) {
 
     const { data } = await supabase
       .from('notificaciones')
-      .select('*, actor:actor_id(nombre), resena:resena_id(id, lugar_id)')
+      .select('*, actor:actor_id(nombre, foto_perfil), resena:resena_id(id, lugar_id)')
       .eq('usuario_id', usuarioRow.id)
       .order('created_at', { ascending: false })
       .limit(30)

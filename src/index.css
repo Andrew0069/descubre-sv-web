@@ -31,6 +31,12 @@ body {
   animation: fadeInUp 0.35s ease-out forwards;
 }
 
+/* Hero slideshow – slow zoom on active image */
+@keyframes heroSlowZoom {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.08); }
+}
+
 @keyframes skeletonPulse {
   0% { background-position: 100% 50%; }
   100% { background-position: 0 50%; }
@@ -125,4 +131,78 @@ body {
   z-index: 2;
   pointer-events: none;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+}
+
+/* Modern Arc Loader */
+.modern-loader-fullscreen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  z-index: 9999;
+}
+
+.modern-loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 3rem;
+}
+
+.modern-loader-spinner svg {
+  overflow: visible;
+}
+
+.arc {
+  fill: none;
+  stroke: #111827;
+  stroke-linecap: round;
+  transform-origin: 50% 50%;
+}
+
+.arc-1 {
+  stroke-width: 4;
+  stroke-dasharray: 60 200;
+  animation: arcSpin 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.arc-2 {
+  stroke-width: 3.5;
+  stroke-dasharray: 45 150;
+  animation: arcSpin 2s cubic-bezier(0.4, 0, 0.2, 1) infinite reverse;
+}
+
+.arc-3 {
+  stroke-width: 3;
+  stroke-dasharray: 30 100;
+  animation: arcSpin 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.arc-4 {
+  stroke-width: 2.5;
+  stroke-dasharray: 15 60;
+  animation: arcSpin 3s cubic-bezier(0.4, 0, 0.2, 1) infinite reverse;
+}
+
+@keyframes arcSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.modern-loader-text {
+  font-size: 1.1rem;
+  font-weight: 300;
+  letter-spacing: 0.05em;
+  color: #9ca3af;
+  animation: pulseOpacity 2s ease-in-out infinite;
+  margin: 0;
+}
+
+@keyframes pulseOpacity {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
 }

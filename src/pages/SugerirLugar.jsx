@@ -49,6 +49,17 @@ export default function SugerirLugar() {
 
     setLoading(true)
 
+    // Get internal usuario_id
+    let usuarioId = null
+    if (session?.user?.id) {
+      const { data: uData } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('auth_id', session.user.id)
+        .maybeSingle()
+      if (uData) usuarioId = uData.id
+    }
+
     const payload = {
       nombre,
       ubicacion: form.ubicacion.trim() || null,
@@ -56,6 +67,7 @@ export default function SugerirLugar() {
       motivo_recomendacion: form.motivo.trim() || null,
       nombre_contacto: form.nombreContacto.trim() || null,
       email: form.email.trim() || null,
+      usuario_id: usuarioId,
     }
 
     const { error: insertError } = await supabase.from('sugerencias').insert(payload)

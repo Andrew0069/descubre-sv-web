@@ -6,7 +6,9 @@ import { useIdioma } from '../lib/idiomaContext'
 import { CategoriaIconSvg } from '../components/CategoriaChip'
 import LugarCard, { LugarCardSkeleton } from '../components/LugarCard'
 import LoginModal from '../components/LoginModal'
+import Loader from '../components/Loader'
 import { useNotificaciones } from '../lib/useNotificaciones'
+import { resolveImageUrl } from '../lib/imageUrl'
 
 function formatRelativeNotif(dateString) {
   if (!dateString) return ''
@@ -18,7 +20,7 @@ function formatRelativeNotif(dateString) {
 }
 
 const HERO_OVERLAY =
-  'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.30) 60%, rgba(0,0,0,0.45) 100%)'
+  'linear-gradient(to bottom, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0.48) 50%, rgba(0,0,0,0.62) 100%)'
 
 function CatButton({ label, emoji, svgNombre, active, onClick, compact }) {
   const ref = useRef(null)
@@ -113,9 +115,11 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [toast, setToast] = useState(null)
   const [user, setUser] = useState(null)
+  const [userPerfil, setUserPerfil] = useState(null)
   const [campanaOpen, setCampanaOpen] = useState(false)
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [isCatBarSticky, setIsCatBarSticky] = useState(false)
+  const [heroIdx, setHeroIdx] = useState(0)
   const catSentinelRef = useRef(null)
   const { noLeidas, notificaciones, marcarTodasLeidas } = useNotificaciones(user)
   const { idioma } = useIdioma()
@@ -198,6 +202,26 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
+    if (!user) {
+      setUserPerfil(null)
+      return
+    }
+    let cancelled = false
+    const fetchPerfil = async () => {
+      const { data } = await supabase
+        .from('usuarios')
+        .select('foto_perfil, nombre')
+        .eq('auth_id', user.id)
+        .maybeSingle()
+      if (!cancelled && data) {
+        setUserPerfil(data)
+      }
+    }
+    fetchPerfil()
+    return () => { cancelled = true }
+  }, [user])
+
+  useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchInput.trim()), 400)
     return () => clearTimeout(timer)
   }, [searchInput])
@@ -209,20 +233,20 @@ export default function Home() {
       return
     }
     let cancelled = false
-    ;(async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      const identificador = session?.user?.id ?? 'anonimo'
-      const allowed = await checkRateLimit(identificador, 'busqueda')
-      if (cancelled) return
-      if (allowed === false) {
-        showToast('Demasiadas solicitudes. Espera un momento antes de continuar.')
-        setSearchInput('')
-        setDebouncedSearch('')
-        setFiltroBusquedaNombre('')
-        return
-      }
-      setFiltroBusquedaNombre(q)
-    })()
+      ; (async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        const identificador = session?.user?.id ?? 'anonimo'
+        const allowed = await checkRateLimit(identificador, 'busqueda')
+        if (cancelled) return
+        if (allowed === false) {
+          showToast('Demasiadas solicitudes. Espera un momento antes de continuar.')
+          setSearchInput('')
+          setDebouncedSearch('')
+          setFiltroBusquedaNombre('')
+          return
+        }
+        setFiltroBusquedaNombre(q)
+      })()
     return () => { cancelled = true }
   }, [debouncedSearch, showToast])
 
@@ -267,9 +291,9 @@ export default function Home() {
       .select('lugar_id')
 
     const conteoPorLugar = {}
-    ;(conteosData || []).forEach((f) => {
-      conteoPorLugar[f.lugar_id] = (conteoPorLugar[f.lugar_id] || 0) + 1
-    })
+      ; (conteosData || []).forEach((f) => {
+        conteoPorLugar[f.lugar_id] = (conteoPorLugar[f.lugar_id] || 0) + 1
+      })
 
     const { data: ratingsData } = await supabase
       .from('likes_lugar')
@@ -277,13 +301,13 @@ export default function Home() {
       .not('rating', 'is', null)
 
     const promediosPorLugar = {}
-    ;(ratingsData || []).forEach(r => {
-      if (!promediosPorLugar[r.lugar_id]) {
-        promediosPorLugar[r.lugar_id] = { suma: 0, count: 0 }
-      }
-      promediosPorLugar[r.lugar_id].suma += r.rating
-      promediosPorLugar[r.lugar_id].count += 1
-    })
+      ; (ratingsData || []).forEach(r => {
+        if (!promediosPorLugar[r.lugar_id]) {
+          promediosPorLugar[r.lugar_id] = { suma: 0, count: 0 }
+        }
+        promediosPorLugar[r.lugar_id].suma += r.rating
+        promediosPorLugar[r.lugar_id].count += 1
+      })
 
     const lugaresConDatos = (data ?? []).map((l) => ({
       ...l,
@@ -399,6 +423,37 @@ export default function Home() {
       .slice(0, 3)
   }, [filtrados, lugares, categoriaId])
 
+  // --- Hero slideshow images (cover photos from places) ---
+  const heroImages = useMemo(() => {
+    if (!lugares.length) return []
+    return lugares
+      .map((l) => {
+        const principal = l.imagen_principal?.trim()
+        const fallback = l.imagenes_lugar
+          ?.slice()
+          .sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
+          .find((f) => f?.ruta_imagen?.trim())?.ruta_imagen
+        return principal || fallback || null
+      })
+      .filter(Boolean)
+      .slice(0, 6)
+      .map((src) =>
+        resolveImageUrl(src, 'lugares-fotos', {
+          transform: { width: 1400, height: 700, resize: 'cover' },
+        })
+      )
+      .filter(Boolean)
+  }, [lugares])
+
+  // Auto-rotate hero images
+  useEffect(() => {
+    if (heroImages.length <= 1) return
+    const timer = setInterval(() => {
+      setHeroIdx((prev) => (prev + 1) % heroImages.length)
+    }, 6000)
+    return () => clearInterval(timer)
+  }, [heroImages.length])
+
   return (
     <div className="min-h-screen pb-16" style={{ background: 'var(--bg)' }}>
       <header style={{
@@ -454,115 +509,182 @@ export default function Home() {
           </button>
 
           {user && (
-            <div style={{ position: 'relative', marginLeft: 'auto' }} data-campana>
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ position: 'relative' }} data-campana>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCampanaOpen((prev) => !prev)
+                    if (!campanaOpen) marcarTodasLeidas()
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '8px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#f3f4f6',
+                    position: 'relative',
+                  }}
+                  aria-label="Notificaciones"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" color="#111827">
+                    <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
+                  </svg>
+                  {noLeidas > 0 && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '-2px',
+                      right: '-2px',
+                      backgroundColor: '#ef4444',
+                      color: '#fff',
+                      fontSize: '0.65rem',
+                      fontWeight: 700,
+                      borderRadius: '50%',
+                      width: '18px',
+                      height: '18px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      lineHeight: 1,
+                      border: '2px solid #fff'
+                    }}>
+                      {noLeidas > 9 ? '9+' : noLeidas}
+                    </span>
+                  )}
+                </button>
+
+                {campanaOpen && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '52px',
+                    right: '0',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '12px',
+                    boxShadow: '0 8px 30px rgba(0,0,0,0.1)',
+                    width: '360px',
+                    zIndex: 100,
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 16px 8px' }}>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#111827' }}>Notificaciones</div>
+                      <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '50%' }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '8px', padding: '0 16px 12px' }}>
+                      <button style={{ backgroundColor: 'rgba(14,165,233,0.1)', color: '#0EA5E9', border: 'none', borderRadius: '20px', padding: '6px 12px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>Todas</button>
+                      <button style={{ backgroundColor: 'transparent', color: '#6b7280', border: 'none', borderRadius: '20px', padding: '6px 12px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', transition: 'background-color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>No leídas</button>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 16px' }}>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#111827' }}>Anteriores</div>
+                      <button style={{ background: 'none', border: 'none', color: '#0EA5E9', fontSize: '0.85rem', cursor: 'pointer', padding: 0 }}>Ver todo</button>
+                    </div>
+
+                    {notificaciones.length === 0 ? (
+                      <div style={{ padding: '24px 16px', textAlign: 'center', color: '#9ca3af', fontSize: '0.85rem' }}>
+                        Sin notificaciones
+                      </div>
+                    ) : (
+                      <ul style={{ listStyle: 'none', margin: 0, padding: '0 8px 8px', maxHeight: '400px', overflowY: 'auto' }}>
+                        {notificaciones.map((n) => (
+                          <li
+                            key={n.id}
+                            onClick={() => {
+                              if (n.resena?.lugar_id) {
+                                setCampanaOpen(false)
+                                navigate(`/lugar/${n.resena.lugar_id}`)
+                              }
+                            }}
+                            style={{
+                              display: 'flex',
+                              gap: '12px',
+                              padding: '8px',
+                              backgroundColor: n.leida ? 'transparent' : 'rgba(14,165,233,0.05)',
+                              cursor: n.resena?.lugar_id ? 'pointer' : 'default',
+                              alignItems: 'center',
+                              borderRadius: '8px',
+                              marginBottom: '4px',
+                              transition: 'background-color 0.15s ease'
+                            }}
+                            onMouseEnter={(e) => { if (n.resena?.lugar_id) e.currentTarget.style.backgroundColor = n.leida ? '#f3f4f6' : 'rgba(14,165,233,0.1)' }}
+                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = n.leida ? 'transparent' : 'rgba(14,165,233,0.05)' }}
+                          >
+                            <div style={{ position: 'relative', flexShrink: 0 }}>
+                              {n.actor?.foto_perfil ? (
+                                <img src={n.actor.foto_perfil} alt={n.actor.nombre} style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover' }} />
+                              ) : (
+                                <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#0EA5E9', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.2rem' }}>
+                                  {(n.actor?.nombre || 'U').charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', backgroundColor: n.tipo === 'respuesta' ? '#0EA5E9' : '#EF4444', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid #fff' }}>
+                                {n.tipo === 'respuesta' ? (
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" color="#fff"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"></path></svg>
+                                ) : (
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" color="#fff"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
+                                )}
+                              </div>
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: '0.85rem', color: '#111827', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', wordBreak: 'break-word', lineHeight: 1.4 }}>
+                                <span style={{ fontWeight: 600 }}>{n.actor?.nombre ?? 'Alguien'}</span>
+                                {n.tipo === 'respuesta' ? ' comentó tu reseña.' : ' reaccionó a tu reseña.'}
+                              </div>
+                              <div style={{ fontSize: '0.8rem', color: '#0EA5E9', marginTop: '4px', fontWeight: n.leida ? 400 : 600 }}>
+                                {formatRelativeNotif(n.created_at)}
+                              </div>
+                            </div>
+                            {!n.leida && (
+                              <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#0EA5E9', flexShrink: 0 }}></div>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <button
                 type="button"
-                onClick={() => {
-                  setCampanaOpen((prev) => !prev)
-                  if (!campanaOpen) marcarTodasLeidas()
-                }}
+                onClick={() => navigate('/perfil')}
                 style={{
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  padding: '6px',
-                  borderRadius: '8px',
+                  padding: 0,
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  width: '40px',
+                  height: '40px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  position: 'relative',
+                  backgroundColor: '#e5e7eb',
+                  color: '#374151',
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  border: '1px solid #d1d5db',
+                  transition: 'opacity 0.2s'
                 }}
-                aria-label="Notificaciones"
+                onMouseEnter={(e) => e.currentTarget.style.opacity = 0.8}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = 1}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                  stroke="#374151" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                </svg>
-                {noLeidas > 0 && (
-                  <span style={{
-                    position: 'absolute',
-                    top: '2px',
-                    right: '2px',
-                    backgroundColor: '#ef4444',
-                    color: '#fff',
-                    fontSize: '0.6rem',
-                    fontWeight: 700,
-                    borderRadius: '50%',
-                    width: '16px',
-                    height: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    lineHeight: 1,
-                  }}>
-                    {noLeidas > 9 ? '9+' : noLeidas}
-                  </span>
+                {userPerfil?.foto_perfil ? (
+                  <img src={userPerfil.foto_perfil} alt="Perfil" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  (userPerfil?.nombre || 'U').charAt(0).toUpperCase()
                 )}
               </button>
-
-              {campanaOpen && (
-                <div style={{
-                  position: 'absolute',
-                  top: '44px',
-                  right: '0',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '12px',
-                  boxShadow: '0 8px 30px rgba(0,0,0,0.1)',
-                  width: '300px',
-                  zIndex: 100,
-                  overflow: 'hidden',
-                }}>
-                  <div style={{
-                    padding: '12px 16px',
-                    borderBottom: '1px solid #f3f4f6',
-                    fontSize: '0.85rem',
-                    fontWeight: 700,
-                    color: '#111827',
-                  }}>
-                    Notificaciones
-                  </div>
-
-                  {notificaciones.length === 0 ? (
-                    <div style={{ padding: '24px 16px', textAlign: 'center', color: '#9ca3af', fontSize: '0.85rem' }}>
-                      Sin notificaciones
-                    </div>
-                  ) : (
-                    <ul style={{ listStyle: 'none', margin: 0, padding: 0, maxHeight: '320px', overflowY: 'auto' }}>
-                      {notificaciones.map((n) => (
-                        <li
-                          key={n.id}
-                          onClick={() => {
-                            if (n.resena?.lugar_id) {
-                              setCampanaOpen(false)
-                              navigate(`/lugar/${n.resena.lugar_id}`)
-                            }
-                          }}
-                          style={{
-                            padding: '12px 16px',
-                            borderBottom: '1px solid #f9fafb',
-                            backgroundColor: n.leida ? '#ffffff' : 'rgba(14,165,233,0.05)',
-                            fontSize: '0.82rem',
-                            color: '#374151',
-                            lineHeight: 1.5,
-                            cursor: n.resena?.lugar_id ? 'pointer' : 'default',
-                          }}
-                          onMouseEnter={(e) => { if (n.resena?.lugar_id) e.currentTarget.style.backgroundColor = '#f9fafb' }}
-                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = n.leida ? '#ffffff' : 'rgba(14,165,233,0.05)' }}
-                        >
-                          {n.tipo === 'respuesta'
-                            ? `💬 ${n.actor?.nombre ?? 'Alguien'} respondió tu reseña`
-                            : `❤️ ${n.actor?.nombre ?? 'Alguien'} dio like a tu reseña`}
-                          <div style={{ fontSize: '0.72rem', color: '#9ca3af', marginTop: '2px' }}>
-                            {formatRelativeNotif(n.created_at)}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )}
             </div>
           )}
 
@@ -616,7 +738,7 @@ export default function Home() {
                     type="button"
                     onClick={() => {
                       setMenuOpen(false)
-                      navigate('/favoritos')
+                      navigate('/perfil')
                     }}
                     style={{
                       display: 'block',
@@ -637,31 +759,7 @@ export default function Home() {
                   >
                     ♥ Mis Favoritos
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false)
-                      navigate('/perfil')
-                    }}
-                    style={{
-                      display: 'block',
-                      width: '100%',
-                      textAlign: 'left',
-                      padding: '0.65rem 1rem',
-                      fontSize: '0.9rem',
-                      fontWeight: '500',
-                      color: '#374151',
-                      backgroundColor: 'transparent',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.07)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                  >
-                    {t.menuPerfil}
-                  </button>
+
                   <button
                     type="button"
                     onClick={async () => {
@@ -723,16 +821,36 @@ export default function Home() {
 
       <div>
         <section className="hero-photo-section relative flex min-h-[520px] items-center justify-center overflow-hidden px-6 py-16 sm:py-20">
-          <div
-            className="pointer-events-none absolute inset-0 z-0 bg-[#0EA5E9] bg-cover bg-center"
-            style={{
-              backgroundImage: "url('/hero-bg.png')",
-              backgroundSize: 'cover',
-              backgroundPosition: 'center bottom',
-              backgroundRepeat: 'no-repeat',
-            }}
-            aria-hidden
-          />
+          {/* Hero slideshow – cross-fade between place cover photos */}
+          {heroImages.length > 0 ? (
+            heroImages.map((url, i) => (
+              <div
+                key={i}
+                className="pointer-events-none absolute inset-0 z-0"
+                style={{
+                  backgroundImage: `url('${url}')`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat',
+                  opacity: heroIdx === i ? 1 : 0,
+                  transition: 'opacity 1.5s ease-in-out',
+                  animation: heroIdx === i ? 'heroSlowZoom 7s ease-out forwards' : 'none',
+                }}
+                aria-hidden
+              />
+            ))
+          ) : (
+            <div
+              className="pointer-events-none absolute inset-0 z-0 bg-[#0EA5E9] bg-cover bg-center"
+              style={{
+                backgroundImage: "url('/hero-bg.png')",
+                backgroundSize: 'cover',
+                backgroundPosition: 'center bottom',
+                backgroundRepeat: 'no-repeat',
+              }}
+              aria-hidden
+            />
+          )}
           <div
             className="pointer-events-none absolute inset-0 z-[1]"
             style={{ background: HERO_OVERLAY }}
@@ -747,11 +865,12 @@ export default function Home() {
                 lineHeight: 1.15,
                 letterSpacing: '-0.5px',
                 marginBottom: '10px',
+                textShadow: '0 2px 12px rgba(0,0,0,0.5)',
               }}
             >
               {t.heroTitle}
             </h1>
-            <p className="mb-8 text-pretty text-sm text-white sm:text-base">
+            <p className="mb-8 text-pretty text-sm text-white sm:text-base" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.45)' }}>
               {t.heroSubtitle}
             </p>
 
@@ -826,6 +945,7 @@ export default function Home() {
               fontStyle: 'italic',
               letterSpacing: '0.03em',
               marginTop: '1.25rem',
+              textShadow: '0 1px 6px rgba(0,0,0,0.4)',
             }}
             >
               {t.heroTagline}
@@ -1012,19 +1132,9 @@ export default function Home() {
 
             <div id="lugares" style={{ minHeight: '650px' }}>
               {loading ? (
-                <ul
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 pt-[32px] m-0 p-0 list-none grid-flow-row-dense"
-                  aria-label={t.cargando}
-                >
-                  {Array.from({ length: 6 }).map((_, index) => {
-                    const isFeatured = index === 0
-                    return (
-                      <li key={index} className={isFeatured ? 'md:col-span-2' : ''}>
-                        <LugarCardSkeleton isFeatured={isFeatured} />
-                      </li>
-                    )
-                  })}
-                </ul>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                  <Loader text={t.cargando} />
+                </div>
               ) : filtrados.length === 0 ? (
                 <div className="animate-fade-in-up" style={{ padding: '3rem 0' }}>
                   <div style={{

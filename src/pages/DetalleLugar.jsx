@@ -7,6 +7,7 @@ import { getGradiente } from '../lib/categoriaVisual'
 import { useIdioma } from '../lib/idiomaContext'
 import { filterProfanity } from '../lib/profanityFilter'
 import LoginModal from '../components/LoginModal'
+import Loader from '../components/Loader'
 
 function formatRelativeEs(dateString) {
   if (!dateString) return ''
@@ -331,6 +332,26 @@ export default function DetalleLugar() {
       .select('*', { count: 'exact', head: true })
       .eq('lugar_id', id)
     setFavoritosCount(favCount || 0)
+
+    // Track visit in historial_visitas
+    if (sess) {
+      const { data: uRow } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('auth_id', sess.user.id)
+        .maybeSingle()
+      if (uRow) {
+        supabase
+          .from('historial_visitas')
+          .upsert(
+            { usuario_id: uRow.id, lugar_id: id, visited_at: new Date().toISOString() },
+            { onConflict: 'usuario_id,lugar_id' }
+          )
+          .then(({ error: hErr }) => {
+            if (hErr) console.error('[historial] upsert error:', hErr)
+          })
+      }
+    }
 
     setLoading(false)
   }, [id])
@@ -789,7 +810,7 @@ export default function DetalleLugar() {
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#9ca3af', fontSize: '0.95rem' }}>{t.cargando}</p>
+        <Loader text={t.cargando} />
       </div>
     )
   }
