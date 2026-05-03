@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getUsuarioId } from '../services/usuariosService'
+import { getFavoritosByUsuario } from '../services/favoritosService'
 import { resolveImageUrl } from '../lib/imageUrl'
 import { getGradiente } from '../lib/categoriaVisual'
 import { CategoriaIconSvg } from '../components/CategoriaChip'
@@ -149,13 +150,8 @@ export default function MisFavoritos() {
       }
 
       // Fetch favoritos joined with lugares
-      const { data } = await supabase
-        .from('favoritos')
-        .select('lugar_id, lugares(id, nombre, descripcion, imagen_principal, precio_entrada, departamentos(nombre))')
-        .eq('usuario_id', usuarioId)
-        .order('created_at', { ascending: false })
-
-      setFavoritos(data ?? [])
+      const data = await getFavoritosByUsuario(usuarioId)
+      setFavoritos(data)
       setLoading(false)
     }
     init()

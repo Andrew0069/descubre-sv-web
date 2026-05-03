@@ -8,6 +8,7 @@ import { useIdioma } from '../lib/idiomaContext'
 import { filterProfanity } from '../lib/profanityFilter'
 import { getUsuarioId, getUsuarioPerfil } from '../services/usuariosService'
 import { getLugarById } from '../services/lugaresService'
+import { getFavoritoStatus, getFavoritosCount, addFavorito, removeFavorito } from '../services/favoritosService'
 import LoginModal from '../components/LoginModal'
 import Loader from '../components/Loader'
 
@@ -312,20 +313,12 @@ export default function DetalleLugar() {
     if (session) {
       const usuarioId = await getUsuarioId(session.user.id)
       if (usuarioId) {
-        const { data: favData } = await supabase
-          .from('favoritos')
-          .select('id')
-          .eq('lugar_id', id)
-          .eq('usuario_id', usuarioId)
-          .maybeSingle()
-        setEsFavorito(!!favData)
+        const esFav = await getFavoritoStatus(id, usuarioId)
+        setEsFavorito(esFav)
       }
     }
-    const { count: favCount } = await supabase
-      .from('favoritos')
-      .select('*', { count: 'exact', head: true })
-      .eq('lugar_id', id)
-    setFavoritosCount(favCount || 0)
+    const favCount = await getFavoritosCount(id)
+    setFavoritosCount(favCount)
 
     // Track visit in historial_visitas
     if (session) {
@@ -428,17 +421,11 @@ export default function DetalleLugar() {
     if (!usuarioId) return
 
     if (esFavorito) {
-      await supabase
-        .from('favoritos')
-        .delete()
-        .eq('lugar_id', id)
-        .eq('usuario_id', usuarioId)
+      await removeFavorito(id, usuarioId)
       setEsFavorito(false)
       setFavoritosCount((prev) => Math.max(0, prev - 1))
     } else {
-      await supabase
-        .from('favoritos')
-        .insert({ lugar_id: id, usuario_id: usuarioId })
+      await addFavorito(id, usuarioId)
       setEsFavorito(true)
       setFavoritosCount((prev) => prev + 1)
     }

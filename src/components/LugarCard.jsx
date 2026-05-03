@@ -5,6 +5,7 @@ import { resolveImageUrl } from '../lib/imageUrl'
 import { CategoriaIconSvg } from './CategoriaChip'
 import { supabase } from '../lib/supabase'
 import { getUsuarioId } from '../services/usuariosService'
+import { getFavoritoStatus, addFavorito, removeFavorito } from '../services/favoritosService'
 
 const TROPICAL_GRADIENT = 'linear-gradient(135deg, #0EA5E9 0%, #06b6d4 50%, #f59e0b 100%)'
 
@@ -87,14 +88,8 @@ function LugarCard({ lugar, isFeatured }) {
 
       if (!usuarioId) return
 
-      const { data } = await supabase
-        .from('favoritos')
-        .select('id')
-        .eq('lugar_id', lugar.id)
-        .eq('usuario_id', usuarioId)
-        .maybeSingle()
-
-      setEsFavorito(!!data)
+      const esFav = await getFavoritoStatus(lugar.id, usuarioId)
+      setEsFavorito(esFav)
     }
     checkFavorito()
   }, [lugar.id])
@@ -115,17 +110,11 @@ function LugarCard({ lugar, isFeatured }) {
     if (!usuarioId) return
 
     if (esFavorito) {
-      await supabase
-        .from('favoritos')
-        .delete()
-        .eq('lugar_id', lugar.id)
-        .eq('usuario_id', usuarioId)
+      await removeFavorito(lugar.id, usuarioId)
       setEsFavorito(false)
       setCount((prev) => Math.max(0, prev - 1))
     } else {
-      await supabase
-        .from('favoritos')
-        .insert({ lugar_id: lugar.id, usuario_id: usuarioId })
+      await addFavorito(lugar.id, usuarioId)
       setEsFavorito(true)
       setCount((prev) => prev + 1)
     }

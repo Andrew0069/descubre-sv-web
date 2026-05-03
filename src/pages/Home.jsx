@@ -11,6 +11,7 @@ import { useNotificaciones } from '../lib/useNotificaciones'
 import { resolveImageUrl } from '../lib/imageUrl'
 import { getUsuarioNavbar } from '../services/usuariosService'
 import { getLugaresHome } from '../services/lugaresService'
+import { getAllFavoritosConteo } from '../services/favoritosService'
 import CatButton from '../components/CatButton'
 
 function formatRelativeNotif(dateString) {
@@ -203,9 +204,7 @@ export default function Home() {
       return
     }
 
-    const { data: conteosData } = await supabase
-      .from('favoritos')
-      .select('lugar_id')
+    const conteosData = await getAllFavoritosConteo()
 
     const conteoPorLugar = {}
       ; (conteosData || []).forEach((f) => {
