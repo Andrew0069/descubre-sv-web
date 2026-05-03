@@ -7,6 +7,7 @@ import { getGradiente } from '../lib/categoriaVisual'
 import { useIdioma } from '../lib/idiomaContext'
 import { filterProfanity } from '../lib/profanityFilter'
 import { getUsuarioId, getUsuarioPerfil } from '../services/usuariosService'
+import { getLugarById } from '../services/lugaresService'
 import LoginModal from '../components/LoginModal'
 import Loader from '../components/Loader'
 
@@ -200,11 +201,7 @@ export default function DetalleLugar() {
     setLoading(true)
     setNotFound(false)
 
-    const { data: lugarRow, error: lugarErr } = await supabase
-      .from('lugares')
-      .select('*, categorias(*), departamentos(*)')
-      .eq('id', id)
-      .maybeSingle()
+    const { data: lugarRow, error: lugarErr } = await getLugarById(id)
 
     if (lugarErr || !lugarRow) {
       setLugar(null)

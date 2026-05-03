@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getUsuarioAdmin, getUsuarioId } from '../services/usuariosService'
+import { getLugaresAdmin, createLugar, updateLugar, deleteLugar, updateImagenPrincipal } from '../services/lugaresService'
 import { resolveImageUrl } from '../lib/imageUrl'
 import EditLugarForm from '../components/EditLugarForm'
 
@@ -610,23 +611,7 @@ export default function AdminPage() {
   }, [navigate])
 
   const cargarLugares = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('lugares')
-      .select(`
-        id,
-        nombre,
-        descripcion,
-        direccion,
-        departamento_id,
-        categoria_id,
-        precio_entrada,
-        subtipo,
-        destacado,
-        latitud,
-        longitud,
-        imagen_principal
-      `)
-      .order('nombre', { ascending: true })
+    const { data, error } = await getLugaresAdmin()
 
     if (error) {
       console.error(error)
@@ -868,25 +853,7 @@ export default function AdminPage() {
       total_resenas: 0,
     }
 
-    const { data: lugaresCreados, error } = await supabase
-      .from('lugares')
-      .insert(payload)
-      .select(`
-        id,
-        nombre,
-        descripcion,
-        direccion,
-        departamento_id,
-        categoria_id,
-        precio_entrada,
-        subtipo,
-        destacado,
-        latitud,
-        longitud,
-        imagen_principal
-      `)
-
-    const lugarCreado = lugaresCreados?.[0]
+    const { data: lugarCreado, error } = await createLugar(payload)
 
     if (error || !lugarCreado) {
       console.error(error)
@@ -902,17 +869,11 @@ export default function AdminPage() {
       detalle: { nombre },
     })
 
-    const { data: lugarCompleto } = await supabase
-      .from('lugares')
-      .select('*')
-      .eq('id', lugarCreado.id)
-      .maybeSingle()
-
     await cargarLugares()
 
     setNewLugarForm(emptyNewLugarForm)
     setIsCreatingLugar(false)
-    handleSeleccionarLugar(lugarCompleto ?? lugarCreado)
+    handleSeleccionarLugar(lugarCreado)
     showToast('Lugar creado correctamente')
     setCreatingLugar(false)
   }
@@ -979,10 +940,7 @@ export default function AdminPage() {
     }
     const camposModificados = Object.keys(payload).filter((key) => payload[key] !== lugarSeleccionado[key])
 
-    const { error } = await supabase
-      .from('lugares')
-      .update(payload)
-      .eq('id', lugarSeleccionado.id)
+    const { error } = await updateLugar(lugarSeleccionado.id, payload)
 
     if (error) {
       console.error(error)
@@ -1040,10 +998,7 @@ export default function AdminPage() {
       })
       .filter(Boolean)
 
-    const { error: ownerError } = await supabase
-      .from('lugares')
-      .update({ usuario_id: adminId })
-      .eq('id', lugarSeleccionado.id)
+    const { error: ownerError } = await updateLugar(lugarSeleccionado.id, { usuario_id: adminId })
 
     if (ownerError) {
       console.error(ownerError)
@@ -1052,11 +1007,7 @@ export default function AdminPage() {
       return
     }
 
-    const { data: deletedRows, error: deleteError } = await supabase
-      .from('lugares')
-      .delete()
-      .eq('id', lugarSeleccionado.id)
-      .select('id')
+    const { data: deletedRows, error: deleteError } = await deleteLugar(lugarSeleccionado.id)
 
     if (deleteError || !deletedRows?.length) {
       console.error(deleteError ?? new Error('No se elimino ninguna fila'))
@@ -1188,7 +1139,7 @@ export default function AdminPage() {
         .filter((i) => i.id !== imagen.id)
         .sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
       const nextPortada = remaining[0]?.ruta_imagen ?? null
-      await supabase.from('lugares').update({ imagen_principal: nextPortada }).eq('id', lugarSeleccionado.id)
+      await updateImagenPrincipal(lugarSeleccionado.id, nextPortada)
       setLugarSeleccionado((prev) => ({ ...prev, imagen_principal: nextPortada }))
       setLugares((prev) =>
         prev.map((l) => l.id === lugarSeleccionado.id ? { ...l, imagen_principal: nextPortada } : l)
@@ -1230,7 +1181,7 @@ export default function AdminPage() {
 
     const newFirst = updated[0]
     if (newFirst && newFirst.ruta_imagen !== lugarSeleccionado.imagen_principal) {
-      await supabase.from('lugares').update({ imagen_principal: newFirst.ruta_imagen }).eq('id', lugarSeleccionado.id)
+      await updateImagenPrincipal(lugarSeleccionado.id, newFirst.ruta_imagen)
       setLugarSeleccionado((prev) => ({ ...prev, imagen_principal: newFirst.ruta_imagen }))
       setLugares((prev) =>
         prev.map((l) => l.id === lugarSeleccionado.id ? { ...l, imagen_principal: newFirst.ruta_imagen } : l)
@@ -1249,10 +1200,7 @@ export default function AdminPage() {
       updates.map((u) => supabase.from('imagenes_lugar').update({ orden: u.orden }).eq('id', u.id))
     )
 
-    const { error } = await supabase
-      .from('lugares')
-      .update({ imagen_principal: imagen.ruta_imagen })
-      .eq('id', lugarSeleccionado.id)
+    const { error } = await updateImagenPrincipal(lugarSeleccionado.id, imagen.ruta_imagen)
 
     if (error) {
       showToast('Error al actualizar portada')

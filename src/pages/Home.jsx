@@ -7,10 +7,10 @@ import { CategoriaIconSvg } from '../components/CategoriaChip'
 import LugarCard, { LugarCardSkeleton } from '../components/LugarCard'
 import LoginModal from '../components/LoginModal'
 import Loader from '../components/Loader'
-import { Loader } from 'lucide-react'
 import { useNotificaciones } from '../lib/useNotificaciones'
 import { resolveImageUrl } from '../lib/imageUrl'
 import { getUsuarioNavbar } from '../services/usuariosService'
+import { getLugaresHome } from '../services/lugaresService'
 import CatButton from '../components/CatButton'
 
 function formatRelativeNotif(dateString) {
@@ -194,11 +194,7 @@ export default function Home() {
       return
     }
 
-    const { data, error: err } = await supabase
-      .from('lugares')
-      .select('id, nombre, categoria_id, subtipo, destacado, imagen_principal, precio_entrada, updated_at, categorias(nombre, color), departamentos(nombre), imagenes_lugar(ruta_imagen, orden)')
-      .order('destacado', { ascending: false, nullsFirst: false })
-      .order('updated_at', { ascending: false })
+    const { data, error: err } = await getLugaresHome()
 
     if (err) {
       setError(err.message)
