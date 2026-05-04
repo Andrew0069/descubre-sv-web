@@ -14,15 +14,9 @@ import { getLugaresHome } from '../services/lugaresService'
 import { getAllFavoritosConteo } from '../services/favoritosService'
 import { getAllRatingsLugares } from '../services/likesService'
 import CatButton from '../components/CatButton'
+import { formatRelativeShort } from '../lib/dateUtils'
 
-function formatRelativeNotif(dateString) {
-  if (!dateString) return ''
-  const diff = Math.round((Date.now() - new Date(dateString).getTime()) / 60000)
-  if (diff < 1) return 'hace un momento'
-  if (diff < 60) return `hace ${diff} min`
-  if (diff < 1440) return `hace ${Math.round(diff / 60)}h`
-  return `hace ${Math.round(diff / 1440)}d`
-}
+
 
 const HERO_OVERLAY =
   'linear-gradient(to bottom, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0.48) 50%, rgba(0,0,0,0.62) 100%)'
@@ -554,7 +548,7 @@ export default function Home() {
                                 {n.tipo === 'respuesta' ? ' comentó tu reseña.' : ' reaccionó a tu reseña.'}
                               </div>
                               <div style={{ fontSize: '0.8rem', color: '#0EA5E9', marginTop: '4px', fontWeight: n.leida ? 400 : 600 }}>
-                                {formatRelativeNotif(n.created_at)}
+                                {formatRelativeShort(n.created_at)}
                               </div>
                             </div>
                             {!n.leida && (
