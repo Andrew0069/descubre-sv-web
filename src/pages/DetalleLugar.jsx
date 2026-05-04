@@ -9,6 +9,13 @@ import { filterProfanity } from '../lib/profanityFilter'
 import { getUsuarioId, getUsuarioPerfil } from '../services/usuariosService'
 import { getLugarById } from '../services/lugaresService'
 import { getFavoritoStatus, getFavoritosCount, addFavorito, removeFavorito } from '../services/favoritosService'
+import {
+  getLikesCountLugar, getUserLikeLugar, addLikeLugar, removeLikeLugar,
+  addLikeResena, removeLikeResena, upsertRatingLugar, getAllResenaLikes, getMyResenaLikes
+} from '../services/likesService'
+import { getResenasByLugar, createResena } from '../services/resenasService'
+import { createNotificacion } from '../services/notificacionesService'
+import { getImagenesByLugar } from '../services/imagenesService'
 import LoginModal from '../components/LoginModal'
 import Loader from '../components/Loader'
 
@@ -219,12 +226,7 @@ export default function DetalleLugar() {
     setLugar(lugarRow)
 
     const userLikePromise = session?.user?.id
-      ? supabase
-        .from('likes_lugar')
-        .select('rating')
-        .eq('lugar_id', id)
-        .eq('user_id', session.user.id)
-        .maybeSingle()
+      ? getUserLikeLugar(id, session.user.id)
       : Promise.resolve({ data: null })
 
     const [
@@ -233,21 +235,10 @@ export default function DetalleLugar() {
       { data: userLikeRow },
       { data: imagenesRows },
     ] = await Promise.all([
-      supabase
-        .from('resenas')
-        .select('*, usuarios(nombre, avatar_url)')
-        .eq('lugar_id', id)
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('likes_lugar')
-        .select('rating')
-        .eq('lugar_id', id),
+      getResenasByLugar(id),
+      getLikesCountLugar(id),
       userLikePromise,
-      supabase
-        .from('imagenes_lugar')
-        .select('*')
-        .eq('lugar_id', id)
-        .order('orden', { ascending: true }),
+      getImagenesByLugar(id),
     ])
 
     const allLikes = allLikesRows ?? []
@@ -266,10 +257,7 @@ export default function DetalleLugar() {
     const likeCountMap = {}
     const userLikedMap = {}
     if (ids.length > 0) {
-      const { data: allResenaLikes } = await supabase
-        .from('likes_resena')
-        .select('resena_id')
-        .in('resena_id', ids)
+      const { data: allResenaLikes } = await getAllResenaLikes(ids)
       for (const rid of ids) {
         likeCountMap[rid] = 0
       }
@@ -278,11 +266,7 @@ export default function DetalleLugar() {
         likeCountMap[rid] = (likeCountMap[rid] ?? 0) + 1
       }
       if (session?.user?.id) {
-        const { data: myResenaLikes } = await supabase
-          .from('likes_resena')
-          .select('resena_id')
-          .eq('user_id', session.user.id)
-          .in('resena_id', ids)
+        const { data: myResenaLikes } = await getMyResenaLikes(session.user.id, ids)
         for (const row of myResenaLikes ?? []) {
           userLikedMap[row.resena_id] = true
         }
@@ -385,11 +369,7 @@ export default function DetalleLugar() {
     }
     const uid = session.user.id
     if (userLiked) {
-      const { error } = await supabase
-        .from('likes_lugar')
-        .delete()
-        .eq('lugar_id', id)
-        .eq('user_id', uid)
+      const { error } = await removeLikeLugar(id, uid)
       if (error) {
         console.error('[handleToggleLike] delete error:', error)
       } else {
@@ -398,9 +378,7 @@ export default function DetalleLugar() {
         setLikesCount((c) => Math.max(0, c - 1))
       }
     } else {
-      const { error } = await supabase
-        .from('likes_lugar')
-        .insert({ lugar_id: id, user_id: uid })
+      const { error } = await addLikeLugar(id, uid)
       if (error) {
         console.error('[handleToggleLike] insert error:', error)
       } else {
@@ -432,10 +410,7 @@ export default function DetalleLugar() {
   }, [esFavorito, id, session])
 
   const refreshLugarRatings = useCallback(async () => {
-    const { data: allRows } = await supabase
-      .from('likes_lugar')
-      .select('rating')
-      .eq('lugar_id', id)
+    const { data: allRows } = await getLikesCountLugar(id)
 
     const rows = allRows ?? []
     setLikesCount(rows.length)
@@ -448,12 +423,7 @@ export default function DetalleLugar() {
     )
 
     if (session?.user?.id) {
-      const { data: mine } = await supabase
-        .from('likes_lugar')
-        .select('rating')
-        .eq('lugar_id', id)
-        .eq('user_id', session.user.id)
-        .maybeSingle()
+      const { data: mine } = await getUserLikeLugar(id, session.user.id)
       setUserLiked(!!mine)
       setUserRating(mine?.rating != null ? Number(mine.rating) : null)
     } else {
@@ -475,12 +445,7 @@ export default function DetalleLugar() {
       if (userRating === valor) {
         // Same heart clicked again → clear the rating
         setUserRating(null)
-        const { error } = await supabase
-          .from('likes_lugar')
-          .upsert(
-            { lugar_id: id, user_id: uid, rating: null },
-            { onConflict: 'lugar_id,user_id' },
-          )
+        const { error } = await upsertRatingLugar(id, uid, null)
         if (error) {
           console.error('[handleRatingClick] clear rating error:', error)
           setUserRating(prevRating)
@@ -490,12 +455,7 @@ export default function DetalleLugar() {
       } else {
         // New or changed rating
         setUserRating(valor)
-        const { error } = await supabase
-          .from('likes_lugar')
-          .upsert(
-            { lugar_id: id, user_id: uid, rating: valor },
-            { onConflict: 'lugar_id,user_id' },
-          )
+        const { error } = await upsertRatingLugar(id, uid, valor)
         if (error) {
           console.error('[handleRatingClick] upsert rating error:', error)
           setUserRating(prevRating)
@@ -516,11 +476,7 @@ export default function DetalleLugar() {
       }
       const liked = !!userResenaLikes[resenaId]
       if (liked) {
-        const { error } = await supabase
-          .from('likes_resena')
-          .delete()
-          .eq('resena_id', resenaId)
-          .eq('user_id', session.user.id)
+        const { error } = await removeLikeResena(resenaId, session.user.id)
         if (!error) {
           setUserResenaLikes((prev) => ({ ...prev, [resenaId]: false }))
           setResenaLikeCounts((prev) => ({
@@ -529,9 +485,7 @@ export default function DetalleLugar() {
           }))
         }
       } else {
-        const { error } = await supabase
-          .from('likes_resena')
-          .insert({ resena_id: resenaId, user_id: session.user.id })
+        const { error } = await addLikeResena(resenaId, session.user.id)
         if (!error) {
           setUserResenaLikes((prev) => ({ ...prev, [resenaId]: true }))
           setResenaLikeCounts((prev) => ({
@@ -543,7 +497,7 @@ export default function DetalleLugar() {
           if (resena && resena.usuario_id) {
             const actorId = await getUsuarioId(session.user.id)
             if (actorId && actorId !== resena.usuario_id) {
-              const { error: notifError } = await supabase.from('notificaciones').insert({
+              const { error: notifError } = await createNotificacion({
                 usuario_id: resena.usuario_id,
                 tipo: 'like',
                 resena_id: resenaId,
@@ -596,7 +550,7 @@ export default function DetalleLugar() {
     }
 
     if (duenioResenaId && duenioResenaId !== usuarioRow.id) {
-      await supabase.from('notificaciones').insert({
+      await createNotificacion({
         usuario_id: duenioResenaId,
         tipo: 'respuesta',
         resena_id: resenaId,
@@ -713,7 +667,7 @@ export default function DetalleLugar() {
       ? filterProfanity(resenaTitulo.trim()).slice(0, 80)
       : null
 
-    const { error: insertError } = await supabase.from('resenas').insert({
+    const { error: insertError } = await createResena({
       lugar_id: id,
       usuario_id: usuarioRow.id,
       titulo: tituloResena,

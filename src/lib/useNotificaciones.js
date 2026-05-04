@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from './supabase'
 import { getUsuarioId } from '../services/usuariosService'
-
+import { getNotificacionesByUser, markAllAsRead as markNotifsRead } from '../services/notificacionesService'
 export function useNotificaciones(user) {
   const [noLeidas, setNoLeidas] = useState(0)
   const [notificaciones, setNotificaciones] = useState([])
@@ -13,12 +13,7 @@ export function useNotificaciones(user) {
 
     if (!usuarioId) return
 
-    const { data } = await supabase
-      .from('notificaciones')
-      .select('*, actor:actor_id(nombre, foto_perfil), resena:resena_id(id, lugar_id)')
-      .eq('usuario_id', usuarioId)
-      .order('created_at', { ascending: false })
-      .limit(30)
+    const { data } = await getNotificacionesByUser(usuarioId)
 
     setNotificaciones(data ?? [])
     setNoLeidas((data ?? []).filter((n) => !n.leida).length)
@@ -28,11 +23,7 @@ export function useNotificaciones(user) {
     if (!user) return
     const usuarioId = await getUsuarioId(user.id)
     if (!usuarioId) return
-    await supabase
-      .from('notificaciones')
-      .update({ leida: true })
-      .eq('usuario_id', usuarioId)
-      .eq('leida', false)
+    await markNotifsRead(usuarioId)
     setNoLeidas(0)
     setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })))
   }, [user])

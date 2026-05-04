@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getUsuarioAdmin, getUsuarioId } from '../services/usuariosService'
 import { getLugaresAdmin, createLugar, updateLugar, deleteLugar, updateImagenPrincipal } from '../services/lugaresService'
+import { getResenasAdmin, deleteResena } from '../services/resenasService'
+import { getImagenesByLugar, createImagenLugar, deleteImagen, swapImagenOrden, reorderImagenes } from '../services/imagenesService'
 import { resolveImageUrl } from '../lib/imageUrl'
 import EditLugarForm from '../components/EditLugarForm'
 import NewLugarForm, { DEPARTAMENTOS } from '../components/NewLugarForm'
@@ -160,20 +162,7 @@ export default function AdminPage() {
 
   const cargarResenas = useCallback(async () => {
     setLoadingResenas(true)
-    const { data, error } = await supabase
-      .from('resenas')
-      .select(`
-        id,
-        usuario_id,
-        lugar_id,
-        titulo,
-        contenido,
-        created_at,
-        estrellas,
-        usuarios(nombre),
-        lugares(nombre)
-      `)
-      .order('created_at', { ascending: false })
+    const { data, error } = await getResenasAdmin()
 
     if (error) {
       console.error(error)
@@ -270,11 +259,7 @@ export default function AdminPage() {
   }, [activeSection, cargarLogs, checking])
 
   const cargarImagenes = useCallback(async (lugarId) => {
-    const { data } = await supabase
-      .from('imagenes_lugar')
-      .select('id, lugar_id, ruta_imagen, orden')
-      .eq('lugar_id', lugarId)
-      .order('orden', { ascending: true })
+    const { data } = await getImagenesByLugar(lugarId)
     setImagenes(data ?? [])
   }, [])
 
@@ -603,10 +588,7 @@ export default function AdminPage() {
 
     const bucketPrefix = '/object/public/lugares-fotos/'
 
-    const { data: imgs } = await supabase
-      .from('imagenes_lugar')
-      .select('ruta_imagen')
-      .eq('lugar_id', lugarSeleccionado.id)
+    const { data: imgs } = await getImagenesByLugar(lugarSeleccionado.id)
 
     const paths = (imgs ?? [])
       .map((img) => {
@@ -691,16 +673,12 @@ export default function AdminPage() {
       .from('lugares-fotos')
       .getPublicUrl(path)
 
-    const { error: insertError, data: imagenInsertada } = await supabase
-      .from('imagenes_lugar')
-      .insert({
-        lugar_id: lugarSeleccionado.id,
-        ruta_imagen: urlData.publicUrl,
-        usuario_id: adminId,
-        orden: imagenes.length,
-      })
-      .select('id')
-      .maybeSingle()
+    const { error: insertError, data: imagenInsertada } = await createImagenLugar({
+      lugar_id: lugarSeleccionado.id,
+      ruta_imagen: urlData.publicUrl,
+      usuario_id: adminId,
+      orden: imagenes.length,
+    })
 
     if (insertError || !imagenInsertada) {
       showToast(insertError ? `Error al guardar: ${insertError.message}` : 'Error al guardar la imagen')
@@ -746,7 +724,7 @@ export default function AdminPage() {
       const path = url.substring(idx + bucketPrefix.length)
       await supabase.storage.from('lugares-fotos').remove([path])
     }
-    const { error } = await supabase.from('imagenes_lugar').delete().eq('id', imagen.id)
+    const { error } = await deleteImagen(imagen.id)
     if (error) {
       showToast('Error al eliminar foto')
       return
@@ -777,12 +755,9 @@ export default function AdminPage() {
     const ordenA = imgA.orden ?? idx
     const ordenB = imgB.orden ?? targetIdx
 
-    const [resA, resB] = await Promise.all([
-      supabase.from('imagenes_lugar').update({ orden: ordenB }).eq('id', imgA.id),
-      supabase.from('imagenes_lugar').update({ orden: ordenA }).eq('id', imgB.id),
-    ])
+    const { errorA, errorB } = await swapImagenOrden(imgA.id, ordenB, imgB.id, ordenA)
 
-    if (resA.error || resB.error) {
+    if (errorA || errorB) {
       showToast('Error al reordenar')
       return
     }
@@ -814,9 +789,7 @@ export default function AdminPage() {
       ...others.map((i, pos) => ({ id: i.id, orden: pos + 1 })),
     ]
 
-    await Promise.all(
-      updates.map((u) => supabase.from('imagenes_lugar').update({ orden: u.orden }).eq('id', u.id))
-    )
+    await reorderImagenes(updates)
 
     const { error } = await updateImagenPrincipal(lugarSeleccionado.id, imagen.ruta_imagen)
 
@@ -867,7 +840,7 @@ export default function AdminPage() {
       console.error('Error al registrar bitácora:', logError)
     }
 
-    const { error: deleteError } = await supabase.from('resenas').delete().eq('id', resena.id)
+    const { error: deleteError } = await deleteResena(resena.id)
     if (deleteError) {
       showToast('Error al eliminar. Intenta de nuevo.')
       console.error(deleteError)

@@ -12,6 +12,7 @@ import { resolveImageUrl } from '../lib/imageUrl'
 import { getUsuarioNavbar } from '../services/usuariosService'
 import { getLugaresHome } from '../services/lugaresService'
 import { getAllFavoritosConteo } from '../services/favoritosService'
+import { getAllRatingsLugares } from '../services/likesService'
 import CatButton from '../components/CatButton'
 
 function formatRelativeNotif(dateString) {
@@ -211,10 +212,7 @@ export default function Home() {
         conteoPorLugar[f.lugar_id] = (conteoPorLugar[f.lugar_id] || 0) + 1
       })
 
-    const { data: ratingsData } = await supabase
-      .from('likes_lugar')
-      .select('lugar_id, rating')
-      .not('rating', 'is', null)
+    const { data: ratingsData } = await getAllRatingsLugares()
 
     const promediosPorLugar = {}
       ; (ratingsData || []).forEach(r => {
