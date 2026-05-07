@@ -1,0 +1,72 @@
+{
+  "project": "Destino SV App",
+  "last_updated": "2026-05-06",
+  "sessions": [
+    {
+      "id": 1,
+      "date": "2026-05-06",
+      "ai_tool": "Claude Code",
+      "summary": "Sesión inicial de configuración del sistema de registro de sesiones.",
+      "files_modified": [
+        "session-log.json",
+        "CLAUDE.md"
+      ],
+      "changes": [
+        "Creado session-log.json para registro de cambios por sesión de AI",
+        "Creado CLAUDE.md con instrucciones de proyecto para agentes de AI"
+      ]
+    },
+    {
+      "id": 2,
+      "date": "2026-05-06",
+      "ai_tool": "Claude Code",
+      "summary": "Mejora de experiencia de carga en Home: eliminación del fondo estático hero-bg.png y creación de splash screen branded con animación de puntos.",
+      "files_modified": [
+        "src/pages/Home.jsx"
+      ],
+      "changes": [
+        "Eliminado backgroundImage hero-bg.png del div de fondo del hero para evitar flash visual al cargar",
+        "Agregados estados splashVisible y splashFading para controlar el ciclo de vida del splash screen",
+        "Agregado useEffect que pre-carga la primera imagen hero con new Image() y dispara el fade-out al completar",
+        "Creado splash screen fullscreen con logo Spotter SVG y 3 puntos animados en naranja (#F5A623)",
+        "Fade-out de 0.6s del splash garantiza que la imagen hero esté lista antes de mostrarse"
+      ]
+    },
+    {
+      "id": 3,
+      "date": "2026-05-06",
+      "ai_tool": "Codex",
+      "summary": "Ajuste quirurgico del carrusel hero en Home para reducir el delay visual inicial y mejorar la nitidez de las imagenes sin cambiar dimensiones ni layout.",
+      "files_modified": [
+        "src/pages/Home.jsx",
+        "session-log.json",
+        "CLAUDE.md"
+      ],
+      "changes": [
+        "El carrusel hero ahora renderiza las imagenes reales como elementos img en vez de background-image",
+        "La primera imagen del hero usa loading eager y fetchPriority high para mejorar la prioridad de carga",
+        "Se mantiene hero-bg.png como fondo inmediato debajo del carrusel mientras cargan las imagenes remotas",
+        "La transformacion de Supabase para el hero subio de 1400x700 a 2400x1200 para reducir pixelado en pantallas anchas",
+        "Se agrego reset de heroIdx al cambiar la lista de imagenes para evitar estados visuales inconsistentes",
+        "Validado con npm run build; quedo un warning preexistente de border duplicado en Home.jsx no relacionado con el cambio"
+      ]
+    },
+    {
+      "id": 4,
+      "date": "2026-05-06",
+      "ai_tool": "Claude Code",
+      "summary": "Rediseño del lightbox de fotos en DetalleLugar: layout dos columnas estilo Yelp con imagen centrada a la izquierda y panel de información a la derecha.",
+      "files_modified": [
+        "src/pages/DetalleLugar.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Reemplazado lightbox de pantalla completa por layout de dos columnas: imagen a la izquierda en fondo oscuro, panel de info blanco a la derecha (320px)",
+        "Panel derecho muestra nombre del lugar, contador de fotos (ej. '1 de 5 fotos'), rating en corazones (❤️/🩷/🤍) con valor numérico, y descripción del lugar",
+        "Botón de cierre reemplazado por botón '← Volver' con estilo pill en esquina superior izquierda del área de imagen",
+        "Imagen ahora usa maxHeight: 100vh garantizando centrado vertical correcto sin necesidad de scroll",
+        "Flechas de navegación reubicadas dentro del panel de imagen con stopPropagation correcto"
+      ]
+    }
+  ]
+}

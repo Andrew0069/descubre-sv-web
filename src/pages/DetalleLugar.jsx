@@ -1059,126 +1059,191 @@ export default function DetalleLugar() {
             position: 'fixed',
             inset: 0,
             zIndex: 300,
-            backgroundColor: 'rgba(0,0,0,0.92)',
-            backdropFilter: 'blur(8px)',
+            backgroundColor: 'rgba(0,0,0,0.88)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
           onClick={() => setLightboxOpen(false)}
         >
-          <div style={{
-            position: 'absolute',
-            top: '20px',
-            right: '20px',
-            color: '#fff',
-            fontSize: '0.85rem',
-            fontWeight: 600,
-            zIndex: 10,
-            backgroundColor: 'rgba(0,0,0,0.4)',
-            padding: '4px 12px',
-            borderRadius: '20px',
-            pointerEvents: 'none',
-          }}>
-            {lightboxIndex + 1} / {fotosCarousel.length}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setLightboxOpen(false)}
+          {/* Contenedor fila: se ajusta al tamaño de la imagen */}
+          <div
             style={{
-              position: 'absolute',
-              top: '16px',
-              left: '20px',
-              color: '#fff',
-              background: 'rgba(255,255,255,0.12)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              borderRadius: '50%',
-              width: '40px',
-              height: '40px',
-              cursor: 'pointer',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.1rem',
-              zIndex: 10,
-            }}
-          >
-            ✕
-          </button>
-
-          <img
-            src={fotosCarousel[lightboxIndex]}
-            alt=""
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              maxWidth: '90vw',
-              maxHeight: '85vh',
-              objectFit: 'contain',
+              flexDirection: 'row',
+              maxHeight: '90vh',
               borderRadius: '8px',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
-              userSelect: 'none',
+              overflow: 'hidden',
+              boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
             }}
-          />
-
-          {fotosCarousel.length > 1 && (
-            <>
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Panel izquierdo: imagen */}
+            <div style={{ position: 'relative', backgroundColor: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {/* Volver */}
               <button
                 type="button"
-                aria-label="Foto anterior"
-                onClick={(e) => { e.stopPropagation(); setLightboxIndex((i) => (i - 1 + fotosCarousel.length) % fotosCarousel.length) }}
+                onClick={() => setLightboxOpen(false)}
                 style={{
                   position: 'absolute',
-                  left: '20px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
+                  top: '14px',
+                  left: '14px',
                   color: '#fff',
-                  background: 'rgba(255,255,255,0.15)',
-                  border: '1px solid rgba(255,255,255,0.25)',
-                  borderRadius: '50%',
-                  width: '48px',
-                  height: '48px',
+                  background: 'rgba(0,0,0,0.55)',
+                  border: '1px solid rgba(255,255,255,0.18)',
+                  borderRadius: '24px',
+                  padding: '5px 14px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
+                  gap: '5px',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
                   zIndex: 10,
-                  backdropFilter: 'blur(8px)',
+                  backdropFilter: 'blur(6px)',
                 }}
               >
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <polyline points="15 18 9 12 15 6" />
                 </svg>
+                Volver
               </button>
-              <button
-                type="button"
-                aria-label="Foto siguiente"
-                onClick={(e) => { e.stopPropagation(); setLightboxIndex((i) => (i + 1) % fotosCarousel.length) }}
+
+              {/* Contador */}
+              <div style={{
+                position: 'absolute',
+                top: '14px',
+                right: '14px',
+                color: '#fff',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                padding: '3px 10px',
+                borderRadius: '20px',
+                pointerEvents: 'none',
+                zIndex: 10,
+              }}>
+                {lightboxIndex + 1} / {fotosCarousel.length}
+              </div>
+
+              <img
+                src={fotosCarousel[lightboxIndex]}
+                alt=""
                 style={{
-                  position: 'absolute',
-                  right: '20px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#fff',
-                  background: 'rgba(255,255,255,0.15)',
-                  border: '1px solid rgba(255,255,255,0.25)',
-                  borderRadius: '50%',
-                  width: '48px',
-                  height: '48px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 10,
-                  backdropFilter: 'blur(8px)',
+                  maxHeight: '90vh',
+                  maxWidth: '65vw',
+                  objectFit: 'contain',
+                  userSelect: 'none',
+                  display: 'block',
                 }}
-              >
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </button>
-            </>
-          )}
+              />
+
+              {fotosCarousel.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Foto anterior"
+                    onClick={(e) => { e.stopPropagation(); setLightboxIndex((i) => (i - 1 + fotosCarousel.length) % fotosCarousel.length) }}
+                    style={{
+                      position: 'absolute',
+                      left: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: '#fff',
+                      background: 'rgba(255,255,255,0.15)',
+                      border: '1px solid rgba(255,255,255,0.25)',
+                      borderRadius: '50%',
+                      width: '40px',
+                      height: '40px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 10,
+                      backdropFilter: 'blur(8px)',
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Foto siguiente"
+                    onClick={(e) => { e.stopPropagation(); setLightboxIndex((i) => (i + 1) % fotosCarousel.length) }}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: '#fff',
+                      background: 'rgba(255,255,255,0.15)',
+                      border: '1px solid rgba(255,255,255,0.25)',
+                      borderRadius: '50%',
+                      width: '40px',
+                      height: '40px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 10,
+                      backdropFilter: 'blur(8px)',
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Panel derecho: info del lugar — solo tan alto como la imagen */}
+            <div
+              style={{
+                width: '300px',
+                flexShrink: 0,
+                backgroundColor: '#fff',
+                display: 'flex',
+                flexDirection: 'column',
+                padding: '28px 22px',
+                overflowY: 'auto',
+              }}
+            >
+              <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#111', margin: '0 0 4px 0', lineHeight: 1.3 }}>
+                {lugar.nombre}
+              </h2>
+              <p style={{ fontSize: '0.78rem', color: '#6b7280', margin: '0 0 14px 0' }}>
+                {lightboxIndex + 1} de {fotosCarousel.length} {fotosCarousel.length === 1 ? 'foto' : 'fotos'}
+              </p>
+
+              {ratingPromedio != null && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '14px' }}>
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    const full = ratingPromedio >= star
+                    const half = !full && ratingPromedio >= star - 0.5
+                    return (
+                      <span key={star} style={{ fontSize: '1.2rem', lineHeight: 1 }}>
+                        {full ? '❤️' : half ? '🩷' : '🤍'}
+                      </span>
+                    )
+                  })}
+                  <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#374151', marginLeft: '4px' }}>
+                    {ratingPromedio.toFixed(1)}
+                  </span>
+                </div>
+              )}
+
+              {lugar.descripcion && (
+                <>
+                  <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '0 0 14px 0' }} />
+                  <p style={{ fontSize: '0.87rem', color: '#374151', lineHeight: 1.6, margin: 0 }}>
+                    {lugar.descripcion}
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

@@ -19,6 +19,15 @@ export async function markAllAsRead(userId) {
   return { data, error }
 }
 
+export async function deleteNotificacion(notificationId, userId) {
+  const { data, error } = await supabase
+    .from('notificaciones')
+    .delete()
+    .eq('id', notificationId)
+    .eq('usuario_id', userId)
+  return { data, error }
+}
+
 export async function createNotificacion(notificacionData) {
   const { data, error } = await supabase
     .from('notificaciones')

@@ -38,11 +38,14 @@ export default function Home() {
   const [user, setUser] = useState(null)
   const [userPerfil, setUserPerfil] = useState(null)
   const [campanaOpen, setCampanaOpen] = useState(false)
+  const [notificacionesFiltro, setNotificacionesFiltro] = useState('todas')
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [isCatBarSticky, setIsCatBarSticky] = useState(false)
   const [heroIdx, setHeroIdx] = useState(0)
+  const [splashVisible, setSplashVisible] = useState(true)
+  const [splashFading, setSplashFading] = useState(false)
   const catSentinelRef = useRef(null)
-  const { noLeidas, notificaciones, marcarTodasLeidas } = useNotificaciones(user)
+  const { noLeidas, notificaciones, marcarTodasLeidas, descartarNotificacion } = useNotificaciones(user)
   const { idioma } = useIdioma()
   const navigate = useNavigate()
 
@@ -274,6 +277,16 @@ export default function Home() {
     return list
   }, [lugares, categoriaId, filtroSubtipo, filtroBusquedaNombre, categoriasOtras])
 
+  const notificacionesVisibles = useMemo(() => {
+    if (notificacionesFiltro === 'no-leidas') return notificaciones.filter((n) => !n.leida)
+    return notificaciones
+  }, [notificaciones, notificacionesFiltro])
+
+  const handleVerTodasNotificaciones = useCallback(async () => {
+    setNotificacionesFiltro('todas')
+    await marcarTodasLeidas()
+  }, [marcarTodasLeidas])
+
   const handleVerTodos = (e) => {
     e.preventDefault()
     setCategoriaId(null)
@@ -347,11 +360,36 @@ export default function Home() {
       .slice(0, 6)
       .map((src) =>
         resolveImageUrl(src, 'lugares-fotos', {
-          transform: { width: 1400, height: 700, resize: 'cover' },
+          transform: { width: 2400, height: 1200, resize: 'cover' },
         })
       )
       .filter(Boolean)
   }, [lugares])
+
+  useEffect(() => {
+    setHeroIdx(0)
+  }, [heroImages])
+
+  // Dismiss splash once the first hero image is fully loaded in the browser
+  useEffect(() => {
+    if (loading) return
+    if (heroImages.length === 0) {
+      setSplashFading(true)
+      const t = setTimeout(() => setSplashVisible(false), 600)
+      return () => clearTimeout(t)
+    }
+    const img = new Image()
+    img.onload = () => {
+      setSplashFading(true)
+      const t = setTimeout(() => setSplashVisible(false), 600)
+      return () => clearTimeout(t)
+    }
+    img.onerror = () => {
+      setSplashFading(true)
+      setTimeout(() => setSplashVisible(false), 600)
+    }
+    img.src = heroImages[0]
+  }, [loading, heroImages])
 
   // Auto-rotate hero images
   useEffect(() => {
@@ -423,7 +461,6 @@ export default function Home() {
                   type="button"
                   onClick={() => {
                     setCampanaOpen((prev) => !prev)
-                    if (!campanaOpen) marcarTodasLeidas()
                   }}
                   style={{
                     background: 'none',
@@ -488,27 +525,42 @@ export default function Home() {
                     </div>
 
                     <div style={{ display: 'flex', gap: '8px', padding: '0 16px 12px' }}>
-                      <button style={{ backgroundColor: 'rgba(14,165,233,0.1)', color: '#0EA5E9', border: 'none', borderRadius: '20px', padding: '6px 12px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>Todas</button>
-                      <button style={{ backgroundColor: 'transparent', color: '#6b7280', border: 'none', borderRadius: '20px', padding: '6px 12px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', transition: 'background-color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>No leídas</button>
+                      <button
+                        type="button"
+                        onClick={() => setNotificacionesFiltro('todas')}
+                        style={{ backgroundColor: notificacionesFiltro === 'todas' ? 'rgba(14,165,233,0.1)' : 'transparent', color: notificacionesFiltro === 'todas' ? '#0EA5E9' : '#6b7280', border: 'none', borderRadius: '20px', padding: '6px 12px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}
+                      >
+                        Todas
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNotificacionesFiltro('no-leidas')}
+                        style={{ backgroundColor: notificacionesFiltro === 'no-leidas' ? 'rgba(14,165,233,0.1)' : 'transparent', color: notificacionesFiltro === 'no-leidas' ? '#0EA5E9' : '#6b7280', border: 'none', borderRadius: '20px', padding: '6px 12px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', transition: 'background-color 0.2s' }}
+                        onMouseEnter={(e) => { if (notificacionesFiltro !== 'no-leidas') e.currentTarget.style.backgroundColor = '#f3f4f6' }}
+                        onMouseLeave={(e) => { if (notificacionesFiltro !== 'no-leidas') e.currentTarget.style.backgroundColor = 'transparent' }}
+                      >
+                        No leídas
+                      </button>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 16px' }}>
                       <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#111827' }}>Anteriores</div>
-                      <button style={{ background: 'none', border: 'none', color: '#0EA5E9', fontSize: '0.85rem', cursor: 'pointer', padding: 0 }}>Ver todo</button>
+                      <button type="button" onClick={handleVerTodasNotificaciones} style={{ background: 'none', border: 'none', color: '#0EA5E9', fontSize: '0.85rem', cursor: 'pointer', padding: 0 }}>Ver todo</button>
                     </div>
 
-                    {notificaciones.length === 0 ? (
+                    {notificacionesVisibles.length === 0 ? (
                       <div style={{ padding: '24px 16px', textAlign: 'center', color: '#9ca3af', fontSize: '0.85rem' }}>
-                        Sin notificaciones
+                        {notificacionesFiltro === 'no-leidas' ? 'Sin notificaciones no leídas' : 'Sin notificaciones'}
                       </div>
                     ) : (
                       <ul style={{ listStyle: 'none', margin: 0, padding: '0 8px 8px', maxHeight: '400px', overflowY: 'auto' }}>
-                        {notificaciones.map((n) => (
+                        {notificacionesVisibles.map((n) => (
                           <li
                             key={n.id}
                             onClick={() => {
                               if (n.resena?.lugar_id) {
                                 setCampanaOpen(false)
+                                descartarNotificacion(n.id)
                                 navigate(`/lugar/${n.resena.lugar_id}`)
                               }
                             }}
@@ -567,7 +619,6 @@ export default function Home() {
                 onClick={() => navigate('/perfil')}
                 style={{
                   background: 'none',
-                  border: 'none',
                   cursor: 'pointer',
                   padding: 0,
                   borderRadius: '50%',
@@ -729,35 +780,34 @@ export default function Home() {
 
       <div>
         <section className="hero-photo-section relative flex min-h-[520px] items-center justify-center overflow-hidden px-6 py-16 sm:py-20">
+          <div
+            className="pointer-events-none absolute inset-0 z-0 bg-[#0EA5E9]"
+            aria-hidden
+          />
           {/* Hero slideshow – cross-fade between place cover photos */}
-          {heroImages.length > 0 ? (
+          {heroImages.length > 0 && (
             heroImages.map((url, i) => (
-              <div
-                key={i}
+              <img
+                key={url}
+                src={url}
+                alt=""
                 className="pointer-events-none absolute inset-0 z-0"
                 style={{
-                  backgroundImage: `url('${url}')`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  backgroundRepeat: 'no-repeat',
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center',
+                  display: 'block',
                   opacity: heroIdx === i ? 1 : 0,
                   transition: 'opacity 1.5s ease-in-out',
                   animation: heroIdx === i ? 'heroSlowZoom 7s ease-out forwards' : 'none',
                 }}
+                loading={i === 0 ? 'eager' : 'lazy'}
+                fetchPriority={i === 0 ? 'high' : 'auto'}
+                decoding="async"
                 aria-hidden
               />
             ))
-          ) : (
-            <div
-              className="pointer-events-none absolute inset-0 z-0 bg-[#0EA5E9] bg-cover bg-center"
-              style={{
-                backgroundImage: "url('/hero-bg.png')",
-                backgroundSize: 'cover',
-                backgroundPosition: 'center bottom',
-                backgroundRepeat: 'no-repeat',
-              }}
-              aria-hidden
-            />
           )}
           <div
             className="pointer-events-none absolute inset-0 z-[1]"
@@ -1211,6 +1261,58 @@ export default function Home() {
           mensaje="Guardá tus lugares favoritos y llevá El Salvador en el bolsillo."
           onClose={() => setShowLoginModal(false)}
         />
+      )}
+
+      {splashVisible && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            backgroundColor: '#ffffff',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '1.5rem',
+            opacity: splashFading ? 0 : 1,
+            transition: 'opacity 0.6s ease',
+            pointerEvents: splashFading ? 'none' : 'all',
+          }}
+        >
+          <svg viewBox="0 0 200 48" height="52" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22 2 C13 2, 5 10, 5 20 C5 33, 22 48, 22 48 C22 48, 39 33, 39 20 C39 10 31 2, 22 2 Z" fill="#F5A623" />
+            <circle cx="22" cy="19" r="10" fill="#1a1a2e" />
+            <path d="M10 19 C13 14, 18 14, 22 19 C26 24, 31 24, 34 19" fill="none" stroke="#F5A623" strokeWidth="2" strokeLinecap="round" />
+            <path d="M11 24 C14 20, 18 20, 22 24 C26 28, 30 28, 33 24" fill="none" stroke="#F5A623" strokeWidth="1.2" strokeLinecap="round" opacity="0.45" />
+            <circle cx="33" cy="8" r="2.5" fill="#F5A623" opacity="0.4" />
+            <text x="46" y="30" fontFamily="Georgia, serif" fontSize="26" fontWeight="700" letterSpacing="-1" fill="#1a1a2e">
+              <tspan fill="#F5A623">S</tspan><tspan fill="#1a1a2e">potter</tspan>
+            </text>
+          </svg>
+
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: '#F5A623',
+                  animation: `splashDot 1.2s ease-in-out ${i * 0.2}s infinite`,
+                }}
+              />
+            ))}
+          </div>
+
+          <style>{`
+            @keyframes splashDot {
+              0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+              40% { transform: scale(1); opacity: 1; }
+            }
+          `}</style>
+        </div>
       )}
     </div>
   )
