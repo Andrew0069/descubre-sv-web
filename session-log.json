@@ -67,6 +67,52 @@
         "Imagen ahora usa maxHeight: 100vh garantizando centrado vertical correcto sin necesidad de scroll",
         "Flechas de navegación reubicadas dentro del panel de imagen con stopPropagation correcto"
       ]
+    },
+    {
+      "id": 5,
+      "date": "2026-05-07",
+      "ai_tool": "Codex",
+      "summary": "Correcciones de notificaciones, visor de foto de perfil y endurecimiento conservador de seguridad en Supabase.",
+      "files_modified": [
+        "src/pages/Home.jsx",
+        "src/pages/Perfil.jsx",
+        "src/lib/useNotificaciones.js",
+        "src/services/notificacionesService.js",
+        "session-log.json",
+        "Supabase database policies/functions"
+      ],
+      "changes": [
+        "El panel de notificaciones ahora filtra correctamente entre Todas y No leidas, y Ver todo marca las notificaciones como leidas",
+        "Abrir la campana ya no marca automaticamente todas las notificaciones como leidas",
+        "Al usar una notificacion accionable se descarta localmente, se intenta eliminar en Supabase y no vuelve a mostrarse en ese navegador",
+        "Removido el boton de tres puntos del encabezado del panel de notificaciones",
+        "El avatar del navbar en Home vuelve a navegar al perfil; el visor de foto se movio a Perfil.jsx al hacer clic en la foto dentro del perfil",
+        "Agregada funcion deleteNotificacion y hook descartarNotificacion para permitir borrar notificaciones propias",
+        "Configurado y autenticado el MCP remoto de Supabase para el proyecto Descubre-sv",
+        "Aplicadas migraciones de seguridad: RLS activado en rate_limits, politicas mas estrictas para admin_logs, sugerencias, notificaciones y avatares",
+        "Endurecidas funciones de Supabase con search_path fijo y permisos EXECUTE reducidos para funciones internas",
+        "Validado con npm run build despues de los cambios de frontend"
+      ]
+    },
+    {
+      "id": 6,
+      "date": "2026-05-06",
+      "ai_tool": "Claude Code",
+      "summary": "Rediseño responsive del lightbox de fotos y fix del panel de notificaciones en móvil.",
+      "files_modified": [
+        "src/pages/DetalleLugar.jsx",
+        "src/pages/Home.jsx",
+        "session-log.json",
+        "CLAUDE.md"
+      ],
+      "changes": [
+        "Lightbox rediseñado con layout estilo Yelp: backdrop centrado + contenedor fila que se ajusta al tamaño natural de la imagen",
+        "Panel de info blanco ahora ocupa exactamente el mismo alto que la imagen (no toda la pantalla)",
+        "Lightbox responsive: en móvil (<768px) cambia a layout vertical — imagen arriba (58vh), panel info abajo scrollable",
+        "En móvil el lightbox ocupa pantalla completa sin backdrop; en desktop mantiene el diseño con sombra y border-radius",
+        "Panel de notificaciones corregido en móvil: cambia de position:absolute a position:fixed con left/right:12px para no cortarse",
+        "Validado con npm run build en todos los cambios"
+      ]
     }
   ]
 }

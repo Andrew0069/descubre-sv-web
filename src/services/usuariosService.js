@@ -92,7 +92,7 @@ export async function getUsuarioAdmin(authId) {
 export async function getUsuarioNavbar(authId) {
   const { data } = await supabase
     .from('usuarios')
-    .select('foto_perfil, nombre')
+    .select('foto_perfil, nombre, is_admin')
     .eq('auth_id', authId)
     .maybeSingle()
   return data ?? null

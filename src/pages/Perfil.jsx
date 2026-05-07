@@ -50,6 +50,7 @@ export default function Perfil() {
   const [tab, setTab] = useState('favoritos')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [modalType, setModalType] = useState(null) // 'editBio' | 'editPhoto'
+  const [fotoOpen, setFotoOpen] = useState(false)
 
   // edit bio
   const [editNombre, setEditNombre] = useState('')
@@ -194,7 +195,7 @@ export default function Perfil() {
         <div className="perfil-banner-inner">
           <div className="perfil-avatar-wrap">
             {foto
-              ? <img src={foto} alt="avatar" className="perfil-avatar" />
+              ? <img src={foto} alt="avatar" className="perfil-avatar" onClick={() => setFotoOpen(true)} style={{ cursor: 'pointer' }} />
               : <div className="perfil-avatar-placeholder">{inicial}</div>}
           </div>
           <div className="perfil-info">
@@ -282,6 +283,60 @@ export default function Perfil() {
               {photoFile && <button className="btn-primary" disabled={saving} onClick={handleSavePhoto}>{saving ? 'Guardando...' : 'Guardar foto'}</button>}
             </div>
           </div>
+        </div>
+      )}
+
+      {fotoOpen && foto && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setFotoOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 10000,
+            backgroundColor: 'rgba(0,0,0,0.72)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px',
+          }}
+        >
+          <button
+            type="button"
+            aria-label="Cerrar"
+            onClick={() => setFotoOpen(false)}
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              border: 'none',
+              backgroundColor: 'rgba(255,255,255,0.95)',
+              color: '#111827',
+              fontSize: '1.5rem',
+              lineHeight: 1,
+              cursor: 'pointer',
+            }}
+          >
+            ×
+          </button>
+          <img
+            src={foto}
+            alt="Foto de perfil"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 'min(92vw, 520px)',
+              maxHeight: '82vh',
+              width: 'auto',
+              height: 'auto',
+              objectFit: 'contain',
+              borderRadius: '12px',
+              backgroundColor: '#ffffff',
+            }}
+          />
         </div>
       )}
     </div>

@@ -919,7 +919,7 @@ export default function AdminPage() {
           <div>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#111827', margin: 0 }}>
               Panel Admin —{' '}
-              <svg viewBox="0 0 200 48" height="36" xmlns="http://www.w3.org/2000/svg">
+              <svg viewBox="0 0 200 48" height="36" xmlns="http://www.w3.org/2000/svg" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
                 <path d="M22 2 C13 2, 5 10, 5 20 C5 33, 22 48, 22 48 C22 48, 39 33, 39 20 C39 10 31 2, 22 2 Z" fill="#F5A623" />
                 <circle cx="22" cy="19" r="10" fill="#1a1a2e" />
                 <path d="M10 19 C13 14, 18 14, 22 19 C26 24, 31 24, 34 19" fill="none" stroke="#F5A623" strokeWidth="2" strokeLinecap="round" />

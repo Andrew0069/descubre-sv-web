@@ -719,6 +719,34 @@ export default function Home() {
                     ♥ Mis Favoritos
                   </button>
 
+                  {userPerfil?.is_admin && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false)
+                        navigate('/admin')
+                      }}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '0.65rem 1rem',
+                        fontSize: '0.9rem',
+                        fontWeight: '500',
+                        color: '#374151',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.07)' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                    >
+                      Admin
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={async () => {
