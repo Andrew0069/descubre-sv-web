@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { supabase } from './lib/supabase'
+import { logSecurityEvent } from './services/securityService'
 import Home from './pages/Home'
 import DetalleLugar from './pages/DetalleLugar'
 import Login from './pages/Login'
@@ -77,6 +79,21 @@ function AnimatedRoutes() {
 }
 
 export default function App() {
+  const loggedRef = useRef(new Set())
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user?.id) {
+        // deduplicate: only log once per user per session load
+        if (!loggedRef.current.has(session.user.id)) {
+          loggedRef.current.add(session.user.id)
+          logSecurityEvent(session, 'login')
+        }
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
   return (
     <BrowserRouter>
       <AnimatedRoutes />

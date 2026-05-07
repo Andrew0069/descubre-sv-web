@@ -18,6 +18,7 @@ import { createNotificacion } from '../services/notificacionesService'
 import { getImagenesByLugar } from '../services/imagenesService'
 import LoginModal from '../components/LoginModal'
 import Loader from '../components/Loader'
+import PhotoPickerSheet from '../components/PhotoPickerSheet'
 import { formatRelativeEs } from '../lib/dateUtils'
 
 
@@ -144,6 +145,7 @@ export default function DetalleLugar() {
   const [resenaTexto, setResenaTexto] = useState('')
   const [resenaFotos, setResenaFotos] = useState([])
   const [resenaPreview, setResenaPreview] = useState([])
+  const [fotosPickerOpen, setFotosPickerOpen] = useState(false)
   const [resenaLoading, setResenaLoading] = useState(false)
   const [resenaError, setResenaError] = useState('')
   const [resenaSuccess, setResenaSuccess] = useState(false)
@@ -847,16 +849,36 @@ export default function DetalleLugar() {
                   </div>
                 ))}
                 {resenaFotos.length < 3 && (
-                  <label style={{
-                    width: '80px', height: '80px', borderRadius: '8px',
-                    border: '2px dashed #d1d5db', display: 'flex',
-                    alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer', color: '#9ca3af', fontSize: '1.5rem',
-                  }}>
-                    +
-                    <input type="file" accept="image/*" multiple onChange={handleFotos} style={{ display: 'none' }} />
-                  </label>
+                  'ontouchstart' in window || window.innerWidth < 768 ? (
+                    <button
+                      type="button"
+                      onClick={() => setFotosPickerOpen(true)}
+                      style={{
+                        width: '80px', height: '80px', borderRadius: '8px',
+                        border: '2px dashed #d1d5db', display: 'flex',
+                        alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', color: '#9ca3af', fontSize: '1.5rem',
+                        background: 'none',
+                      }}
+                    >+</button>
+                  ) : (
+                    <label style={{
+                      width: '80px', height: '80px', borderRadius: '8px',
+                      border: '2px dashed #d1d5db', display: 'flex',
+                      alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer', color: '#9ca3af', fontSize: '1.5rem',
+                    }}>
+                      +
+                      <input type="file" accept="image/*" multiple onChange={handleFotos} style={{ display: 'none' }} />
+                    </label>
+                  )
                 )}
+                <PhotoPickerSheet
+                  open={fotosPickerOpen}
+                  onClose={() => setFotosPickerOpen(false)}
+                  onFileSelected={handleFotos}
+                  multiple
+                />
               </div>
             </div>
 

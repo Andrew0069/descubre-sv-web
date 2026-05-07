@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { getUsuarioCompleto, updateUsuarioPerfil, updateUsuarioFoto } from '../services/usuariosService'
 import { resolveImageUrl } from '../lib/imageUrl'
 import Loader from '../components/Loader'
+import PhotoPickerSheet from '../components/PhotoPickerSheet'
 import './Perfil.css'
 
 /* ── tiny helpers ─────────────────────────────────── */
@@ -61,6 +62,7 @@ export default function Perfil() {
   // edit photo
   const [photoFile, setPhotoFile] = useState(null)
   const [photoPreview, setPhotoPreview] = useState('')
+  const [photoPickerOpen, setPhotoPickerOpen] = useState(false)
 
   /* ── session ── */
   useEffect(() => {
@@ -268,15 +270,32 @@ export default function Perfil() {
             )}
 
             <div className="perfil-photo-options">
-              <label className="perfil-photo-upload">
-                <input type="file" accept="image/*" onChange={handlePhotoSelect} />
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                <span style={{ fontSize: '0.88rem', color: '#374151' }}>{photoFile ? photoFile.name : 'Subir nueva foto'}</span>
-              </label>
+              {'ontouchstart' in window || window.innerWidth < 768 ? (
+                <button
+                  type="button"
+                  className="perfil-photo-upload"
+                  style={{ cursor: 'pointer', background: 'none', border: 'none', width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: 0 }}
+                  onClick={() => setPhotoPickerOpen(true)}
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <span style={{ fontSize: '0.88rem', color: '#374151' }}>{photoFile ? photoFile.name : 'Subir nueva foto'}</span>
+                </button>
+              ) : (
+                <label className="perfil-photo-upload">
+                  <input type="file" accept="image/*" onChange={handlePhotoSelect} />
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <span style={{ fontSize: '0.88rem', color: '#374151' }}>{photoFile ? photoFile.name : 'Subir nueva foto'}</span>
+                </label>
+              )}
               {perfil?.foto_perfil && (
                 <button className="perfil-remove-btn" onClick={handleRemovePhoto} disabled={saving}>🗑️ Quitar foto actual</button>
               )}
             </div>
+            <PhotoPickerSheet
+              open={photoPickerOpen}
+              onClose={() => setPhotoPickerOpen(false)}
+              onFileSelected={handlePhotoSelect}
+            />
 
             <div className="actions">
               <button className="btn-secondary" onClick={() => setModalType(null)}>Cancelar</button>

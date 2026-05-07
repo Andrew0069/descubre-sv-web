@@ -101,6 +101,9 @@ export default function AdminPage() {
   const [logs, setLogs] = useState([])
   const [loadingResenas, setLoadingResenas] = useState(false)
   const [loadingLogs, setLoadingLogs] = useState(false)
+  const [securityLogs, setSecurityLogs] = useState([])
+  const [loadingSecurityLogs, setLoadingSecurityLogs] = useState(false)
+  const [securityFilter, setSecurityFilter] = useState('todos')
   const [uploading, setUploading] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deletingLugar, setDeletingLugar] = useState(false)
@@ -257,6 +260,40 @@ export default function AdminPage() {
     if (checking || activeSection !== 'bitacora') return
     cargarLogs()
   }, [activeSection, cargarLogs, checking])
+
+  const cargarSecurityLogs = useCallback(async () => {
+    setLoadingSecurityLogs(true)
+    const { data } = await supabase
+      .from('security_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(200)
+    setSecurityLogs(data ?? [])
+    setLoadingSecurityLogs(false)
+  }, [])
+
+  useEffect(() => {
+    if (checking || activeSection !== 'seguridad') return
+    cargarSecurityLogs()
+  }, [activeSection, cargarSecurityLogs, checking])
+
+  const handleToggleFlag = async (log) => {
+    await supabase.from('security_logs').update({ flagged: !log.flagged }).eq('id', log.id)
+    setSecurityLogs(prev => prev.map(l => l.id === log.id ? { ...l, flagged: !l.flagged } : l))
+  }
+
+  const handleBloquearUsuarioSecurity = async (log) => {
+    if (!log.usuario_db_id) return
+    await supabase.from('usuarios').update({ bloqueado: true }).eq('id', log.usuario_db_id)
+    await supabase.from('admin_logs').insert({
+      admin_id: adminId,
+      accion: 'UPDATE',
+      tabla: 'usuarios',
+      registro_id: log.usuario_db_id,
+      detalle: { motivo: 'seguridad', security_log_id: log.id },
+    })
+    showToast('Usuario bloqueado')
+  }
 
   const cargarImagenes = useCallback(async (lugarId) => {
     const { data } = await getImagenesByLugar(lugarId)
@@ -899,6 +936,7 @@ export default function AdminPage() {
     { id: 'lugares', label: `Lugares (${lugares.length})` },
     { id: 'resenas', label: 'Reseñas' },
     { id: 'bitacora', label: 'Bitácora' },
+    { id: 'seguridad', label: 'Seguridad' },
   ]
 
   return (
@@ -1370,6 +1408,101 @@ export default function AdminPage() {
                           </td>
                         </tr>
                       ))}
+                    </tbody>
+                  </table>
+                )}
+              </section>
+            )}
+
+            {activeSection === 'seguridad' && (
+              <section style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflowX: 'auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#111827', margin: 0 }}>Registros de Seguridad</h2>
+                    <p style={{ fontSize: '0.85rem', color: '#6b7280', margin: '4px 0 0' }}>{securityLogs.length} acceso{securityLogs.length !== 1 ? 's' : ''} recientes</p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {['todos', 'marcados', 'proxy'].map(f => (
+                      <button
+                        key={f}
+                        type="button"
+                        onClick={() => setSecurityFilter(f)}
+                        style={{
+                          ...buttonBase,
+                          backgroundColor: securityFilter === f ? '#0EA5E9' : '#f3f4f6',
+                          color: securityFilter === f ? '#fff' : '#374151',
+                          fontSize: '0.8rem', padding: '6px 14px',
+                        }}
+                      >
+                        {f === 'todos' ? 'Todos' : f === 'marcados' ? 'Marcados' : 'Con proxy'}
+                      </button>
+                    ))}
+                    <button type="button" onClick={cargarSecurityLogs} style={{ ...buttonBase, backgroundColor: '#f3f4f6', color: '#374151' }}>
+                      Actualizar
+                    </button>
+                  </div>
+                </div>
+
+                {loadingSecurityLogs ? (
+                  <p style={{ color: '#6b7280' }}>Cargando registros...</p>
+                ) : securityLogs.length === 0 ? (
+                  <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#9ca3af', border: '1px dashed #e5e7eb', borderRadius: '12px' }}>
+                    No hay registros de seguridad aún.
+                  </div>
+                ) : (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+                        {['Fecha', 'Email', 'Evento', 'IP', 'País', 'Ciudad', 'GPS', 'Proxy', 'Acciones'].map(h => (
+                          <th key={h} style={{ textAlign: 'left', padding: '10px', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {securityLogs
+                        .filter(l => {
+                          if (securityFilter === 'marcados') return l.flagged
+                          if (securityFilter === 'proxy') return l.ip_is_proxy
+                          return true
+                        })
+                        .map((log) => (
+                          <tr key={log.id} style={{ borderBottom: '1px solid #f3f4f6', verticalAlign: 'middle', backgroundColor: log.flagged ? '#fffbeb' : 'transparent' }}>
+                            <td style={{ padding: '10px', fontSize: '0.82rem', color: '#374151', whiteSpace: 'nowrap' }}>{formatDateTime(log.created_at)}</td>
+                            <td style={{ padding: '10px', fontSize: '0.82rem', color: '#111827', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{log.email ?? '—'}</td>
+                            <td style={{ padding: '10px' }}>
+                              <span style={{ ...actionBadgeStyle(log.event_type === 'login' ? 'INSERT' : 'UPDATE'), fontSize: '0.75rem' }}>{log.event_type}</span>
+                            </td>
+                            <td style={{ padding: '10px', fontSize: '0.82rem', color: '#374151', whiteSpace: 'nowrap' }}>{log.ip_address ?? '—'}</td>
+                            <td style={{ padding: '10px', fontSize: '0.82rem', color: '#374151' }}>{log.ip_country_code ? `${log.ip_country_name} (${log.ip_country_code})` : '—'}</td>
+                            <td style={{ padding: '10px', fontSize: '0.82rem', color: '#374151' }}>{log.ip_city ?? '—'}</td>
+                            <td style={{ padding: '10px', fontSize: '0.82rem', color: '#374151', whiteSpace: 'nowrap' }}>
+                              {log.gps_denied ? <span style={{ color: '#ef4444' }}>Denegado</span> : log.gps_lat ? `${log.gps_lat.toFixed(4)}, ${log.gps_lng.toFixed(4)}` : '—'}
+                            </td>
+                            <td style={{ padding: '10px' }}>
+                              {log.ip_is_proxy ? <span style={{ backgroundColor: '#fef2f2', color: '#dc2626', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '999px', fontWeight: 700 }}>SÍ</span> : <span style={{ color: '#9ca3af', fontSize: '0.82rem' }}>No</span>}
+                            </td>
+                            <td style={{ padding: '10px' }}>
+                              <div style={{ display: 'flex', gap: '6px', flexWrap: 'nowrap' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleFlag(log)}
+                                  style={{ ...buttonBase, fontSize: '0.78rem', padding: '4px 10px', backgroundColor: log.flagged ? '#fef3c7' : '#f3f4f6', color: log.flagged ? '#92400e' : '#374151' }}
+                                >
+                                  {log.flagged ? '★ Marcado' : '☆ Marcar'}
+                                </button>
+                                {log.usuario_db_id && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleBloquearUsuarioSecurity(log)}
+                                    style={{ ...buttonBase, fontSize: '0.78rem', padding: '4px 10px', backgroundColor: '#fef2f2', color: '#dc2626' }}
+                                  >
+                                    Bloquear
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
                 )}

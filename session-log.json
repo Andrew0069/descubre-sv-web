@@ -113,6 +113,31 @@
         "Panel de notificaciones corregido en móvil: cambia de position:absolute a position:fixed con left/right:12px para no cortarse",
         "Validado con npm run build en todos los cambios"
       ]
+    },
+    {
+      "id": 7,
+      "date": "2026-05-06",
+      "ai_tool": "Claude Code",
+      "summary": "Acceso a fotos en móvil con PhotoPickerSheet y sistema de seguridad con geolocalización/IP.",
+      "files_modified": [
+        "src/components/PhotoPickerSheet.jsx",
+        "src/services/securityService.js",
+        "src/App.jsx",
+        "src/pages/Perfil.jsx",
+        "src/pages/DetalleLugar.jsx",
+        "src/pages/AdminPage.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Creado componente PhotoPickerSheet: bottom-sheet en móvil con opciones Tomar foto (cámara) y Elegir de galería",
+        "En Perfil.jsx: botón de foto en móvil abre el sheet en vez del selector genérico",
+        "En DetalleLugar.jsx: botón '+' de fotos de reseña en móvil abre el sheet (con multiple para galería)",
+        "Creado securityService.js: recopila GPS (navigator.geolocation) e IP (ipapi.co) en paralelo, inserta en security_logs",
+        "En App.jsx: onAuthStateChange captura SIGNED_IN (email y Google OAuth) y llama logSecurityEvent en modo fire-and-forget",
+        "Creada tabla security_logs en Supabase con RLS (solo admins pueden leer)",
+        "En AdminPage.jsx: nueva sección 'Seguridad' en sidebar con tabla de accesos (IP, país, GPS, proxy), filtros y botones Marcar/Bloquear usuario",
+        "Build validado con npm run build"
+      ]
     }
   ]
 }
