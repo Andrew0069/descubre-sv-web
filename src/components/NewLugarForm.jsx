@@ -1,3 +1,4 @@
+import CategoryColorPicker from './CategoryColorPicker'
 import { DEFAULT_CATEGORY_COLOR } from '../pages/AdminPage'
 
 export const DEPARTAMENTOS = [
@@ -152,9 +153,9 @@ export default function NewLugarForm({ formData, categorias = [], isSaving, onCh
         {formData.categoria_id === '__nueva__' && (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1fr) 120px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
             gap: '16px',
-            alignItems: 'end',
+            alignItems: 'start',
           }}>
             <div>
             <label style={createLabelStyle}>
@@ -169,31 +170,27 @@ export default function NewLugarForm({ formData, categorias = [], isSaving, onCh
             />
             </div>
             <div>
-              <label style={createLabelStyle}>
-                Color
-              </label>
-              <input
-                type="color"
+              <CategoryColorPicker
+                label="Color"
                 name="nueva_categoria_color"
                 value={formData.nueva_categoria_color || DEFAULT_CATEGORY_COLOR}
+                categorias={categorias}
+                defaultColor={DEFAULT_CATEGORY_COLOR}
                 onChange={onChange}
-                style={{ ...createFieldStyle, padding: '4px 6px', cursor: 'pointer' }}
               />
             </div>
           </div>
         )}
 
         {formData.categoria_id !== '__nueva__' && (
-          <div>
-            <label style={createLabelStyle}>
-              Color de la categoria
-            </label>
-            <input
-              type="color"
+          <div style={{ maxWidth: '420px' }}>
+            <CategoryColorPicker
+              label="Color de la categoria"
               name="categoria_color"
               value={formData.categoria_color || DEFAULT_CATEGORY_COLOR}
+              categorias={categorias}
+              defaultColor={DEFAULT_CATEGORY_COLOR}
               onChange={onChange}
-              style={{ ...createFieldStyle, width: '120px', padding: '4px 6px', cursor: 'pointer' }}
             />
           </div>
         )}

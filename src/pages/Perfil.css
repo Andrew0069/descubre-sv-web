@@ -5,16 +5,16 @@
 .perfil-header-bar .title { font-size:0.88rem; font-weight:600; color:#374151; }
 
 /* Profile banner */
-.perfil-banner { background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#0EA5E9 100%); padding:2.5rem 1.5rem 1.5rem; position:relative; }
+.perfil-banner { background:linear-gradient(135deg,#fffdf5 0%,#fef3c7 38%,var(--accent) 100%); padding:2.5rem 1.5rem 1.5rem; position:relative; }
 .perfil-banner-inner { max-width:800px; margin:0 auto; display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap; }
 .perfil-avatar-wrap { position:relative; flex-shrink:0; }
-.perfil-avatar { width:100px; height:100px; border-radius:50%; object-fit:cover; border:4px solid rgba(255,255,255,0.3); }
-.perfil-avatar-placeholder { width:100px; height:100px; border-radius:50%; background:#0EA5E9; color:#fff; display:flex; align-items:center; justify-content:center; font-size:2.5rem; font-weight:700; border:4px solid rgba(255,255,255,0.3); }
-.perfil-info h1 { color:#fff; font-size:1.5rem; font-weight:800; margin:0 0 4px; }
-.perfil-info .bio { color:rgba(255,255,255,0.7); font-size:0.88rem; margin:0 0 8px; max-width:400px; line-height:1.5; }
-.perfil-info .joined { color:rgba(255,255,255,0.5); font-size:0.78rem; margin:0; display:flex; align-items:center; gap:4px; }
-.perfil-settings-btn { position:absolute; top:1rem; right:1rem; background:rgba(255,255,255,0.15); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.2); border-radius:10px; color:#fff; padding:8px 14px; font-size:0.82rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; transition:background 0.2s; }
-.perfil-settings-btn:hover { background:rgba(255,255,255,0.25); }
+.perfil-avatar { width:100px; height:100px; border-radius:50%; object-fit:cover; border:4px solid rgba(255,255,255,0.72); box-shadow:0 10px 24px rgba(146,64,14,0.16); }
+.perfil-avatar-placeholder { width:100px; height:100px; border-radius:50%; background:linear-gradient(135deg,#fcd34d 0%,#d97706 100%); color:#fff; display:flex; align-items:center; justify-content:center; font-size:2.5rem; font-weight:700; border:4px solid rgba(255,255,255,0.72); box-shadow:0 10px 24px rgba(146,64,14,0.16); }
+.perfil-info h1 { color:#1a1a2e; font-size:1.5rem; font-weight:800; margin:0 0 4px; }
+.perfil-info .bio { color:rgba(26,26,46,0.78); font-size:0.88rem; margin:0 0 8px; max-width:400px; line-height:1.5; }
+.perfil-info .joined { color:rgba(26,26,46,0.58); font-size:0.78rem; margin:0; display:flex; align-items:center; gap:4px; }
+.perfil-settings-btn { position:absolute; top:1rem; right:1rem; background:rgba(255,255,255,0.58); backdrop-filter:blur(8px); border:1px solid rgba(245,197,24,0.34); border-radius:10px; color:#1a1a2e; padding:8px 14px; font-size:0.82rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; transition:background 0.2s,border-color 0.2s; box-shadow:0 10px 24px rgba(146,64,14,0.08); }
+.perfil-settings-btn:hover { background:rgba(255,255,255,0.8); border-color:rgba(217,119,6,0.42); }
 
 /* Settings dropdown */
 .perfil-settings-dd { position:absolute; top:3rem; right:0; background:#fff; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,0.15); padding:0.5rem; min-width:200px; z-index:60; }

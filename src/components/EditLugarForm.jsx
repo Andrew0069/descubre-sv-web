@@ -1,3 +1,5 @@
+import CategoryColorPicker from './CategoryColorPicker'
+
 const SUBTIPOS = ['Hotel', 'Hostal', 'Airbnb', 'Restaurante', 'Bar', 'Atracción']
 const DEFAULT_CATEGORY_COLOR = '#2196F3'
 
@@ -98,9 +100,9 @@ export default function EditLugarForm({ formData, categorias = [], onChange, onT
         {formData.categoria_id === '__nueva__' && (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1fr) 120px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
             gap: '16px',
-            alignItems: 'end',
+            alignItems: 'start',
           }}>
             <div>
             <label style={labelStyle}>
@@ -115,31 +117,27 @@ export default function EditLugarForm({ formData, categorias = [], onChange, onT
             />
             </div>
             <div>
-              <label style={labelStyle}>
-                Color
-              </label>
-              <input
-                type="color"
+              <CategoryColorPicker
+                label="Color"
                 name="nueva_categoria_color"
                 value={formData.nueva_categoria_color || DEFAULT_CATEGORY_COLOR}
+                categorias={categorias}
+                defaultColor={DEFAULT_CATEGORY_COLOR}
                 onChange={onChange}
-                style={{ ...fieldStyle, padding: '4px 6px', cursor: 'pointer' }}
               />
             </div>
           </div>
         )}
 
         {formData.categoria_id !== '__nueva__' && (
-          <div>
-            <label style={labelStyle}>
-              Color de la categoria
-            </label>
-            <input
-              type="color"
+          <div style={{ maxWidth: '420px' }}>
+            <CategoryColorPicker
+              label="Color de la categoria"
               name="categoria_color"
               value={formData.categoria_color || DEFAULT_CATEGORY_COLOR}
+              categorias={categorias}
+              defaultColor={DEFAULT_CATEGORY_COLOR}
               onChange={onChange}
-              style={{ ...fieldStyle, width: '120px', padding: '4px 6px', cursor: 'pointer' }}
             />
           </div>
         )}
