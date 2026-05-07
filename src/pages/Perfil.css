@@ -90,7 +90,9 @@
 .perfil-msg.success { background:rgba(16,185,129,0.08); color:#059669; }
 
 @media(max-width:600px){
+  .perfil-banner { padding-top: 4rem; }
   .perfil-banner-inner { flex-direction:column; text-align:center; align-items:center; }
+  .perfil-settings-btn { padding: 6px 10px; font-size: 0.78rem; }
   .perfil-tab { padding:0.75rem 1rem; font-size:0.82rem; }
   .perfil-fav-grid { grid-template-columns:1fr; }
 }

@@ -503,7 +503,20 @@ export default function Home() {
                 </button>
 
                 {campanaOpen && (
-                  <div style={{
+                  <div style={window.innerWidth < 640 ? {
+                    position: 'fixed',
+                    top: '60px',
+                    left: '12px',
+                    right: '12px',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '12px',
+                    boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
+                    zIndex: 200,
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                  } : {
                     position: 'absolute',
                     top: '52px',
                     right: '0',

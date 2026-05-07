@@ -158,6 +158,24 @@
         "La paleta muestra el color seleccionado con swatch, codigo HEX y estado visual de seleccion",
         "Validado con npm run build; Vite solo reporto el warning existente de chunk mayor a 500 kB"
       ]
+    },
+    {
+      "id": 9,
+      "date": "2026-05-07",
+      "ai_tool": "Claude Code",
+      "summary": "Fix del panel de notificaciones recortado en móvil y reposicionamiento del botón de configuración en Perfil.",
+      "files_modified": [
+        "src/pages/Home.jsx",
+        "src/pages/Perfil.css",
+        "session-log.json"
+      ],
+      "changes": [
+        "Panel de notificaciones en móvil (<640px) ahora usa position:fixed con left/right:12px y top:60px para no cortarse fuera del viewport",
+        "En desktop el panel mantiene position:absolute con width:360px y right:0 sin cambios",
+        "Perfil.css: en móvil el banner aumenta padding-top a 4rem para que el avatar/info no quede debajo del botón Configuración",
+        "Botón Configuración en móvil: se reduce padding (6px 10px) y font-size (0.78rem) para mayor comodidad visual",
+        "Build validado con npm run build"
+      ]
     }
   ]
 }
