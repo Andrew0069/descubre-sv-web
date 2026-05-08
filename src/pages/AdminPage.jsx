@@ -94,6 +94,9 @@ export default function AdminPage() {
     precio_entrada: '',
     subtipo: '',
     destacado: false,
+    latitud: '',
+    longitud: '',
+    horarios: null,
   })
   const [imagenes, setImagenes] = useState([])
   const [resenas, setResenas] = useState([])
@@ -330,6 +333,9 @@ export default function AdminPage() {
         precio_entrada: '',
         subtipo: '',
         destacado: false,
+        latitud: '',
+        longitud: '',
+        horarios: null,
       })
       return
     }
@@ -345,6 +351,9 @@ export default function AdminPage() {
       precio_entrada: lugarSeleccionado.precio_entrada ?? '',
       subtipo: lugarSeleccionado.subtipo ?? '',
       destacado: lugarSeleccionado.destacado ?? false,
+      latitud: lugarSeleccionado.latitud ?? '',
+      longitud: lugarSeleccionado.longitud ?? '',
+      horarios: lugarSeleccionado.horarios ?? null,
     })
   }, [categorias, lugarSeleccionado])
 
@@ -393,6 +402,9 @@ export default function AdminPage() {
       precio_entrada: lugarSeleccionado.precio_entrada ?? '',
       subtipo: lugarSeleccionado.subtipo ?? '',
       destacado: lugarSeleccionado.destacado ?? false,
+      latitud: lugarSeleccionado.latitud ?? '',
+      longitud: lugarSeleccionado.longitud ?? '',
+      horarios: lugarSeleccionado.horarios ?? null,
     })
   }
 
@@ -577,6 +589,8 @@ export default function AdminPage() {
       precio_entrada: formData.precio_entrada,
       subtipo: formData.subtipo || null,
       destacado: formData.destacado,
+      latitud: formData.latitud !== '' ? Number(formData.latitud) : null,
+      longitud: formData.longitud !== '' ? Number(formData.longitud) : null,
     }
     const camposModificados = Object.keys(payload).filter((key) => payload[key] !== lugarSeleccionado[key])
 
@@ -1280,6 +1294,94 @@ export default function AdminPage() {
                         )}
                       </div>
                     </section>
+
+                    {/* ── Horarios ── */}
+                    {lugarSeleccionado && (() => {
+                      const dias = [
+                        { key: 'lunes', label: 'Lunes' },
+                        { key: 'martes', label: 'Martes' },
+                        { key: 'miercoles', label: 'Miércoles' },
+                        { key: 'jueves', label: 'Jueves' },
+                        { key: 'viernes', label: 'Viernes' },
+                        { key: 'sabado', label: 'Sábado' },
+                        { key: 'domingo', label: 'Domingo' },
+                      ]
+                      const handleHorarioChange = (dia, campo, valor) => {
+                        setFormData(prev => {
+                          const diaActual = (prev.horarios || {})[dia] || { abierto: false, abre: '09:00', cierra: '18:00' }
+                          return {
+                            ...prev,
+                            horarios: { ...prev.horarios, [dia]: { ...diaActual, [campo]: valor } }
+                          }
+                        })
+                      }
+                      const handleGuardarHorarios = async () => {
+                        const { error } = await supabase
+                          .from('lugares')
+                          .update({ horarios: formData.horarios })
+                          .eq('id', lugarSeleccionado.id)
+                        if (error) { alert('Error al guardar horarios'); return }
+                        alert('Horarios guardados ✓')
+                      }
+                      return (
+                        <section style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid #f0f0f0' }}>
+                          <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px' }}>🕐 Horarios</h3>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {dias.map(({ key, label }) => {
+                              const d = (formData.horarios || {})[key] || { abierto: false, abre: '09:00', cierra: '18:00' }
+                              return (
+                                <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                                  <span style={{ width: '82px', fontSize: '14px', fontWeight: 500, color: '#333' }}>{label}</span>
+                                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                                    <input
+                                      type="checkbox"
+                                      checked={d.abierto || false}
+                                      onChange={(e) => handleHorarioChange(key, 'abierto', e.target.checked)}
+                                    />
+                                    <span style={{ fontSize: '13px', color: d.abierto ? '#16a34a' : '#aaa' }}>
+                                      {d.abierto ? 'Abierto' : 'Cerrado'}
+                                    </span>
+                                  </label>
+                                  {d.abierto && (
+                                    <>
+                                      <input
+                                        type="time"
+                                        value={d.abre || '09:00'}
+                                        onChange={(e) => handleHorarioChange(key, 'abre', e.target.value)}
+                                        style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px' }}
+                                      />
+                                      <span style={{ color: '#aaa' }}>–</span>
+                                      <input
+                                        type="time"
+                                        value={d.cierra || '18:00'}
+                                        onChange={(e) => handleHorarioChange(key, 'cierra', e.target.value)}
+                                        style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px' }}
+                                      />
+                                    </>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                          <button
+                            onClick={handleGuardarHorarios}
+                            style={{
+                              marginTop: '20px',
+                              padding: '10px 20px',
+                              background: '#0ea5e9',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '8px',
+                              fontWeight: 600,
+                              fontSize: '14px',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Guardar horarios
+                          </button>
+                        </section>
+                      )
+                    })()}
                   </div>
                 )}
               </div>

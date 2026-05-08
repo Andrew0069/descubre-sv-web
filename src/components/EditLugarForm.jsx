@@ -241,6 +241,38 @@ export default function EditLugarForm({ formData, categorias = [], onChange, onT
         </div>
       </div>
 
+      <div style={{ padding: '0 20px 16px' }}>
+        <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: '13px', color: '#555', display: 'block', marginBottom: '4px' }}>Latitud (opcional)</label>
+            <input
+              type="number"
+              step="any"
+              name="latitud"
+              value={formData.latitud ?? ''}
+              onChange={onChange}
+              placeholder="ej. 13.692940"
+              style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+            />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: '13px', color: '#555', display: 'block', marginBottom: '4px' }}>Longitud (opcional)</label>
+            <input
+              type="number"
+              step="any"
+              name="longitud"
+              value={formData.longitud ?? ''}
+              onChange={onChange}
+              placeholder="ej. -89.218191"
+              style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+            />
+          </div>
+        </div>
+        <p style={{ fontSize: '12px', color: '#aaa', marginTop: '4px', marginBottom: 0 }}>
+          💡 Obtén las coordenadas desde Google Maps → clic derecho sobre el punto → copiar lat/lng
+        </p>
+      </div>
+
       <div style={{
         display: 'flex',
         justifyContent: 'flex-end',

@@ -1413,12 +1413,74 @@ export default function DetalleLugar() {
               padding: '20px 24px',
               border: '1px solid #f3f4f6',
             }}>
-              <h3 style={{ fontSize: '0.9rem', fontWeight: 600, color: '#6b7280', marginBottom: '8px' }}>
-                {t.ubicacion}
-              </h3>
-              <p style={{ fontSize: '0.9rem', color: '#374151', margin: 0, lineHeight: 1.5 }}>
-                {lugar.direccion}
+              <p style={{ fontWeight: 600, fontSize: '15px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px', margin: '0 0 10px' }}>
+                📍 {idioma === 'en' ? 'Location' : 'Ubicación'}
               </p>
+              {(() => {
+                const mapSrc = lugar.latitud && lugar.longitud
+                  ? `https://www.google.com/maps?q=${lugar.latitud},${lugar.longitud}&output=embed`
+                  : `https://www.google.com/maps?q=${encodeURIComponent(lugar.direccion || '')}&output=embed`
+                const directionsUrl = lugar.latitud && lugar.longitud
+                  ? `https://maps.google.com/?q=${lugar.latitud},${lugar.longitud}`
+                  : `https://maps.google.com/?q=${encodeURIComponent(lugar.direccion || '')}`
+                return (
+                  <>
+                    <p style={{ fontSize: '14px', color: '#555', marginBottom: '10px' }}>{lugar.direccion}</p>
+                    <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid #e8e8e8', marginBottom: '10px' }}>
+                      <iframe
+                        title="Mapa de ubicación"
+                        width="100%"
+                        height="220"
+                        style={{ border: 0, display: 'block' }}
+                        src={mapSrc}
+                        allowFullScreen
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                      />
+                    </div>
+                    <a
+                      href={directionsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '9px 18px', background: '#1a1a1a', color: '#fff', borderRadius: '24px', fontSize: '14px', fontWeight: 600, textDecoration: 'none' }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                      {idioma === 'en' ? 'Get directions' : 'Cómo llegar'}
+                    </a>
+                  </>
+                )
+              })()}
+              {lugar.horarios && (() => {
+                const dias = [
+                  { key: 'lunes', label: 'Lunes' },
+                  { key: 'martes', label: 'Martes' },
+                  { key: 'miercoles', label: 'Miércoles' },
+                  { key: 'jueves', label: 'Jueves' },
+                  { key: 'viernes', label: 'Viernes' },
+                  { key: 'sabado', label: 'Sábado' },
+                  { key: 'domingo', label: 'Domingo' },
+                ]
+                return (
+                  <div style={{ marginTop: '20px' }}>
+                    <p style={{ fontWeight: 600, fontSize: '15px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      🕐 Horarios
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {dias.map(({ key, label }) => {
+                        const d = lugar.horarios[key]
+                        return (
+                          <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', padding: '4px 0', borderBottom: '1px solid #f5f5f5' }}>
+                            <span style={{ color: '#555' }}>{label}</span>
+                            <span style={{ color: d?.abierto ? '#1a1a1a' : '#aaa', fontWeight: d?.abierto ? 500 : 400 }}>
+                              {d?.abierto ? `${d.abre ?? '?'} – ${d.cierra ?? '?'}` : 'Cerrado'}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })()}
             </div>
           )}
         </div>
@@ -1468,12 +1530,102 @@ export default function DetalleLugar() {
               </button>
             </div>
 
+            {resenas.length > 0 && (() => {
+              const total = resenas.length
+              const promedio = resenas.reduce((acc, r) => acc + (Number(r.estrellas) || 0), 0) / total
+              const distribucion = [5, 4, 3, 2, 1].map(n => ({
+                valor: n,
+                cantidad: resenas.filter(r => Number(r.estrellas) === n).length
+              }))
+              const renderCorazones = (val) => [1, 2, 3, 4, 5].map(i => {
+                const diff = val - (i - 1)
+                const color = diff >= 1 ? '#0ea5e9' : '#ddd'
+                return <span key={i} style={{ color, fontSize: '20px' }}>{diff >= 1 ? '♥' : '♡'}</span>
+              })
+              return (
+                <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '12px', padding: '20px 24px', marginBottom: '20px', display: 'flex', gap: '32px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '90px' }}>
+                    <span style={{ fontSize: '40px', fontWeight: 700, color: '#1a1a1a', lineHeight: 1 }}>{promedio.toFixed(1)}</span>
+                    <div style={{ display: 'flex', gap: '2px', margin: '8px 0 4px' }}>{renderCorazones(promedio)}</div>
+                    <span style={{ fontSize: '13px', color: '#888' }}>{total} reseña{total !== 1 ? 's' : ''}</span>
+                  </div>
+                  <div style={{ width: '1px', height: '80px', background: '#e8e8e8', flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: '180px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {distribucion.map(({ valor, cantidad }) => {
+                      const pct = total > 0 ? (cantidad / total) * 100 : 0
+                      return (
+                        <div key={valor} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '13px', color: '#555', width: '14px', textAlign: 'right', flexShrink: 0 }}>{valor}</span>
+                          <span style={{ fontSize: '13px', color: '#0ea5e9', flexShrink: 0 }}>♥</span>
+                          <div style={{ flex: 1, height: '8px', background: '#ebebeb', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{ width: `${pct}%`, height: '100%', background: valor >= 4 ? '#0ea5e9' : valor === 3 ? '#38bdf8' : '#bae6fd', borderRadius: '4px', transition: 'width 0.4s ease' }} />
+                          </div>
+                          <span style={{ fontSize: '12px', color: '#aaa', width: '20px', flexShrink: 0 }}>{cantidad}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })()}
+
             {resenas.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px 16px' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '12px' }}>✍️</div>
-                <p style={{ color: '#9ca3af', fontSize: '0.95rem', margin: 0 }}>
-                  {t.primero}
-                </p>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '48px 24px',
+                gap: '16px',
+                background: '#fafafa',
+                borderRadius: '12px',
+                border: '1px solid #f0f0f0'
+              }}>
+                <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="56" height="56" rx="28" fill="#e0f2fe"/>
+                  <path d="M14 20C14 17.8 15.8 16 18 16H38C40.2 16 42 17.8 42 20V32C42 34.2 40.2 36 38 36H30L24 41V36H18C15.8 36 14 34.2 14 32V20Z"
+                    stroke="#0ea5e9" strokeWidth="2" strokeLinejoin="round" fill="none"/>
+                  <circle cx="22" cy="26" r="1.5" fill="#0ea5e9"/>
+                  <circle cx="28" cy="26" r="1.5" fill="#0ea5e9"/>
+                  <circle cx="34" cy="26" r="1.5" fill="#0ea5e9"/>
+                </svg>
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: '16px', color: '#1a1a1a' }}>
+                    {idioma === 'en' ? 'No reviews yet' : 'Aún no hay reseñas'}
+                  </p>
+                  <p style={{ margin: '6px 0 0', fontSize: '14px', color: '#888', lineHeight: '1.5' }}>
+                    {idioma === 'en' ? 'Be the first to share your experience' : 'Sé el primero en compartir tu experiencia'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    if (!session?.user) {
+                      setLoginMensaje('Iniciá sesión para compartir tu experiencia en este lugar.')
+                      setShowLoginModal(true)
+                      return
+                    }
+                    setModalOpen(true)
+                  }}
+                  style={{
+                    marginTop: '4px',
+                    padding: '10px 24px',
+                    background: '#0ea5e9',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '24px',
+                    fontWeight: 600,
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                  </svg>
+                  {idioma === 'en' ? 'Write a review' : 'Escribir reseña'}
+                </button>
               </div>
             ) : (
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column' }}>
@@ -1685,3 +1837,4 @@ export default function DetalleLugar() {
     </div>
   )
 }
+
