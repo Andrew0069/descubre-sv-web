@@ -1323,11 +1323,33 @@ export default function AdminPage() {
                         if (error) { alert('Error al guardar horarios'); return }
                         alert('Horarios guardados ✓')
                       }
+                      const es24Horas = (formData.horarios || {}).es24Horas || false;
+                      const handleEs24HorasChange = (e) => {
+                        const checked = e.target.checked;
+                        setFormData(prev => ({
+                          ...prev,
+                          horarios: { ...(prev.horarios || {}), es24Horas: checked }
+                        }))
+                      }
                       return (
                         <section style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid #f0f0f0' }}>
-                          <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px' }}>🕐 Horarios</h3>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            {dias.map(({ key, label }) => {
+                          <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px' }}>🕐 Horarios (GMT-6)</h3>
+                          
+                          <div style={{ marginBottom: '16px' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px', color: '#111827' }}>
+                              <input
+                                type="checkbox"
+                                checked={es24Horas}
+                                onChange={handleEs24HorasChange}
+                                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                              />
+                              Abierto 24 horas
+                            </label>
+                          </div>
+
+                          {!es24Horas && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                              {dias.map(({ key, label }) => {
                               const d = (formData.horarios || {})[key] || { abierto: false, abre: '09:00', cierra: '18:00' }
                               return (
                                 <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -1362,7 +1384,8 @@ export default function AdminPage() {
                                 </div>
                               )
                             })}
-                          </div>
+                            </div>
+                          )}
                           <button
                             onClick={handleGuardarHorarios}
                             style={{

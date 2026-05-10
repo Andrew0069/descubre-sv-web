@@ -139,6 +139,7 @@ export default function DetalleLugar() {
   const [resenaLikeCounts, setResenaLikeCounts] = useState({})
   const [userResenaLikes, setUserResenaLikes] = useState({})
   const [modalOpen, setModalOpen] = useState(false)
+  const [modalRatingHover, setModalRatingHover] = useState(null)
   const [session, setSession] = useState(null)
   const [authReady, setAuthReady] = useState(false)
   const [resenaTitulo, setResenaTitulo] = useState('')
@@ -643,10 +644,13 @@ export default function DetalleLugar() {
       return
     }
 
+    if (!resenaTitulo.trim()) {
+      setResenaError(idioma === 'en' ? 'The title is required.' : 'El título es obligatorio.')
+      return
+    }
+
     const contenidoResena = filterProfanity(resenaTexto.trim())
-    const tituloResena = resenaTitulo.trim()
-      ? filterProfanity(resenaTitulo.trim()).slice(0, 80)
-      : null
+    const tituloResena = filterProfanity(resenaTitulo.trim()).slice(0, 80)
 
     const { error: insertError } = await createResena({
       lugar_id: id,
@@ -796,7 +800,7 @@ export default function DetalleLugar() {
               type="text"
               value={resenaTitulo}
               onChange={(e) => setResenaTitulo(e.target.value.slice(0, 80))}
-              placeholder={idioma === 'en' ? 'Title (optional)' : 'Título (opcional)'}
+              placeholder={idioma === 'en' ? 'Title' : 'Título'}
               style={{
                 width: '100%', padding: '0.75rem 1rem', borderRadius: '10px',
                 border: '1.5px solid #e5e7eb', fontSize: '0.93rem',
@@ -827,6 +831,44 @@ export default function DetalleLugar() {
               <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
                 {resenaTexto.length}/1000
               </span>
+            </div>
+
+            {/* Calificación dentro del modal */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <p style={{ fontSize: '0.82rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>
+                {idioma === 'en' ? 'Rate this place' : 'Calificá este lugar'}
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                {[1, 2, 3, 4, 5].map((v) => {
+                  const active = modalRatingHover != null ? v <= modalRatingHover : (userRating != null && v <= userRating)
+                  return (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => handleRatingClick(v)}
+                      onMouseEnter={() => setModalRatingHover(v)}
+                      onMouseLeave={() => setModalRatingHover(null)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: '4px',
+                        cursor: 'pointer',
+                        lineHeight: 0,
+                        transition: 'transform 0.15s ease',
+                        transform: modalRatingHover === v ? 'scale(1.2)' : 'scale(1)',
+                      }}
+                      aria-label={idioma === 'en' ? `Rate ${v} of 5` : `Calificar ${v} de 5`}
+                    >
+                      <HeartIcon filled={active} size={30} />
+                    </button>
+                  )
+                })}
+                {userRating != null && (
+                  <span style={{ fontSize: '0.78rem', color: '#6b7280', marginLeft: '6px' }}>
+                    {userRating}/5
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Fotos */}
@@ -1375,37 +1417,6 @@ export default function DetalleLugar() {
             </p>
           </div>
 
-          <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '12px',
-            padding: '20px 24px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-          }}>
-            <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#6b7280', margin: '0 0 12px' }}>
-              {idioma === 'en' ? 'Rate this place' : 'Calificá este lugar'}
-            </p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              {[1, 2, 3, 4, 5].map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => handleRatingClick(v)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    padding: '4px',
-                    cursor: 'pointer',
-                    lineHeight: 0,
-                    color: userRating != null && v <= userRating ? '#ef4444' : '#d1d5db',
-                  }}
-                  aria-label={idioma === 'en' ? `Rate ${v} of 5` : `Calificar ${v} de 5`}
-                >
-                  <HeartIcon filled={userRating != null && v <= userRating} size={28} />
-                </button>
-              ))}
-            </div>
-          </div>
-
           {lugar.direccion && (
             <div style={{
               backgroundColor: '#f9fafb',
@@ -1451,6 +1462,20 @@ export default function DetalleLugar() {
                 )
               })()}
               {lugar.horarios && (() => {
+                if (lugar.horarios.es24Horas) {
+                  return (
+                    <div style={{ marginTop: '20px' }}>
+                      <p style={{ fontWeight: 600, fontSize: '15px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        🕐 Horarios (GMT-6)
+                      </p>
+                      <div style={{ padding: '12px 16px', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '16px' }}>🌟</span>
+                        <span style={{ color: '#065f46', fontWeight: 600, fontSize: '14px' }}>Abierto 24 horas todos los días</span>
+                      </div>
+                    </div>
+                  )
+                }
+
                 const dias = [
                   { key: 'lunes', label: 'Lunes' },
                   { key: 'martes', label: 'Martes' },
@@ -1463,16 +1488,26 @@ export default function DetalleLugar() {
                 return (
                   <div style={{ marginTop: '20px' }}>
                     <p style={{ fontWeight: 600, fontSize: '15px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      🕐 Horarios
+                      🕐 Horarios (GMT-6)
                     </p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       {dias.map(({ key, label }) => {
                         const d = lugar.horarios[key]
+                        const format12h = (time) => {
+                          if (!time || time === '?') return '?'
+                          const parts = time.split(':')
+                          if (parts.length !== 2) return time
+                          let h = parseInt(parts[0], 10)
+                          const m = parts[1]
+                          const ampm = h >= 12 ? 'PM' : 'AM'
+                          h = h % 12 || 12
+                          return `${h}:${m} ${ampm}`
+                        }
                         return (
                           <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', padding: '4px 0', borderBottom: '1px solid #f5f5f5' }}>
                             <span style={{ color: '#555' }}>{label}</span>
                             <span style={{ color: d?.abierto ? '#1a1a1a' : '#aaa', fontWeight: d?.abierto ? 500 : 400 }}>
-                              {d?.abierto ? `${d.abre ?? '?'} – ${d.cierra ?? '?'}` : 'Cerrado'}
+                              {d?.abierto ? `${format12h(d.abre)} – ${format12h(d.cierra)}` : 'Cerrado'}
                             </span>
                           </div>
                         )
@@ -1661,6 +1696,17 @@ export default function DetalleLugar() {
                           <time style={{ fontSize: '0.75rem', color: '#9ca3af' }} dateTime={r.created_at}>
                             {formatRelativeEs(r.created_at)}
                           </time>
+
+                          {/* Corazones de rating */}
+                          {r.estrellas != null && (
+                            <div style={{ display: 'flex', gap: '2px', margin: '5px 0 2px' }}>
+                              {[1, 2, 3, 4, 5].map(i => (
+                                <span key={i} style={{ color: i <= Number(r.estrellas) ? '#0ea5e9' : '#ddd', fontSize: '14px' }}>
+                                  {i <= Number(r.estrellas) ? '♥' : '♡'}
+                                </span>
+                              ))}
+                            </div>
+                          )}
 
                           {/* Título en negrita */}
                           {r.titulo && (

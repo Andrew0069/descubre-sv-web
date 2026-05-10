@@ -206,6 +206,22 @@ function LugarCard({ lugar, isFeatured }) {
               ⭐ Destacado
             </span>
           )}
+          {lugar.horarios?.es24Horas && (
+            <span style={{
+              display: 'inline-block',
+              padding: '4px 10px',
+              borderRadius: '20px',
+              fontSize: '0.7rem',
+              fontWeight: 700,
+              color: '#ffffff',
+              background: '#10B981',
+              backdropFilter: 'blur(4px)',
+              pointerEvents: 'none',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            }}>
+              🕐 24 Horas
+            </span>
+          )}
         </div>
 
         {/* Heart button */}

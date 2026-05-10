@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 export async function getLugaresHome() {
   const { data, error } = await supabase
     .from('lugares')
-    .select('id, nombre, categoria_id, subtipo, destacado, imagen_principal, precio_entrada, updated_at, categorias(nombre, color), departamentos(nombre), imagenes_lugar(ruta_imagen, orden)')
+    .select('id, nombre, categoria_id, subtipo, destacado, imagen_principal, precio_entrada, horarios, updated_at, categorias(nombre, color), departamentos(nombre), imagenes_lugar(ruta_imagen, orden)')
     .order('destacado', { ascending: false, nullsFirst: false })
     .order('updated_at', { ascending: false })
   return { data: data ?? [], error }
@@ -21,7 +21,7 @@ export async function getLugarById(id) {
 export async function getLugaresAdmin() {
   const { data, error } = await supabase
     .from('lugares')
-    .select(`id, nombre, descripcion, direccion, departamento_id, categoria_id, precio_entrada, subtipo, destacado, imagen_principal, latitud, longitud, updated_at, categorias(id, nombre, color), departamentos(id, nombre)`)
+    .select(`id, nombre, descripcion, direccion, departamento_id, categoria_id, precio_entrada, subtipo, destacado, imagen_principal, latitud, longitud, horarios, updated_at, categorias(id, nombre, color), departamentos(id, nombre)`)
     .order('nombre', { ascending: true })
   return { data: data ?? [], error }
 }
@@ -30,7 +30,7 @@ export async function createLugar(payload) {
   const { data, error } = await supabase
     .from('lugares')
     .insert(payload)
-    .select(`id, nombre, descripcion, direccion, departamento_id, categoria_id, precio_entrada, subtipo, destacado, imagen_principal, map_url, latitud, longitud, updated_at, categorias(id, nombre, color), departamentos(id, nombre)`)
+    .select(`id, nombre, descripcion, direccion, departamento_id, categoria_id, precio_entrada, subtipo, destacado, imagen_principal, map_url, latitud, longitud, horarios, updated_at, categorias(id, nombre, color), departamentos(id, nombre)`)
     .maybeSingle()
   return { data: data ?? null, error }
 }
