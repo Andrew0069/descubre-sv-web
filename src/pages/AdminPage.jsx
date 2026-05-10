@@ -1334,7 +1334,7 @@ export default function AdminPage() {
                       return (
                         <section style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid #f0f0f0' }}>
                           <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px' }}>🕐 Horarios (GMT-6)</h3>
-                          
+
                           <div style={{ marginBottom: '16px' }}>
                             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px', color: '#111827' }}>
                               <input
@@ -1350,40 +1350,40 @@ export default function AdminPage() {
                           {!es24Horas && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                               {dias.map(({ key, label }) => {
-                              const d = (formData.horarios || {})[key] || { abierto: false, abre: '09:00', cierra: '18:00' }
-                              return (
-                                <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                                  <span style={{ width: '82px', fontSize: '14px', fontWeight: 500, color: '#333' }}>{label}</span>
-                                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                                    <input
-                                      type="checkbox"
-                                      checked={d.abierto || false}
-                                      onChange={(e) => handleHorarioChange(key, 'abierto', e.target.checked)}
-                                    />
-                                    <span style={{ fontSize: '13px', color: d.abierto ? '#16a34a' : '#aaa' }}>
-                                      {d.abierto ? 'Abierto' : 'Cerrado'}
-                                    </span>
-                                  </label>
-                                  {d.abierto && (
-                                    <>
+                                const d = (formData.horarios || {})[key] || { abierto: false, abre: '09:00', cierra: '18:00' }
+                                return (
+                                  <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                                    <span style={{ width: '82px', fontSize: '14px', fontWeight: 500, color: '#333' }}>{label}</span>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
                                       <input
-                                        type="time"
-                                        value={d.abre || '09:00'}
-                                        onChange={(e) => handleHorarioChange(key, 'abre', e.target.value)}
-                                        style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px' }}
+                                        type="checkbox"
+                                        checked={d.abierto || false}
+                                        onChange={(e) => handleHorarioChange(key, 'abierto', e.target.checked)}
                                       />
-                                      <span style={{ color: '#aaa' }}>–</span>
-                                      <input
-                                        type="time"
-                                        value={d.cierra || '18:00'}
-                                        onChange={(e) => handleHorarioChange(key, 'cierra', e.target.value)}
-                                        style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px' }}
-                                      />
-                                    </>
-                                  )}
-                                </div>
-                              )
-                            })}
+                                      <span style={{ fontSize: '13px', color: d.abierto ? '#16a34a' : '#aaa' }}>
+                                        {d.abierto ? 'Abierto' : 'Cerrado'}
+                                      </span>
+                                    </label>
+                                    {d.abierto && (
+                                      <>
+                                        <input
+                                          type="time"
+                                          value={d.abre || '09:00'}
+                                          onChange={(e) => handleHorarioChange(key, 'abre', e.target.value)}
+                                          style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px' }}
+                                        />
+                                        <span style={{ color: '#aaa' }}>–</span>
+                                        <input
+                                          type="time"
+                                          value={d.cierra || '18:00'}
+                                          onChange={(e) => handleHorarioChange(key, 'cierra', e.target.value)}
+                                          style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px' }}
+                                        />
+                                      </>
+                                    )}
+                                  </div>
+                                )
+                              })}
                             </div>
                           )}
                           <button

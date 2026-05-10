@@ -10,6 +10,7 @@ import Perfil from './pages/Perfil'
 import SugerirLugar from './pages/SugerirLugar'
 import NotFound from './pages/NotFound'
 import AdminPage from './pages/AdminPage'
+import CookieConsent from './components/CookieConsent'
 
 import PrivacyPage from './pages/PrivacyPage'
 import TermsPage from './pages/TermsPage'
@@ -97,6 +98,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AnimatedRoutes />
+      <CookieConsent />
     </BrowserRouter>
   )
 }
