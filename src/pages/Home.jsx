@@ -24,9 +24,11 @@ function getUserAvatar(usuario) {
   return usuario?.foto_perfil || usuario?.avatar_url || null
 }
 
+let _splashShownOnce = false
+let _lugaresCache = []
 
 export default function Home() {
-  const [lugares, setLugares] = useState([])
+  const [lugares, setLugares] = useState(_lugaresCache)
   const [categorias, setCategorias] = useState([])
   const [categoriasOtras, setCategoriasOtras] = useState([])
   const [loading, setLoading] = useState(true)
@@ -46,7 +48,7 @@ export default function Home() {
   const [heroIdx, setHeroIdx] = useState(0)
   const [heroNextIdx, setHeroNextIdx] = useState(null)
   const [heroIsFading, setHeroIsFading] = useState(false)
-  const [splashVisible, setSplashVisible] = useState(true)
+  const [splashVisible, setSplashVisible] = useState(!_splashShownOnce)
   const [splashFading, setSplashFading] = useState(false)
   const catSentinelRef = useRef(null)
   const heroLoadedImagesRef = useRef(new Set())
@@ -228,6 +230,7 @@ export default function Home() {
         : null
     }))
 
+    _lugaresCache = lugaresConDatos
     setLugares(lugaresConDatos)
     setLoading(false)
   }, [showToast])
@@ -395,6 +398,7 @@ export default function Home() {
   useEffect(() => {
     if (loading) return
     if (heroImages.length === 0) {
+      _splashShownOnce = true
       setSplashFading(true)
       const t = setTimeout(() => setSplashVisible(false), 600)
       return () => clearTimeout(t)
@@ -436,6 +440,7 @@ export default function Home() {
         if (cancelled) return
       }
 
+      _splashShownOnce = true
       setSplashFading(true)
       hideTimer = setTimeout(() => setSplashVisible(false), 600)
     })
@@ -1471,14 +1476,15 @@ export default function Home() {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
+            justifyContent: 'flex-start',
             gap: '1.5rem',
+            paddingTop: 'clamp(88px, 18vh, 148px)',
             opacity: splashFading ? 0 : 1,
             transition: 'opacity 0.6s ease',
             pointerEvents: splashFading ? 'none' : 'all',
           }}
         >
-          <svg viewBox="0 0 200 48" height="72" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 200 48" height="60" xmlns="http://www.w3.org/2000/svg">
             <path d="M22 2 C13 2, 5 10, 5 20 C5 33, 22 48, 22 48 C22 48, 39 33, 39 20 C39 10 31 2, 22 2 Z" fill="#F5A623" />
             <circle cx="22" cy="19" r="10" fill="#1a1a2e" />
             <path d="M10 19 C13 14, 18 14, 22 19 C26 24, 31 24, 34 19" fill="none" stroke="#F5A623" strokeWidth="2" strokeLinecap="round" />
