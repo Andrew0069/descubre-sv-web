@@ -20,6 +20,10 @@ import { formatRelativeShort } from '../lib/dateUtils'
 const HERO_OVERLAY =
   'linear-gradient(to bottom, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0.48) 50%, rgba(0,0,0,0.62) 100%)'
 
+function getUserAvatar(usuario) {
+  return usuario?.foto_perfil || usuario?.avatar_url || null
+}
+
 
 export default function Home() {
   const [lugares, setLugares] = useState([])
@@ -582,8 +586,8 @@ export default function Home() {
                             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = n.leida ? 'transparent' : 'rgba(14,165,233,0.05)' }}
                           >
                             <div style={{ position: 'relative', flexShrink: 0 }}>
-                              {n.actor?.foto_perfil ? (
-                                <img src={n.actor.foto_perfil} alt={n.actor.nombre} style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover' }} />
+                              {getUserAvatar(n.actor) ? (
+                                <img src={getUserAvatar(n.actor)} alt={n.actor.nombre} style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover' }} />
                               ) : (
                                 <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#0EA5E9', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.2rem' }}>
                                   {(n.actor?.nombre || 'U').charAt(0).toUpperCase()}
@@ -641,8 +645,8 @@ export default function Home() {
                 onMouseEnter={(e) => e.currentTarget.style.opacity = 0.8}
                 onMouseLeave={(e) => e.currentTarget.style.opacity = 1}
               >
-                {userPerfil?.foto_perfil ? (
-                  <img src={userPerfil.foto_perfil} alt="Perfil" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                {getUserAvatar(userPerfil) ? (
+                  <img src={getUserAvatar(userPerfil)} alt="Perfil" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   (userPerfil?.nombre || 'U').charAt(0).toUpperCase()
                 )}

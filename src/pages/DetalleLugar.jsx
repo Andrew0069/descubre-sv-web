@@ -23,11 +23,17 @@ import { formatRelativeEs } from '../lib/dateUtils'
 
 
 
-function AvatarImg({ src, nombre, size = 36, fontSize = '0.85rem' }) {
-  const [failed, setFailed] = useState(false)
+function AvatarImg({ src, fallbackSrc, nombre, size = 36, fontSize = '0.85rem' }) {
+  const [srcIndex, setSrcIndex] = useState(0)
   const inicial = (nombre || '?').charAt(0).toUpperCase()
+  const sources = [src, fallbackSrc].filter(Boolean)
+  const currentSrc = sources[srcIndex] || null
 
-  if (!src || failed) {
+  useEffect(() => {
+    setSrcIndex(0)
+  }, [src, fallbackSrc])
+
+  if (!currentSrc) {
     return (
       <div style={{
         width: `${size}px`, height: `${size}px`,
@@ -43,11 +49,16 @@ function AvatarImg({ src, nombre, size = 36, fontSize = '0.85rem' }) {
 
   return (
     <img
-      src={src}
+      src={currentSrc}
       alt={nombre}
       referrerPolicy="no-referrer"
-      crossOrigin="anonymous"
-      onError={() => setFailed(true)}
+      onError={() => {
+        if (srcIndex < sources.length - 1) {
+          setSrcIndex((prev) => prev + 1)
+        } else {
+          setSrcIndex(sources.length)
+        }
+      }}
       style={{
         width: `${size}px`, height: `${size}px`,
         borderRadius: '50%', objectFit: 'cover',
@@ -266,7 +277,7 @@ export default function DetalleLugar() {
     if (idsResenas.length > 0) {
       const { data: respData } = await supabase
         .from('respuestas_resena')
-        .select('*, usuarios(nombre, avatar_url)')
+        .select('*, usuarios(nombre, foto_perfil, avatar_url)')
         .in('resena_id', idsResenas)
         .order('created_at', { ascending: true })
       const rmap = {}
@@ -311,7 +322,7 @@ export default function DetalleLugar() {
     if (!resenaIds.length) return
     const { data } = await supabase
       .from('respuestas_resena')
-      .select('*, usuarios(nombre, avatar_url)')
+      .select('*, usuarios(nombre, foto_perfil, avatar_url)')
       .in('resena_id', resenaIds)
       .order('created_at', { ascending: true })
     const map = {}
@@ -562,6 +573,7 @@ export default function DetalleLugar() {
       created_at: new Date().toISOString(),
       usuarios: {
         nombre: usuarioRow.nombre ?? 'Tú',
+        foto_perfil: usuarioRow.foto_perfil ?? null,
         avatar_url: usuarioRow.avatar_url ?? null,
       },
     }
@@ -696,6 +708,7 @@ export default function DetalleLugar() {
       created_at: new Date().toISOString(),
       usuarios: {
         nombre: usuarioRow.nombre ?? '',
+        foto_perfil: usuarioRow.foto_perfil ?? null,
         avatar_url: usuarioRow.avatar_url ?? null,
       },
     }
@@ -1698,24 +1711,29 @@ export default function DetalleLugar() {
                     >
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                         {/* Avatar */}
-                        <AvatarImg
-                          src={r.usuarios?.avatar_url}
-                          nombre={autor}
-                          size={42}
-                          fontSize="1rem"
-                        />
+                        <Link to={`/usuario/${r.usuario_id}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
+                          <AvatarImg
+                            src={r.usuarios?.foto_perfil}
+                            fallbackSrc={r.usuarios?.avatar_url}
+                            nombre={autor}
+                            size={42}
+                            fontSize="1rem"
+                          />
+                        </Link>
 
                         {/* Columna derecha: todo el contenido */}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           {/* Nombre + fecha */}
-                          <p style={{ fontSize: '0.92rem', fontWeight: 700, color: '#111827', margin: '0 0 1px' }}>
-                            {autor}
-                          </p>
+                          <Link to={`/usuario/${r.usuario_id}`} style={{ textDecoration: 'none' }}>
+                            <p style={{ fontSize: '0.92rem', fontWeight: 700, color: '#111827', margin: '0 0 1px', cursor: 'pointer' }}>
+                              {autor}
+                            </p>
+                          </Link>
                           <time style={{ fontSize: '0.75rem', color: '#9ca3af' }} dateTime={r.created_at}>
                             {formatRelativeEs(r.created_at)}
                           </time>
 
-                          {/* Corazones de rating */}
+
                           {r.estrellas != null && (
                             <div style={{ display: 'flex', gap: '2px', margin: '5px 0 2px' }}>
                               {[1, 2, 3, 4, 5].map(i => (
@@ -1867,7 +1885,8 @@ export default function DetalleLugar() {
                                 alignItems: 'flex-start',
                               }}>
                                 <AvatarImg
-                                  src={rep.usuarios?.avatar_url}
+                                  src={rep.usuarios?.foto_perfil}
+                                  fallbackSrc={rep.usuarios?.avatar_url}
                                   nombre={repNombre}
                                   size={26}
                                   fontSize="0.65rem"
@@ -1899,4 +1918,3 @@ export default function DetalleLugar() {
     </div>
   )
 }
-

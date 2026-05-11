@@ -1,0 +1,175 @@
+/* ── Public Profile Page ── */
+.pub-profile-page { min-height:100vh; background:#f9fafb; }
+
+.pub-profile-header-bar {
+  background:#fff; border-bottom:1px solid #e5e7eb;
+  padding:0 2rem; height:60px; display:flex; align-items:center; gap:1rem;
+  position:sticky; top:0; z-index:50;
+}
+.pub-profile-header-bar a { text-decoration:none; display:flex; align-items:center; }
+.pub-profile-header-bar .sep { color:#d1d5db; }
+.pub-profile-header-bar .title { font-size:0.88rem; font-weight:600; color:#374151; }
+
+/* Banner */
+.pub-profile-banner {
+  background:linear-gradient(135deg,#fffdf5 0%,#fef3c7 38%,var(--accent) 100%);
+  padding:2.5rem 1.5rem 2rem;
+  position:relative;
+}
+.pub-profile-banner-inner {
+  max-width:800px; margin:0 auto;
+  display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap;
+}
+.pub-profile-avatar {
+  width:110px; height:110px; border-radius:50%; object-fit:cover;
+  border:4px solid rgba(255,255,255,0.8);
+  box-shadow:0 10px 28px rgba(146,64,14,0.18);
+  flex-shrink:0;
+}
+.pub-profile-avatar-placeholder {
+  width:110px; height:110px; border-radius:50%;
+  background:linear-gradient(135deg,#fcd34d 0%,#d97706 100%);
+  color:#fff; display:flex; align-items:center; justify-content:center;
+  font-size:2.8rem; font-weight:700;
+  border:4px solid rgba(255,255,255,0.8);
+  box-shadow:0 10px 28px rgba(146,64,14,0.18);
+  flex-shrink:0;
+}
+.pub-profile-info h1 {
+  color:#1a1a2e; font-size:1.5rem; font-weight:800; margin:0 0 4px;
+}
+.pub-profile-info .bio {
+  color:rgba(26,26,46,0.78); font-size:0.88rem; margin:0 0 8px;
+  max-width:400px; line-height:1.5;
+}
+.pub-profile-info .joined {
+  color:rgba(26,26,46,0.58); font-size:0.78rem; margin:0;
+  display:flex; align-items:center; gap:4px;
+}
+
+/* Stats */
+.pub-profile-stats {
+  display:flex; gap:1.5rem; margin-top:6px;
+}
+.pub-profile-stat {
+  display:flex; flex-direction:column; align-items:center;
+}
+.pub-profile-stat .num {
+  font-size:1.25rem; font-weight:800; color:#1a1a2e;
+}
+.pub-profile-stat .label {
+  font-size:0.72rem; font-weight:600; color:rgba(26,26,46,0.58); text-transform:uppercase;
+  letter-spacing:0.04em;
+}
+
+/* Section title */
+.pub-profile-section-title {
+  max-width:800px; margin:0 auto;
+  padding:1.5rem 1.5rem 0.75rem;
+  font-size:1.05rem; font-weight:800; color:#1a1a2e;
+  display:flex; align-items:center; gap:8px;
+}
+
+/* Reviews list */
+.pub-profile-reviews {
+  max-width:800px; margin:0 auto;
+  padding:0 1.5rem 2rem;
+  display:flex; flex-direction:column; gap:1rem;
+}
+
+.pub-review-card {
+  background:#fff;
+  border-radius:14px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.06);
+  padding:1.25rem 1.5rem;
+  transition:transform 0.22s ease, box-shadow 0.22s ease;
+}
+.pub-review-card:hover {
+  transform:translateY(-2px);
+  box-shadow:0 6px 20px rgba(0,0,0,0.1);
+}
+
+.pub-review-header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:10px; gap:8px; flex-wrap:wrap;
+}
+.pub-review-lugar {
+  display:flex; align-items:center; gap:10px;
+  text-decoration:none; color:#111827;
+  transition:color 0.15s;
+}
+.pub-review-lugar:hover { color:#d97706; }
+.pub-review-lugar-img {
+  width:44px; height:44px; border-radius:10px;
+  object-fit:cover; flex-shrink:0;
+  border:1px solid rgba(0,0,0,0.06);
+}
+.pub-review-lugar-img-placeholder {
+  width:44px; height:44px; border-radius:10px;
+  background:linear-gradient(135deg, #fef3c7, #fcd34d);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.2rem; flex-shrink:0;
+}
+.pub-review-lugar-name {
+  font-size:0.88rem; font-weight:700; margin:0;
+}
+.pub-review-lugar-dept {
+  font-size:0.72rem; color:#9ca3af; margin:0;
+}
+
+.pub-review-date {
+  font-size:0.72rem; color:#9ca3af; flex-shrink:0;
+}
+
+/* Hearts */
+.pub-review-hearts {
+  display:flex; gap:2px; margin-bottom:6px;
+}
+.pub-review-hearts span {
+  font-size:15px;
+}
+
+/* Title & content */
+.pub-review-title {
+  font-size:0.92rem; font-weight:700; color:#111827;
+  margin:0 0 6px;
+}
+.pub-review-content {
+  font-size:0.875rem; color:#4b5563; line-height:1.65; margin:0;
+}
+
+/* Photos */
+.pub-review-photos {
+  display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;
+}
+.pub-review-photos img {
+  height:100px; width:auto; max-width:160px;
+  object-fit:cover; border-radius:8px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.08);
+  cursor:pointer; transition:transform 0.2s;
+}
+.pub-review-photos img:hover { transform:scale(1.04); }
+
+/* Empty */
+.pub-profile-empty {
+  text-align:center; padding:3rem 1rem;
+}
+.pub-profile-empty .icon {
+  width:64px; height:64px; border-radius:50%;
+  background:linear-gradient(135deg,#fef3c7,#fde68a);
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 1rem;
+}
+.pub-profile-empty p {
+  color:#9ca3af; font-size:0.9rem; line-height:1.6;
+}
+
+/* Responsive */
+@media(max-width:600px){
+  .pub-profile-banner { padding-top:3rem; }
+  .pub-profile-banner-inner {
+    flex-direction:column; text-align:center; align-items:center;
+  }
+  .pub-profile-stats { justify-content:center; }
+  .pub-review-header { flex-direction:column; align-items:flex-start; }
+}

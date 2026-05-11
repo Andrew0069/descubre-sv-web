@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 export async function getResenasByLugar(lugarId) {
   const { data, error } = await supabase
     .from('resenas')
-    .select('*, usuarios(nombre, avatar_url)')
+    .select('*, usuarios(nombre, foto_perfil, avatar_url)')
     .eq('lugar_id', lugarId)
     .order('created_at', { ascending: false })
   return { data, error }

@@ -7,6 +7,7 @@ import DetalleLugar from './pages/DetalleLugar'
 import Login from './pages/Login'
 import ResetPassword from './pages/ResetPassword'
 import Perfil from './pages/Perfil'
+import PerfilPublico from './pages/PerfilPublico'
 import SugerirLugar from './pages/SugerirLugar'
 import NotFound from './pages/NotFound'
 import AdminPage from './pages/AdminPage'
@@ -67,6 +68,7 @@ function AnimatedRoutes() {
           <Route path="/login" element={<Login />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/perfil" element={<Perfil />} />
+          <Route path="/usuario/:id" element={<PerfilPublico />} />
           <Route path="/sugerir-lugar" element={<SugerirLugar />} />
           <Route path="/admin" element={<AdminPage />} />
 

@@ -15,14 +15,14 @@ export async function getUsuarioId(authId) {
 }
 
 /**
- * Obtiene id, nombre y avatar_url dado un auth_id.
+ * Obtiene id, nombre y campos de avatar dado un auth_id.
  * @param {string} authId - session.user.id
- * @returns {Promise<{id, nombre, avatar_url}|null>}
+ * @returns {Promise<{id, nombre, foto_perfil, avatar_url}|null>}
  */
 export async function getUsuarioPerfil(authId) {
   const { data } = await supabase
     .from('usuarios')
-    .select('id, nombre, avatar_url')
+    .select('id, nombre, foto_perfil, avatar_url')
     .eq('auth_id', authId)
     .maybeSingle()
   return data ?? null
@@ -85,14 +85,14 @@ export async function getUsuarioAdmin(authId) {
 }
 
 /**
- * Obtiene foto_perfil y nombre dado un auth_id.
+ * Obtiene avatar y nombre dado un auth_id.
  * @param {string} authId
- * @returns {Promise<{foto_perfil, nombre}|null>}
+ * @returns {Promise<{foto_perfil, avatar_url, nombre}|null>}
  */
 export async function getUsuarioNavbar(authId) {
   const { data } = await supabase
     .from('usuarios')
-    .select('foto_perfil, nombre, is_admin')
+    .select('foto_perfil, avatar_url, nombre, is_admin')
     .eq('auth_id', authId)
     .maybeSingle()
   return data ?? null

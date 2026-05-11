@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 export async function getNotificacionesByUser(userId) {
   const { data, error } = await supabase
     .from('notificaciones')
-    .select('*, actor:actor_id(nombre, foto_perfil), resena:resena_id(id, lugar_id)')
+    .select('*, actor:actor_id(nombre, foto_perfil, avatar_url), resena:resena_id(id, lugar_id)')
     .eq('usuario_id', userId)
     .order('created_at', { ascending: false })
     .limit(30)

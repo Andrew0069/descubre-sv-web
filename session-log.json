@@ -354,6 +354,63 @@
                                          "MisFavoritos.jsx y LoginModal.jsx: CTAs actualizados para no mencionar Google y mantener el lenguaje de acceso por correo",
                                          "Build validado con npm run build"
                                      ]
-                     }
+                    },
+                    {
+                        "id":  20,
+                        "date":  "2026-05-10",
+                        "ai_tool":  "Codex",
+                        "summary":  "Fix de avatar en reseñas y respuestas: el detalle del lugar ahora usa foto_perfil de forma consistente.",
+                        "files_modified":  [
+                                               "src/services/usuariosService.js",
+                                               "src/services/resenasService.js",
+                                               "src/pages/DetalleLugar.jsx",
+                                               "session-log.json"
+                                           ],
+                        "changes":  [
+                                        "Diagnóstico del cambio previo en login: quitar Google OAuth no afectaba el render; la foto faltaba porque reseñas/respuestas seguían leyendo usuarios.avatar_url mientras Perfil y Home ya usan usuarios.foto_perfil",
+                                        "usuariosService.getUsuarioPerfil: select actualizado de avatar_url a foto_perfil para devolver el mismo campo que persiste Perfil.jsx",
+                                        "resenasService y DetalleLugar.jsx: joins de usuarios en reseñas y respuestas cambiados a foto_perfil",
+                                        "DetalleLugar.jsx: render de AvatarImg y objetos optimistas de reseñas/respuestas actualizados para consumir usuarios.foto_perfil",
+                                        "Build validado con npm run build"
+                                    ]
+                    },
+                    {
+                        "id":  21,
+                        "date":  "2026-05-10",
+                        "ai_tool":  "Codex",
+                        "summary":  "Compatibilidad de avatar para cuentas legacy/admin: la UI ahora acepta foto_perfil o avatar_url.",
+                        "files_modified":  [
+                                               "src/services/usuariosService.js",
+                                               "src/services/resenasService.js",
+                                               "src/services/notificacionesService.js",
+                                               "src/pages/DetalleLugar.jsx",
+                                               "src/pages/Home.jsx",
+                                               "src/pages/Perfil.jsx",
+                                               "session-log.json"
+                                           ],
+                        "changes":  [
+                                        "Diagnóstico del caso Test2/admin: algunas cuentas antiguas siguen teniendo la imagen en avatar_url, por eso el fallback de inicial seguía apareciendo aunque Test1 ya funcionara con foto_perfil",
+                                        "usuariosService, resenasService y notificacionesService: selects ampliados para traer foto_perfil y avatar_url",
+                                        "DetalleLugar.jsx y Home.jsx: agregado helper getUserAvatar para renderizar foto_perfil || avatar_url en reseñas, respuestas, notificaciones y avatar del navbar",
+                                        "Perfil.jsx: la vista del perfil ahora también muestra la foto existente aunque venga de avatar_url",
+                                        "Build validado con npm run build"
+                                    ]
+                    },
+                    {
+                        "id":  22,
+                        "date":  "2026-05-10",
+                        "ai_tool":  "Codex",
+                        "summary":  "Fallback secuencial de avatar en reseñas: prueba foto_perfil y luego avatar_url para cuentas con cargas parciales o errores de imagen.",
+                        "files_modified":  [
+                                               "src/pages/DetalleLugar.jsx",
+                                               "session-log.json"
+                                           ],
+                        "changes":  [
+                                        "Verificado en Supabase que Test2 sí tiene foto_perfil y avatar_url, y que ambas URLs responden 200, por lo que el problema no estaba en datos ni storage",
+                                        "AvatarImg en DetalleLugar.jsx: eliminado crossOrigin=anonymous y agregado fallback secuencial src -> fallbackSrc en onError",
+                                        "Reseñas y respuestas ahora envían foto_perfil como origen principal y avatar_url como respaldo explícito",
+                                        "Build validado con npm run build"
+                                    ]
+                    }
                  ]
 }

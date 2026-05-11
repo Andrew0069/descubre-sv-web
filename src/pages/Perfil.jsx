@@ -179,7 +179,7 @@ export default function Perfil() {
     return <div className="perfil-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Loader text="Cargando perfil…" /></div>
   }
 
-  const foto = perfil?.foto_perfil
+  const foto = perfil?.foto_perfil || perfil?.avatar_url
   const inicial = (perfil?.nombre || 'U').charAt(0).toUpperCase()
   const joinDate = perfil?.created_at ? new Date(perfil.created_at).toLocaleDateString('es', { month: 'long', year: 'numeric' }) : ''
 
