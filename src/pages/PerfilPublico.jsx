@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { resolveImageUrl } from '../lib/imageUrl'
 import { formatRelativeEs } from '../lib/dateUtils'
 import Loader from '../components/Loader'
+import FotoLightbox from '../components/FotoLightbox'
 import './PerfilPublico.css'
 
 /* ── Spotter logo (same as Perfil.jsx) ── */
@@ -29,6 +30,7 @@ export default function PerfilPublico() {
   const [resenas, setResenas] = useState([])
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [resenaLightbox, setResenaLightbox] = useState(null) // { fotos, index }
 
   const loadData = useCallback(async () => {
     if (!id) return
@@ -209,7 +211,7 @@ export default function PerfilPublico() {
                         src={url}
                         alt=""
                         loading="lazy"
-                        onClick={() => window.open(url, '_blank')}
+                        onClick={() => setResenaLightbox({ fotos: r.fotos, index: i })}
                       />
                     ))}
                   </div>
@@ -219,6 +221,15 @@ export default function PerfilPublico() {
           })
         )}
       </div>
+
+      {/* Lightbox for review photos */}
+      {resenaLightbox && (
+        <FotoLightbox
+          fotos={resenaLightbox.fotos}
+          index={resenaLightbox.index}
+          onClose={() => setResenaLightbox(null)}
+        />
+      )}
     </div>
   )
 }

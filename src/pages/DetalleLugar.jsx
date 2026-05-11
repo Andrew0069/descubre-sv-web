@@ -18,6 +18,7 @@ import { createNotificacion } from '../services/notificacionesService'
 import { getImagenesByLugar } from '../services/imagenesService'
 import Loader from '../components/Loader'
 import PhotoPickerSheet from '../components/PhotoPickerSheet'
+import FotoLightbox from '../components/FotoLightbox'
 import { formatRelativeEs } from '../lib/dateUtils'
 
 
@@ -174,6 +175,7 @@ export default function DetalleLugar() {
   const [loginMensaje, setLoginMensaje] = useState('')
   const [esFavorito, setEsFavorito] = useState(false)
   const [favoritosCount, setFavoritosCount] = useState(0)
+  const [resenaLightbox, setResenaLightbox] = useState(null) // { fotos, index }
   const returnTo = `${location.pathname}${location.search}${location.hash}`
 
   useEffect(() => {
@@ -1775,7 +1777,7 @@ export default function DetalleLugar() {
                                     cursor: 'pointer',
                                     boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                                   }}
-                                  onClick={() => window.open(url, '_blank')}
+                                  onClick={() => setResenaLightbox({ fotos: r.fotos, index: i })}
                                 />
                               ))}
                             </div>
@@ -1915,6 +1917,15 @@ export default function DetalleLugar() {
           </div>
         </div>
       </div>
+
+      {/* Lightbox for review photos */}
+      {resenaLightbox && (
+        <FotoLightbox
+          fotos={resenaLightbox.fotos}
+          index={resenaLightbox.index}
+          onClose={() => setResenaLightbox(null)}
+        />
+      )}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 {
     "project":  "Destino SV App",
-    "last_updated":  "2026-05-10",
+    "last_updated": "2026-05-10",
     "sessions":  [
                      {
                          "id":  1,
@@ -411,6 +411,88 @@
                                         "Reseñas y respuestas ahora envían foto_perfil como origen principal y avatar_url como respaldo explícito",
                                         "Build validado con npm run build"
                                     ]
+                    },
+                    {
+                        "id":  23,
+                        "date":  "2026-05-10",
+                        "ai_tool":  "Codex",
+                        "summary":  "Limpieza de transicion del carrusel hero en Home: precarga de slides, crossfade controlado y reinicio correcto del zoom por imagen.",
+                        "files_modified":  [
+                                               "src/pages/Home.jsx",
+                                               "session-log.json"
+                                           ],
+                        "changes":  [
+                                        "El carrusel hero dejo de renderizar todas las portadas a la vez y ahora hace la transicion solo entre la imagen actual y la siguiente",
+                                        "Se agrego precarga explicita de la primera imagen y del siguiente slide para evitar que reaparezca el banner anterior durante el cambio",
+                                        "La rotacion automatica ahora espera a que la siguiente imagen este cargada antes de iniciar el crossfade",
+                                        "Se agregaron keys separadas para la capa actual y la capa siguiente, reiniciando correctamente la animacion heroSlowZoom en cada portada",
+                                        "Build validado con npm run build"
+                                    ]
+                    },
+                    {
+                        "id": 24,
+                        "date": "2026-05-10",
+                        "ai_tool": "Claude Code",
+                        "summary": "Fix de carrusel hero deadlocked y blink inicial en Home.",
+                        "files_modified": [
+                            "src/pages/Home.jsx",
+                            "session-log.json"
+                        ],
+                        "changes": [
+                            "Carrusel: removido heroNextIdx del array de dependencias del efecto auto-rotate — cuando setHeroNextIdx se llamaba dentro del timer, el cleanup del efecto fijaba cancelled=true bloqueando el requestAnimationFrame que llama setHeroIsFading(true), dejando el carrusel en heroNextIdx=1/heroIsFading=false para siempre",
+                            "Blink inicial: agregado heroImgRef (useRef) apuntando al img actual del hero; en el efecto de splash, tras preloadHeroImage se llama heroImgRef.current?.decode() antes de setSplashFading para garantizar que el img del DOM haya decodificado la imagen antes de que el splash empiece a desvanecerse",
+                            "Eliminado decoding='async' del img actual del hero para no diferir la decodificación en el momento de pintar"
+                        ]
+                    },
+                    {
+                        "id": 27,
+                        "date": "2026-05-10",
+                        "ai_tool": "Claude Code",
+                        "summary": "Fix del parpadeo en la transicion 1->2 del carrusel hero en arranque limpio y splash mas visible.",
+                        "files_modified": [
+                            "src/pages/Home.jsx",
+                            "session-log.json"
+                        ],
+                        "changes": [
+                            "Carrusel: el parpadeo aparecia solo en arranque limpio (no en reload) porque preloadHeroImage usa Image() off-DOM, que cachea el archivo pero NO garantiza que el <img> del DOM lo haya decodificado/pintado antes del crossfade. Tras setHeroNextIdx + 2 rAFs, el <img next> recien montado entraba al fade sin textura -> flash",
+                            "Agregado heroNextImgRef y pasado al <img next> en el JSX",
+                            "Auto-rotate refactorizado: ahora solo precarga y hace setHeroNextIdx, ya no dispara el fade directamente",
+                            "Nuevo efecto sobre heroNextIdx: espera load + decode() del DOM <img next> (con addEventListener once:true), luego doble rAF, y recien ahi setHeroIsFading(true). Esto elimina el parpadeo cold-start sin afectar el flujo de hot/reload",
+                            "Splash: MIN_SPLASH_MS subido de 900 a 1500ms para que el splash se perciba claramente como pantalla de carga",
+                            "Splash: SVG del logo subido de height 52 a 72 y puntos de 8x8px a 11x11px con gap de 10px para mas visibilidad en pantallas grandes"
+                        ]
+                    },
+                    {
+                        "id": 26,
+                        "date": "2026-05-10",
+                        "ai_tool": "Claude Code",
+                        "summary": "Fix del blink inicial y de los puntos invisibles del splash en Home tras los cambios para mejorar la transicion del carrusel.",
+                        "files_modified": [
+                            "src/pages/Home.jsx",
+                            "session-log.json"
+                        ],
+                        "changes": [
+                            "Splash effect: reemplazado setTimeout(60ms) por doble requestAnimationFrame para garantizar que el navegador haya pintado al menos un frame con la imagen antes de desvanecer el splash — elimina el blink blanco/azul al cargar",
+                            "Splash effect: agregado MIN_SPLASH_MS=900ms medido con performance.now() para asegurar que la animacion splashDot (1.2s por ciclo) alcance a verse al menos un ciclo cuando los lugares y la imagen vienen de cache",
+                            "Splash effect: la espera de imgEl ahora usa addEventListener('load'/'error', { once: true }) en vez de asignar imgEl.onload directamente, evitando pisar handlers internos que React/Vite puedan colocar en el elemento",
+                            "El check de cancelled se duplica despues de la espera minima del splash para no llamar setSplashFading sobre un efecto ya limpiado"
+                        ]
+                    },
+                    {
+                        "id": 25,
+                        "date": "2026-05-10",
+                        "ai_tool": "Gemini 3.1 Pro (High)",
+                        "summary": "Solución al tropiezo del carrusel y corrección del blink de carga inicial en Home.",
+                        "files_modified": [
+                            "src/index.css",
+                            "src/pages/Home.jsx",
+                            "session-log.json"
+                        ],
+                        "changes": [
+                            "Se añadió una validación estricta en el splash screen para esperar a que el DOM img dispare onload y decode() completo, en lugar de solo confiar en el preload en memoria",
+                            "Se insertó una pausa de 60ms antes de desvanecer el splash screen para darle tiempo al navegador de subir la textura a la GPU (compositing layer) y evitar el destello o blink blanco",
+                            "Re-implementada la aceleración por hardware (translateZ, backfaceVisibility y scale 1.001) para asegurar un heroSlowZoom totalmente fluido sin tropiezos ni temblores"
+                        ]
                     }
                  ]
 }

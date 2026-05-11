@@ -44,9 +44,15 @@ export default function Home() {
   const [notificacionesFiltro, setNotificacionesFiltro] = useState('todas')
   const [isCatBarSticky, setIsCatBarSticky] = useState(false)
   const [heroIdx, setHeroIdx] = useState(0)
+  const [heroNextIdx, setHeroNextIdx] = useState(null)
+  const [heroIsFading, setHeroIsFading] = useState(false)
   const [splashVisible, setSplashVisible] = useState(true)
   const [splashFading, setSplashFading] = useState(false)
   const catSentinelRef = useRef(null)
+  const heroLoadedImagesRef = useRef(new Set())
+  const heroFadeTimeoutRef = useRef(null)
+  const heroImgRef = useRef(null)
+  const heroNextImgRef = useRef(null)
   const { noLeidas, notificaciones, marcarTodasLeidas, descartarNotificacion } = useNotificaciones(user)
   const { idioma } = useIdioma()
   const navigate = useNavigate()
@@ -360,8 +366,29 @@ export default function Home() {
       .filter(Boolean)
   }, [lugares])
 
+  const preloadHeroImage = useCallback((src) => {
+    if (!src) return Promise.resolve(false)
+    if (heroLoadedImagesRef.current.has(src)) return Promise.resolve(true)
+
+    return new Promise((resolve) => {
+      const img = new Image()
+      img.onload = () => {
+        heroLoadedImagesRef.current.add(src)
+        resolve(true)
+      }
+      img.onerror = () => resolve(false)
+      img.src = src
+    })
+  }, [])
+
   useEffect(() => {
     setHeroIdx(0)
+    setHeroNextIdx(null)
+    setHeroIsFading(false)
+    if (heroFadeTimeoutRef.current) {
+      clearTimeout(heroFadeTimeoutRef.current)
+      heroFadeTimeoutRef.current = null
+    }
   }, [heroImages])
 
   // Dismiss splash once the first hero image is fully loaded in the browser
@@ -372,27 +399,134 @@ export default function Home() {
       const t = setTimeout(() => setSplashVisible(false), 600)
       return () => clearTimeout(t)
     }
-    const img = new Image()
-    img.onload = () => {
-      setSplashFading(true)
-      const t = setTimeout(() => setSplashVisible(false), 600)
-      return () => clearTimeout(t)
-    }
-    img.onerror = () => {
-      setSplashFading(true)
-      setTimeout(() => setSplashVisible(false), 600)
-    }
-    img.src = heroImages[0]
-  }, [loading, heroImages])
+    let cancelled = false
+    let hideTimer = null
+    const splashStart = performance.now()
+    const MIN_SPLASH_MS = 1500
 
-  // Auto-rotate hero images
+    preloadHeroImage(heroImages[0]).finally(async () => {
+      if (cancelled) return
+
+      const imgEl = heroImgRef.current
+      if (imgEl) {
+        if (!imgEl.complete) {
+          await new Promise((resolve) => {
+            const done = () => {
+              imgEl.removeEventListener('load', done)
+              imgEl.removeEventListener('error', done)
+              resolve()
+            }
+            imgEl.addEventListener('load', done, { once: true })
+            imgEl.addEventListener('error', done, { once: true })
+          })
+        }
+        try { await imgEl.decode() } catch (e) {}
+      }
+
+      // Garantiza al menos un frame pintado con la imagen ya en pantalla
+      // (mas confiable que setTimeout para evitar el blink blanco)
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+
+      if (cancelled) return
+
+      // Asegura que los puntos del splash alcancen a verse al menos un ciclo
+      const elapsed = performance.now() - splashStart
+      if (elapsed < MIN_SPLASH_MS) {
+        await new Promise((r) => setTimeout(r, MIN_SPLASH_MS - elapsed))
+        if (cancelled) return
+      }
+
+      setSplashFading(true)
+      hideTimer = setTimeout(() => setSplashVisible(false), 600)
+    })
+    return () => {
+      cancelled = true
+      if (hideTimer) clearTimeout(hideTimer)
+    }
+  }, [loading, heroImages, preloadHeroImage])
+
   useEffect(() => {
     if (heroImages.length <= 1) return
-    const timer = setInterval(() => {
-      setHeroIdx((prev) => (prev + 1) % heroImages.length)
+    const nextIdx = (heroIdx + 1) % heroImages.length
+    preloadHeroImage(heroImages[nextIdx])
+  }, [heroIdx, heroImages, preloadHeroImage])
+
+  // Auto-rotate hero images: solo programa el siguiente slide.
+  // El crossfade se dispara desde otro efecto cuando el <img next>
+  // del DOM ya esta cargado y decodificado, para evitar el flash inicial
+  // en arranque limpio (cuando el bitmap aun no esta caliente en el browser).
+  useEffect(() => {
+    if (heroImages.length <= 1) return
+    if (heroNextIdx !== null || heroIsFading) return
+
+    let cancelled = false
+    const nextIdx = (heroIdx + 1) % heroImages.length
+    const timer = setTimeout(async () => {
+      await preloadHeroImage(heroImages[nextIdx])
+      if (cancelled) return
+      setHeroNextIdx(nextIdx)
     }, 6000)
-    return () => clearInterval(timer)
-  }, [heroImages.length])
+
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  // heroNextIdx intentionally omitted: ver comentario abajo en el efecto de fade.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [heroIdx, heroImages, heroIsFading, preloadHeroImage])
+
+  // Espera a que el <img next> del DOM este realmente listo (load + decode + paint)
+  // antes de iniciar el crossfade. Sin esto, en arranque limpio el navegador
+  // dispara el fade mientras la textura del siguiente slide todavia se decodifica
+  // y se ve un parpadeo entre la imagen 1 y la 2.
+  useEffect(() => {
+    if (heroNextIdx === null) return
+    let cancelled = false
+
+    const triggerFade = async () => {
+      const imgEl = heroNextImgRef.current
+      if (imgEl) {
+        if (!imgEl.complete) {
+          await new Promise((resolve) => {
+            const done = () => {
+              imgEl.removeEventListener('load', done)
+              imgEl.removeEventListener('error', done)
+              resolve()
+            }
+            imgEl.addEventListener('load', done, { once: true })
+            imgEl.addEventListener('error', done, { once: true })
+          })
+        }
+        try { await imgEl.decode() } catch (e) {}
+      }
+      if (cancelled) return
+      // Doble rAF para garantizar que el frame con la nueva imagen este pintado
+      // antes de empezar la transicion de opacidad
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+      if (!cancelled) setHeroIsFading(true)
+    }
+    triggerFade()
+
+    return () => { cancelled = true }
+  }, [heroNextIdx])
+
+  useEffect(() => {
+    if (heroNextIdx === null || !heroIsFading) return
+
+    heroFadeTimeoutRef.current = setTimeout(() => {
+      setHeroIdx(heroNextIdx)
+      setHeroNextIdx(null)
+      setHeroIsFading(false)
+      heroFadeTimeoutRef.current = null
+    }, 1400)
+
+    return () => {
+      if (heroFadeTimeoutRef.current) {
+        clearTimeout(heroFadeTimeoutRef.current)
+        heroFadeTimeoutRef.current = null
+      }
+    }
+  }, [heroIsFading, heroNextIdx])
 
   return (
     <div className="min-h-screen pb-16" style={{ background: 'var(--bg)' }}>
@@ -821,10 +955,11 @@ export default function Home() {
           />
           {/* Hero slideshow – cross-fade between place cover photos */}
           {heroImages.length > 0 && (
-            heroImages.map((url, i) => (
+            <>
               <img
-                key={url}
-                src={url}
+                ref={heroImgRef}
+                key={`hero-current-${heroIdx}`}
+                src={heroImages[heroIdx]}
                 alt=""
                 className="pointer-events-none absolute inset-0 z-0"
                 style={{
@@ -833,16 +968,46 @@ export default function Home() {
                   objectFit: 'cover',
                   objectPosition: 'center',
                   display: 'block',
-                  opacity: heroIdx === i ? 1 : 0,
-                  transition: 'opacity 1.5s ease-in-out',
-                  animation: heroIdx === i ? 'heroSlowZoom 7s ease-out forwards' : 'none',
+                  opacity: heroNextIdx !== null && heroIsFading ? 0 : 1,
+                  transition: 'opacity 1.4s ease-in-out',
+                  animation: 'heroSlowZoom 7s ease-out forwards',
+                  willChange: 'transform, opacity',
+                  backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden',
+                  transformOrigin: '50% 50%',
                 }}
-                loading={i === 0 ? 'eager' : 'lazy'}
-                fetchPriority={i === 0 ? 'high' : 'auto'}
-                decoding="async"
+                loading="eager"
+                fetchPriority="high"
                 aria-hidden
               />
-            ))
+              {heroNextIdx !== null && (
+                <img
+                  ref={heroNextImgRef}
+                  key={`hero-next-${heroNextIdx}`}
+                  src={heroImages[heroNextIdx]}
+                  alt=""
+                  className="pointer-events-none absolute inset-0 z-0"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    objectPosition: 'center',
+                    display: 'block',
+                    opacity: heroIsFading ? 1 : 0,
+                    transition: 'opacity 1.4s ease-in-out',
+                    animation: 'heroSlowZoom 7s ease-out forwards',
+                    willChange: 'transform, opacity',
+                    backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden',
+                    transformOrigin: '50% 50%',
+                  }}
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
+                  aria-hidden
+                />
+              )}
+            </>
           )}
           <div
             className="pointer-events-none absolute inset-0 z-[1]"
@@ -1312,7 +1477,7 @@ export default function Home() {
             pointerEvents: splashFading ? 'none' : 'all',
           }}
         >
-          <svg viewBox="0 0 200 48" height="52" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 200 48" height="72" xmlns="http://www.w3.org/2000/svg">
             <path d="M22 2 C13 2, 5 10, 5 20 C5 33, 22 48, 22 48 C22 48, 39 33, 39 20 C39 10 31 2, 22 2 Z" fill="#F5A623" />
             <circle cx="22" cy="19" r="10" fill="#1a1a2e" />
             <path d="M10 19 C13 14, 18 14, 22 19 C26 24, 31 24, 34 19" fill="none" stroke="#F5A623" strokeWidth="2" strokeLinecap="round" />
@@ -1323,13 +1488,13 @@ export default function Home() {
             </text>
           </svg>
 
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
                 style={{
-                  width: '8px',
-                  height: '8px',
+                  width: '11px',
+                  height: '11px',
                   borderRadius: '50%',
                   backgroundColor: '#F5A623',
                   animation: `splashDot 1.2s ease-in-out ${i * 0.2}s infinite`,

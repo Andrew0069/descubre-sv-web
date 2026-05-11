@@ -32,12 +32,10 @@ Al **finalizar cada sesión**, actualiza el archivo `session-log.json` en la ra�
 
 ## Resumen de sesion reciente
 
-### 2026-05-06 - Claude Code
-- Lightbox de fotos en `DetalleLugar.jsx` rediseñado con layout estilo Yelp: backdrop centrado + contenedor fila ajustado al tamaño de la imagen.
-- Panel blanco de info ahora ocupa exactamente el mismo alto que la imagen (no toda la pantalla).
-- Lightbox responsive: en móvil (<768px) usa layout vertical (imagen arriba ~58vh, info abajo scrollable); en desktop mantiene layout horizontal.
-- Panel de notificaciones en `Home.jsx` corregido en móvil: usa `position:fixed` con `left/right:12px` para no cortarse fuera del viewport.
-- `npm run build` paso correctamente en todos los cambios.
+### 2026-05-10 - Claude Code (sesión 24)
+- **Carrusel hero desbloqueado:** `heroNextIdx` fue removido del array de dependencias del efecto `auto-rotate`. El bug era que al llamar `setHeroNextIdx` dentro del timer, React ejecutaba el cleanup del efecto (fijando `cancelled=true`) antes de que el `requestAnimationFrame` pudiera llamar `setHeroIsFading(true)`. El carrusel quedaba en `heroNextIdx=1 / heroIsFading=false` para siempre.
+- **Blink inicial eliminado:** Se agregó `heroImgRef` (useRef) apuntando al `<img>` del hero actual. En el efecto del splash, después de que `preloadHeroImage` resuelve, se llama `heroImgRef.current?.decode()` antes de iniciar el fade-out, garantizando que el DOM haya decodificado y pintado la imagen antes de revelarla.
+- Se eliminó `decoding="async"` del img actual del hero para no diferir la decodificación al momento del pintado.
 
 También actualiza el campo `last_updated` en la raíz del JSON con la fecha actual.
 
