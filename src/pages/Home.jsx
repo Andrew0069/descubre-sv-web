@@ -1117,13 +1117,14 @@ export default function Home() {
         <section
           className={`cat-bar-section${isCatBarSticky ? ' cat-bar-sticky-enter' : ''}`}
           style={{
-            padding: isCatBarSticky ? '6px 16px' : '16px 16px 0',
+            padding: isCatBarSticky ? '6px 16px' : '10px 16px 0',
             position: 'sticky',
             top: '60px',
             zIndex: 40,
-            backgroundColor: isCatBarSticky ? '#ffffff' : 'transparent',
-            boxShadow: isCatBarSticky ? '0 2px 12px rgba(0,0,0,0.08)' : 'none',
-            borderBottom: isCatBarSticky ? '1px solid #e5e7eb' : '1px solid transparent',
+            backgroundColor: isCatBarSticky ? '#ffffff' : 'rgba(255,255,255,0)',
+            boxShadow: isCatBarSticky ? '0 2px 12px rgba(0,0,0,0.08)' : '0 2px 12px rgba(0,0,0,0)',
+            borderBottom: isCatBarSticky ? '1px solid #e5e7eb' : '1px solid rgba(229,231,235,0)',
+            transition: 'padding 0.3s cubic-bezier(0.22,1,0.36,1), background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, opacity 0.3s ease, transform 0.3s cubic-bezier(0.22,1,0.36,1)',
           }}
         >
           <div
@@ -1131,8 +1132,8 @@ export default function Home() {
             style={{
               backgroundColor: '#ffffff',
               borderRadius: isCatBarSticky ? '0' : '16px',
-              boxShadow: isCatBarSticky ? 'none' : '0 2px 16px rgba(0,0,0,0.07)',
-              padding: isCatBarSticky ? '0.2rem 0.5rem' : '0.5rem 1rem',
+              boxShadow: isCatBarSticky ? '0 2px 16px rgba(0,0,0,0)' : '0 2px 16px rgba(0,0,0,0.07)',
+              padding: isCatBarSticky ? '0.2rem 0.5rem' : '0.4rem 0.75rem',
               overflowX: 'auto',
               display: 'flex',
               gap: '0',
@@ -1354,7 +1355,7 @@ export default function Home() {
                   {filtrados.map((lugar, index) => {
                     const isFeatured = index === 0;
                     return (
-                      <li key={lugar.id} className={isFeatured ? 'md:col-span-2' : ''}>
+                      <li key={lugar.id}>
                         <LugarCard lugar={lugar} isFeatured={isFeatured} />
                       </li>
                     );

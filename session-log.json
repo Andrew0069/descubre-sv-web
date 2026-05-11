@@ -493,6 +493,23 @@
                             "Se insertó una pausa de 60ms antes de desvanecer el splash screen para darle tiempo al navegador de subir la textura a la GPU (compositing layer) y evitar el destello o blink blanco",
                             "Re-implementada la aceleración por hardware (translateZ, backfaceVisibility y scale 1.001) para asegurar un heroSlowZoom totalmente fluido sin tropiezos ni temblores"
                         ]
+                    },
+                    {
+                        "id": 28,
+                        "date": "2026-05-10",
+                        "ai_tool": "Claude Code",
+                        "summary": "Fix de tamaño de cards, filtro y transición del cat-bar sticky en Home.",
+                        "files_modified": [
+                            "src/pages/Home.jsx",
+                            "session-log.json"
+                        ],
+                        "changes": [
+                            "Cards: eliminado md:col-span-2 del primer card (isFeatured) — ahora todos los cards tienen el mismo ancho en la grilla (1/3 en lg, 1/2 en md), el prop isFeatured se conserva solo para resolución de imagen",
+                            "Filtro: padding del estado no-sticky reducido de 16px a 10px en la section y de 0.5rem 1rem a 0.4rem 0.75rem en el inner div para que el cat-bar se vea más compacto sin alterar el comportamiento sticky",
+                            "Transición suave: reemplazados transparent/none por rgba(255,255,255,0), rgba(229,231,235,0) y 0 2px 12px rgba(0,0,0,0) — CSS no puede interpolar entre none/transparent y un valor real, lo que causaba saltos de color/sombra; con valores rgba correctos la interpolación es suave",
+                            "Transición suave (cont): agregado opacity y transform al transition inline del section para que la animación stickySlideIn no cause snap si se interrumpe antes de completarse (0.3s) al hacer scroll rápido",
+                            "Build validado con npm run build — sin errores"
+                        ]
                     }
                  ]
 }

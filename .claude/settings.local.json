@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "PowerShell(cd \"C:\\\\Users\\\\andre\\\\Desktop\\\\Destino SV App\"; git show cc07ca2 -- src/pages/Home.jsx | Select-Object -First 100)"
     ]
   }
 }
