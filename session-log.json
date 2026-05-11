@@ -1,6 +1,6 @@
 {
     "project":  "Destino SV App",
-    "last_updated":  "2026-05-07",
+    "last_updated":  "2026-05-10",
     "sessions":  [
                      {
                          "id":  1,
@@ -300,6 +300,20 @@
                                      ]
                      },
                      {
+                         "id":  18,
+                         "date":  "2026-05-10",
+                         "ai_tool":  "Claude Code",
+                         "summary":  "Animación de entrada agregada a Login.jsx para eliminar el tropiezo visual al cargar la página.",
+                         "files_modified":  [
+                                                "src/pages/Login.jsx"
+                                            ],
+                         "changes":  [
+                                         "Agregado estado visible (inicia false, pasa a true tras 30ms via useEffect) para controlar la animación de entrada",
+                                         "El contenedor raíz hace fade-in con opacity 0→1 en 0.35s ease",
+                                         "El card blanco hace slide-up (translateY 18px→0) + fade-in con curva cubic-bezier(0.22,1,0.36,1) en 0.4s, igual que las animaciones del resto de la app"
+                                     ]
+                     },
+                     {
                          "id":  17,
                          "date":  "2026-05-07",
                          "ai_tool":  "Claude Code",
@@ -316,6 +330,29 @@
                                          "DetalleLugar.jsx: Overall Rating — agregado Number() en reduce y filter para manejar estrellas almacenadas como string vs número; campo confirmado como r.estrellas; posición confirmada correcta (líneas 1533–1570)",
                                          "Diagnóstico: tarjetas de reseña individual no muestran r.estrellas en el JSX — campo se guarda pero nunca se renderiza por reseña",
                                          "Build validado con npm run build — sin errores"
+                                     ]
+                     },
+                     {
+                         "id":  19,
+                         "date":  "2026-05-10",
+                         "ai_tool":  "Codex",
+                         "summary":  "Login reducido a correo y redirecciÃ³n de favoritos/reseÃ±as hacia /login con retorno a la ruta original.",
+                         "files_modified":  [
+                                                "src/pages/Login.jsx",
+                                                "src/components/LugarCard.jsx",
+                                                "src/pages/Home.jsx",
+                                                "src/pages/DetalleLugar.jsx",
+                                                "src/pages/MisFavoritos.jsx",
+                                                "src/components/LoginModal.jsx",
+                                                "session-log.json"
+                                            ],
+                         "changes":  [
+                                         "Login.jsx: eliminada la opciÃ³n de Google OAuth y agregado soporte para volver a la ruta original usando location.state.from despuÃ©s del login por correo",
+                                         "LugarCard.jsx: el corazÃ³n de favoritos ahora redirige directo a /login cuando no hay sesiÃ³n, preservando pathname, search y hash actuales",
+                                         "Home.jsx: removido el listener show-login-modal y la dependencia del modal de login para el flujo de favoritos",
+                                         "DetalleLugar.jsx: acciones protegidas de favoritos, calificaciones, likes, respuestas y publicaciÃ³n de reseÃ±as ahora redirigen a /login en lugar de abrir modal",
+                                         "MisFavoritos.jsx y LoginModal.jsx: CTAs actualizados para no mencionar Google y mantener el lenguaje de acceso por correo",
+                                         "Build validado con npm run build"
                                      ]
                      }
                  ]

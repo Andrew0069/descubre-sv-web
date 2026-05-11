@@ -163,7 +163,9 @@ export default function MisFavoritos() {
   }, [])
 
   const handleLogin = () => {
-    navigate('/login')
+    navigate('/login', {
+      state: { from: '/' },
+    })
   }
 
   // Not authenticated
@@ -247,7 +249,7 @@ export default function MisFavoritos() {
             onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 6px 24px rgba(245,200,66,0.6)' }}
             onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(245,200,66,0.4)' }}
           >
-            Acceder con Google
+            Iniciar sesión
           </button>
         </div>
       </div>

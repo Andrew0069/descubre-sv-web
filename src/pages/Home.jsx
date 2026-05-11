@@ -5,7 +5,6 @@ import { checkRateLimit } from '../lib/rateLimit'
 import { useIdioma } from '../lib/idiomaContext'
 import { CategoriaIconSvg } from '../components/CategoriaChip'
 import LugarCard, { LugarCardSkeleton } from '../components/LugarCard'
-import LoginModal from '../components/LoginModal'
 import Loader from '../components/Loader'
 import { useNotificaciones } from '../lib/useNotificaciones'
 import { resolveImageUrl } from '../lib/imageUrl'
@@ -39,7 +38,6 @@ export default function Home() {
   const [userPerfil, setUserPerfil] = useState(null)
   const [campanaOpen, setCampanaOpen] = useState(false)
   const [notificacionesFiltro, setNotificacionesFiltro] = useState('todas')
-  const [showLoginModal, setShowLoginModal] = useState(false)
   const [isCatBarSticky, setIsCatBarSticky] = useState(false)
   const [heroIdx, setHeroIdx] = useState(0)
   const [splashVisible, setSplashVisible] = useState(true)
@@ -105,14 +103,6 @@ export default function Home() {
     )
     observer.observe(sentinel)
     return () => observer.disconnect()
-  }, [])
-
-  // Listen for the custom event dispatched by LugarCard when an unauthenticated
-  // user taps the heart button on a card.
-  useEffect(() => {
-    const handler = () => setShowLoginModal(true)
-    window.addEventListener('show-login-modal', handler)
-    return () => window.removeEventListener('show-login-modal', handler)
   }, [])
 
   useEffect(() => {
@@ -1297,13 +1287,10 @@ export default function Home() {
           {toast}
         </div>
       )}
-      {showLoginModal && (
-        <LoginModal
+      {/*
           mensaje="Guardá tus lugares favoritos y llevá El Salvador en el bolsillo."
-          onClose={() => setShowLoginModal(false)}
-        />
-      )}
 
+      */}
       {splashVisible && (
         <div
           style={{

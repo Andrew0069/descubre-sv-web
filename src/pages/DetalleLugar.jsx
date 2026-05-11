@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { checkRateLimit } from '../lib/rateLimit'
 import { resolveImageUrl } from '../lib/imageUrl'
@@ -16,7 +16,6 @@ import {
 import { getResenasByLugar, createResena } from '../services/resenasService'
 import { createNotificacion } from '../services/notificacionesService'
 import { getImagenesByLugar } from '../services/imagenesService'
-import LoginModal from '../components/LoginModal'
 import Loader from '../components/Loader'
 import PhotoPickerSheet from '../components/PhotoPickerSheet'
 import { formatRelativeEs } from '../lib/dateUtils'
@@ -99,6 +98,8 @@ function CategoryPill({ nombre }) {
 
 export default function DetalleLugar() {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const location = useLocation()
   const { idioma } = useIdioma()
 
   const t = {
@@ -162,6 +163,7 @@ export default function DetalleLugar() {
   const [loginMensaje, setLoginMensaje] = useState('')
   const [esFavorito, setEsFavorito] = useState(false)
   const [favoritosCount, setFavoritosCount] = useState(0)
+  const returnTo = `${location.pathname}${location.search}${location.hash}`
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' })
@@ -343,10 +345,22 @@ export default function DetalleLugar() {
     return () => window.removeEventListener('keydown', handleKey)
   }, [lightboxOpen])
 
+  const redirectToLogin = useCallback(() => {
+    navigate('/login', {
+      state: { from: returnTo },
+    })
+  }, [navigate, returnTo])
+
+  useEffect(() => {
+    if (!showLoginModal) return
+    setShowLoginModal(false)
+    redirectToLogin()
+  }, [showLoginModal, redirectToLogin])
+
   const handleToggleLike = useCallback(async () => {
     if (!session?.user) {
       setLoginMensaje('Guardá tus lugares favoritos y llevá El Salvador en el bolsillo.')
-      setShowLoginModal(true)
+      redirectToLogin()
       return
     }
     const uid = session.user.id
@@ -373,7 +387,7 @@ export default function DetalleLugar() {
   const handleToggleFavorito = useCallback(async () => {
     if (!session) {
       setLoginMensaje('Guardá tus lugares favoritos y llevá El Salvador en el bolsillo.')
-      setShowLoginModal(true)
+      redirectToLogin()
       return
     }
     const activeSession = session
@@ -418,7 +432,7 @@ export default function DetalleLugar() {
     async (valor) => {
       if (!session?.user) {
         setLoginMensaje('Iniciá sesión para calificar este lugar.')
-        setShowLoginModal(true)
+        redirectToLogin()
         return
       }
       const uid = session.user.id
@@ -453,7 +467,7 @@ export default function DetalleLugar() {
     async (resenaId) => {
       if (!session?.user) {
         setLoginMensaje('Iniciá sesión para dar like a reseñas.')
-        setShowLoginModal(true)
+        redirectToLogin()
         return
       }
       const liked = !!userResenaLikes[resenaId]
@@ -496,7 +510,7 @@ export default function DetalleLugar() {
   const handleResponder = useCallback(async (resenaId, duenioResenaId) => {
     if (!session?.user) {
       setLoginMensaje('Iniciá sesión para responder reseñas.')
-      setShowLoginModal(true)
+      redirectToLogin()
       return
     }
 
@@ -604,6 +618,10 @@ export default function DetalleLugar() {
 
   const handleSubmitResena = async () => {
     setResenaError('')
+    if (!session?.user) {
+      redirectToLogin()
+      return
+    }
     if (resenaTexto.trim().length < 50) {
       setResenaError(t.errorResena)
       return
@@ -1544,7 +1562,7 @@ export default function DetalleLugar() {
                     setModalOpen(true)
                   } else {
                     setLoginMensaje('Iniciá sesión para compartir tu experiencia en este lugar.')
-                    setShowLoginModal(true)
+                    redirectToLogin()
                   }
                 }}
                 style={{
@@ -1636,7 +1654,7 @@ export default function DetalleLugar() {
                   onClick={() => {
                     if (!session?.user) {
                       setLoginMensaje('Iniciá sesión para compartir tu experiencia en este lugar.')
-                      setShowLoginModal(true)
+                      redirectToLogin()
                       return
                     }
                     setModalOpen(true)
@@ -1770,6 +1788,10 @@ export default function DetalleLugar() {
                             <button
                               type="button"
                               onClick={() => {
+                                if (!session?.user) {
+                                  redirectToLogin()
+                                  return
+                                }
                                 setRespuestaAbierta(respuestaAbierta === r.id ? null : r.id)
                                 setRespuestaTexto('')
                               }}
@@ -1874,12 +1896,6 @@ export default function DetalleLugar() {
           </div>
         </div>
       </div>
-      {showLoginModal && (
-        <LoginModal
-          mensaje={loginMensaje}
-          onClose={() => setShowLoginModal(false)}
-        />
-      )}
     </div>
   )
 }

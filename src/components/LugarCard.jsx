@@ -1,5 +1,5 @@
 import { memo, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getCategoriaBadgeBackground, getGradiente } from '../lib/categoriaVisual'
 import { resolveImageUrl } from '../lib/imageUrl'
 import { CategoriaIconSvg } from './CategoriaChip'
@@ -56,6 +56,8 @@ export function LugarCardSkeleton({ isFeatured = false }) {
 }
 
 function LugarCard({ lugar, isFeatured }) {
+  const navigate = useNavigate()
+  const location = useLocation()
   const [hovered, setHovered] = useState(false)
   const [heartHover, setHeartHover] = useState(false)
   const [imageError, setImageError] = useState(false)
@@ -100,8 +102,11 @@ function LugarCard({ lugar, isFeatured }) {
 
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
-      // Notify Home.jsx (or any parent) to show the login modal
-      window.dispatchEvent(new CustomEvent('show-login-modal'))
+      navigate('/login', {
+        state: {
+          from: `${location.pathname}${location.search}${location.hash}`,
+        },
+      })
       return
     }
 
