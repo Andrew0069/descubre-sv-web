@@ -1,43 +1,47 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 
 /**
- * FotoLightbox – modal gallery for review photos.
+ * FotoLightbox – split-panel modal for photos.
  *
  * Props:
- *   fotos   : string[]          – array of image URLs
- *   index   : number            – initial photo index to show
- *   onClose : () => void        – close callback
+ *   fotos   : string[]   – array of image URLs
+ *   index   : number     – initial photo index
+ *   onClose : () => void
+ *   meta    : { title, subtitle, descripcion, avatar, rating } – optional side panel content
  */
-export default function FotoLightbox({ fotos = [], index = 0, onClose }) {
+export default function FotoLightbox({ fotos = [], index = 0, onClose, meta }) {
   const [current, setCurrent] = useState(index)
+  const [closing, setClosing] = useState(false)
   const touchRef = useRef({ startX: 0, startY: 0 })
   const total = fotos.length
+  const mob = typeof window !== 'undefined' && window.innerWidth < 768
 
-  // Sync when props change
   useEffect(() => { setCurrent(index) }, [index])
 
-  // Lock body scroll while open
   useEffect(() => {
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = prev }
   }, [])
 
-  // Keyboard navigation
+  const handleClose = useCallback(() => {
+    setClosing(true)
+    setTimeout(onClose, 260)
+  }, [onClose])
+
   useEffect(() => {
     const handle = (e) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') handleClose()
       if (e.key === 'ArrowRight') setCurrent((c) => (c + 1) % total)
       if (e.key === 'ArrowLeft') setCurrent((c) => (c - 1 + total) % total)
     }
     window.addEventListener('keydown', handle)
     return () => window.removeEventListener('keydown', handle)
-  }, [onClose, total])
+  }, [handleClose, total])
 
   const goNext = useCallback(() => setCurrent((c) => (c + 1) % total), [total])
   const goPrev = useCallback(() => setCurrent((c) => (c - 1 + total) % total), [total])
 
-  // Touch swipe for mobile
   const handleTouchStart = (e) => {
     touchRef.current.startX = e.touches[0].clientX
     touchRef.current.startY = e.touches[0].clientY
@@ -57,191 +61,230 @@ export default function FotoLightbox({ fotos = [], index = 0, onClose }) {
     <div
       role="dialog"
       aria-modal="true"
-      onClick={onClose}
+      onClick={handleClose}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 10000,
-        backgroundColor: 'rgba(0, 0, 0, 0.88)',
+        backgroundColor: mob ? '#111' : 'rgba(0,0,0,0.88)',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: mob ? 'flex-start' : 'center',
         justifyContent: 'center',
-        padding: '0',
-        animation: 'lbFadeIn 0.2s ease',
+        overflowY: mob ? 'auto' : 'hidden',
+        opacity: closing ? 0 : 1,
+        transition: 'opacity 0.26s ease',
+        animation: closing ? 'none' : 'lbFadeIn 0.22s ease',
       }}
     >
       <style>{`
-        @keyframes lbFadeIn {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-        .lb-btn {
-          border: none;
-          background: rgba(255,255,255,0.12);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-          color: #ffffff;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: background 0.2s, transform 0.15s;
-        }
-        .lb-btn:hover { background: rgba(255,255,255,0.22); }
-        .lb-btn:active { transform: scale(0.92); }
+        @keyframes lbFadeIn { from { opacity: 0 } to { opacity: 1 } }
       `}</style>
 
-      {/* Close button */}
-      <button
-        type="button"
-        className="lb-btn"
-        aria-label="Cerrar"
-        onClick={(e) => { e.stopPropagation(); onClose() }}
+      {/* Contenedor split */}
+      <div
+        onClick={(e) => e.stopPropagation()}
         style={{
-          position: 'absolute',
-          top: 'env(safe-area-inset-top, 16px)',
-          right: '16px',
-          marginTop: '16px',
-          width: '44px',
-          height: '44px',
-          borderRadius: '50%',
-          fontSize: '1.4rem',
-          zIndex: 10,
+          display: 'flex',
+          flexDirection: mob ? 'column' : 'row',
+          width: mob ? '100%' : 'auto',
+          height: mob ? 'auto' : 'auto',
+          maxHeight: mob ? 'none' : '90vh',
+          borderRadius: mob ? 0 : '10px',
+          overflow: mob ? 'visible' : 'hidden',
+          boxShadow: mob ? 'none' : '0 24px 64px rgba(0,0,0,0.6)',
         }}
       >
-        ✕
-      </button>
+        {/* Área de imagen */}
+        <div style={{
+          position: 'relative',
+          backgroundColor: '#111',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}>
+          {/* Volver */}
+          <button
+            type="button"
+            onClick={handleClose}
+            style={{
+              position: 'absolute',
+              top: '14px',
+              left: '14px',
+              color: '#fff',
+              background: 'rgba(0,0,0,0.55)',
+              border: '1px solid rgba(255,255,255,0.18)',
+              borderRadius: '24px',
+              padding: '5px 14px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              fontSize: '0.82rem',
+              fontWeight: 600,
+              zIndex: 10,
+              backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
+            }}
+          >
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            Volver
+          </button>
 
-      {/* Counter */}
-      {total > 1 && (
-        <div
-          style={{
+          {/* Contador */}
+          <div style={{
             position: 'absolute',
-            top: 'env(safe-area-inset-top, 16px)',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            marginTop: '20px',
-            color: 'rgba(255,255,255,0.7)',
-            fontSize: '0.85rem',
+            top: '14px',
+            right: '14px',
+            color: '#fff',
+            fontSize: '0.78rem',
             fontWeight: 600,
-            letterSpacing: '0.05em',
-            zIndex: 10,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            padding: '3px 10px',
+            borderRadius: '20px',
             pointerEvents: 'none',
-          }}
-        >
-          {current + 1} / {total}
+            zIndex: 10,
+          }}>
+            {current + 1} / {total}
+          </div>
+
+          <img
+            key={current}
+            src={fotos[current]}
+            alt={`Foto ${current + 1} de ${total}`}
+            draggable={false}
+            style={{
+              display: 'block',
+              userSelect: 'none',
+              maxHeight: mob ? 'none' : '90vh',
+              maxWidth: mob ? '100vw' : '65vw',
+              width: mob ? '100%' : 'auto',
+              height: 'auto',
+            }}
+          />
+
+          {total > 1 && (
+            <>
+              <button
+                type="button"
+                aria-label="Foto anterior"
+                onClick={(e) => { e.stopPropagation(); goPrev() }}
+                style={{
+                  position: 'absolute',
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#fff',
+                  background: 'rgba(255,255,255,0.15)',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  borderRadius: '50%',
+                  width: '40px',
+                  height: '40px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 10,
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                aria-label="Foto siguiente"
+                onClick={(e) => { e.stopPropagation(); goNext() }}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#fff',
+                  background: 'rgba(255,255,255,0.15)',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  borderRadius: '50%',
+                  width: '40px',
+                  height: '40px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 10,
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+            </>
+          )}
         </div>
-      )}
 
-      {/* Prev arrow */}
-      {total > 1 && (
-        <button
-          type="button"
-          className="lb-btn"
-          aria-label="Anterior"
-          onClick={(e) => { e.stopPropagation(); goPrev() }}
-          style={{
-            position: 'absolute',
-            left: '12px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            width: '44px',
-            height: '44px',
-            borderRadius: '50%',
-            fontSize: '1.3rem',
-            zIndex: 10,
-          }}
-        >
-          ‹
-        </button>
-      )}
-
-      {/* Next arrow */}
-      {total > 1 && (
-        <button
-          type="button"
-          className="lb-btn"
-          aria-label="Siguiente"
-          onClick={(e) => { e.stopPropagation(); goNext() }}
-          style={{
-            position: 'absolute',
-            right: '12px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            width: '44px',
-            height: '44px',
-            borderRadius: '50%',
-            fontSize: '1.3rem',
-            zIndex: 10,
-          }}
-        >
-          ›
-        </button>
-      )}
-
-      {/* Image */}
-      <img
-        src={fotos[current]}
-        alt={`Foto ${current + 1} de ${total}`}
-        onClick={(e) => e.stopPropagation()}
-        draggable={false}
-        style={{
-          maxWidth: 'min(92vw, 900px)',
-          maxHeight: '85vh',
-          width: 'auto',
-          height: 'auto',
-          objectFit: 'contain',
-          borderRadius: '10px',
-          userSelect: 'none',
-          WebkitUserSelect: 'none',
-        }}
-      />
-
-      {/* Thumbnail strip */}
-      {total > 1 && (
-        <div
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            position: 'absolute',
-            bottom: 'env(safe-area-inset-bottom, 16px)',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            marginBottom: '16px',
+        {/* Panel de info */}
+        {meta && (
+          <div style={{
+            width: mob ? '100%' : '280px',
+            flex: 'none',
+            backgroundColor: '#fff',
             display: 'flex',
-            gap: '8px',
-            padding: '8px 12px',
-            borderRadius: '12px',
-            background: 'rgba(0,0,0,0.45)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            overflowX: 'auto',
-            maxWidth: '90vw',
-            zIndex: 10,
-          }}
-        >
-          {fotos.map((url, i) => (
-            <img
-              key={i}
-              src={url}
-              alt=""
-              onClick={() => setCurrent(i)}
-              style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '6px',
-                objectFit: 'cover',
-                cursor: 'pointer',
-                border: i === current ? '2px solid #ffffff' : '2px solid transparent',
-                opacity: i === current ? 1 : 0.55,
-                transition: 'opacity 0.2s, border-color 0.2s',
-                flexShrink: 0,
-              }}
-            />
-          ))}
-        </div>
-      )}
+            flexDirection: 'column',
+            padding: mob ? '16px 18px' : '26px 22px',
+            overflowY: mob ? 'visible' : 'auto',
+            maxHeight: mob ? 'none' : '90vh',
+          }}>
+            {/* Avatar + nombre */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+              {meta.avatar ? (
+                <img src={meta.avatar} alt={meta.title} style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+              ) : (
+                <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: '#0EA5E9', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1rem', flexShrink: 0 }}>
+                  {(meta.title || 'U').charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <h2 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#111', margin: 0, lineHeight: 1.3 }}>
+                  {meta.title}
+                </h2>
+                <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: 0 }}>
+                  {current + 1} de {total} {total === 1 ? 'foto' : 'fotos'}
+                </p>
+              </div>
+            </div>
+
+            {meta.rating != null && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginBottom: '10px' }}>
+                {[1, 2, 3, 4, 5].map((star) => {
+                  const full = meta.rating >= star
+                  const half = !full && meta.rating >= star - 0.5
+                  return (
+                    <span key={star} style={{ fontSize: '1rem', lineHeight: 1 }}>
+                      {full ? '❤️' : half ? '🩷' : '🤍'}
+                    </span>
+                  )
+                })}
+              </div>
+            )}
+
+            {meta.descripcion && (
+              <>
+                <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '0 0 10px 0' }} />
+                <p style={{ fontSize: '0.85rem', color: '#374151', lineHeight: 1.6, margin: 0 }}>
+                  {meta.descripcion}
+                </p>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

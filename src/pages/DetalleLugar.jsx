@@ -1762,23 +1762,45 @@ export default function DetalleLugar() {
                           {r.fotos && r.fotos.length > 0 && (
                             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
                               {r.fotos.map((url, i) => (
-                                <img
+                                <div
                                   key={i}
-                                  src={url}
-                                  alt=""
-                                  loading="lazy"
-                                  decoding="async"
+                                  onClick={() => setResenaLightbox({
+                                    fotos: r.fotos,
+                                    index: i,
+                                    meta: {
+                                      title: r.usuarios?.nombre ?? 'Usuario',
+                                      avatar: r.usuarios?.foto_perfil || r.usuarios?.avatar_url || null,
+                                      rating: r.rating ?? null,
+                                      descripcion: r.contenido ?? null,
+                                    }
+                                  })}
                                   style={{
-                                    height: '120px',
-                                    width: 'auto',
-                                    maxWidth: '200px',
-                                    objectFit: 'cover',
+                                    width: '110px',
+                                    height: '110px',
                                     borderRadius: '8px',
+                                    overflow: 'hidden',
                                     cursor: 'pointer',
                                     boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                    backgroundColor: '#f3f4f6',
+                                    flexShrink: 0,
                                   }}
-                                  onClick={() => setResenaLightbox({ fotos: r.fotos, index: i })}
-                                />
+                                >
+                                  <img
+                                    src={url}
+                                    alt=""
+                                    loading="lazy"
+                                    decoding="async"
+                                    style={{
+                                      width: '100%',
+                                      height: '100%',
+                                      objectFit: 'cover',
+                                      objectPosition: 'center',
+                                      transition: 'transform 0.25s ease',
+                                    }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.06)' }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
+                                  />
+                                </div>
                               ))}
                             </div>
                           )}
@@ -1923,6 +1945,7 @@ export default function DetalleLugar() {
         <FotoLightbox
           fotos={resenaLightbox.fotos}
           index={resenaLightbox.index}
+          meta={resenaLightbox.meta}
           onClose={() => setResenaLightbox(null)}
         />
       )}
