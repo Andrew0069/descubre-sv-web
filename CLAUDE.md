@@ -32,10 +32,11 @@ Al **finalizar cada sesión**, actualiza el archivo `session-log.json` en la ra�
 
 ## Resumen de sesion reciente
 
-### 2026-05-11 - Claude Code (sesión 29)
-- **Hero al volver a Home:** `_lugaresCache` agregado a nivel de módulo para inicializar `lugares` con datos previos al remontar — elimina el parpadeo de hero azul vacío al regresar desde DetalleLugar.
-- **Thumbnails de reseñas:** Cambiados a contenedores cuadrados fijos 110×110px con `overflow:hidden` y `objectFit:cover` para evitar recortes en fotos de cualquier proporción.
-- **FotoLightbox rediseñado:** Ahora usa el mismo layout split que el lightbox de fotos del lugar (imagen oscura izquierda + panel blanco derecha). Muestra avatar, nombre del reviewer, rating en corazones y texto de la reseña. En móvil el panel aparece debajo. Cierre con fade-out de 260ms y botón `← Volver` estilo pill.
+### 2026-05-12 - Gemini (sesión 30)
+- **FotoLightbox reescrito — fix de imagen cortada:** La foto de reseña se cortaba en escritorio y móvil porque en móvil `maxHeight:none` + `width:100%` hacía la imagen más alta que el viewport, y `onClick=handleClose` en el backdrop interceptaba todos los toques impidiendo scroll.
+- **Móvil:** Layout fullscreen `flex-column`. Área de imagen usa `flex:1` + `overflow:hidden` con `objectFit:contain` — foto siempre visible completa. Panel de reviewer como strip oscuro abajo con `maxHeight:35vh` scrollable. Swipe horizontal preservado.
+- **Desktop:** Contenedor split con `maxHeight:90vh`, imagen con `objectFit:contain`, panel blanco scrollable a la derecha.
+- **Resultado:** La foto ahora siempre se muestra completa sin recorte ni necesidad de hacer zoom out, en ambas plataformas.
 
 También actualiza el campo `last_updated` en la raíz del JSON con la fecha actual.
 

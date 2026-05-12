@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { createPortal } from 'react-dom'
 
 /**
  * FotoLightbox – split-panel modal for photos.
@@ -57,22 +58,232 @@ export default function FotoLightbox({ fotos = [], index = 0, onClose, meta }) {
 
   if (!fotos.length) return null
 
-  return (
+  /* ─── Mobile: full-screen single-panel view ─── */
+  if (mob) {
+    return createPortal((
+      <div
+        role="dialog"
+        aria-modal="true"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 10000,
+          backgroundColor: '#000',
+          display: 'flex',
+          flexDirection: 'column',
+          opacity: closing ? 0 : 1,
+          transition: 'opacity 0.26s ease',
+          animation: closing ? 'none' : 'lbFadeIn 0.22s ease',
+        }}
+      >
+        <style>{`
+          @keyframes lbFadeIn { from { opacity: 0 } to { opacity: 1 } }
+        `}</style>
+
+        {/* Top bar */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 14px',
+          zIndex: 20,
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)',
+        }}>
+          <button
+            type="button"
+            onClick={handleClose}
+            style={{
+              color: '#fff',
+              background: 'rgba(0,0,0,0.5)',
+              border: '1px solid rgba(255,255,255,0.18)',
+              borderRadius: '24px',
+              padding: '5px 14px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              fontSize: '0.82rem',
+              fontWeight: 600,
+              backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
+            }}
+          >
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            Volver
+          </button>
+          <div style={{
+            color: '#fff',
+            fontSize: '0.78rem',
+            fontWeight: 600,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            padding: '3px 10px',
+            borderRadius: '20px',
+          }}>
+            {current + 1} / {total}
+          </div>
+        </div>
+
+        {/* Image area: fills remaining space, image fully contained */}
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          minHeight: 0,
+        }}>
+          <img
+            key={current}
+            src={fotos[current]}
+            alt={`Foto ${current + 1} de ${total}`}
+            draggable={false}
+            style={{
+              display: 'block',
+              maxWidth: '100%',
+              maxHeight: '100%',
+              objectFit: 'contain',
+              userSelect: 'none',
+            }}
+          />
+        </div>
+
+        {/* Nav buttons */}
+        {total > 1 && (
+          <>
+            <button
+              type="button"
+              aria-label="Foto anterior"
+              onClick={goPrev}
+              style={{
+                position: 'absolute',
+                left: '8px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#fff',
+                background: 'rgba(255,255,255,0.15)',
+                border: '1px solid rgba(255,255,255,0.25)',
+                borderRadius: '50%',
+                width: '36px',
+                height: '36px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 20,
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+              }}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              aria-label="Foto siguiente"
+              onClick={goNext}
+              style={{
+                position: 'absolute',
+                right: '8px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#fff',
+                background: 'rgba(255,255,255,0.15)',
+                border: '1px solid rgba(255,255,255,0.25)',
+                borderRadius: '50%',
+                width: '36px',
+                height: '36px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 20,
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+              }}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          </>
+        )}
+
+        {/* Meta panel at bottom */}
+        {meta && (
+          <div style={{
+            backgroundColor: '#111',
+            borderTop: '1px solid rgba(255,255,255,0.1)',
+            padding: '14px 16px',
+            maxHeight: '35vh',
+            overflowY: 'auto',
+            flexShrink: 0,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+              {meta.avatar ? (
+                <img src={meta.avatar} alt={meta.title} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+              ) : (
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#0EA5E9', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.85rem', flexShrink: 0 }}>
+                  {(meta.title || 'U').charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <p style={{ fontSize: '0.88rem', fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.3 }}>
+                  {meta.title}
+                </p>
+                <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.5)', margin: 0 }}>
+                  {current + 1} de {total} {total === 1 ? 'foto' : 'fotos'}
+                </p>
+              </div>
+            </div>
+
+            {meta.rating != null && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginBottom: '6px' }}>
+                {[1, 2, 3, 4, 5].map((star) => {
+                  const full = meta.rating >= star
+                  const half = !full && meta.rating >= star - 0.5
+                  return (
+                    <span key={star} style={{ fontSize: '0.9rem', lineHeight: 1 }}>
+                      {full ? '❤️' : half ? '🩷' : '🤍'}
+                    </span>
+                  )
+                })}
+              </div>
+            )}
+
+            {meta.descripcion && (
+              <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.75)', lineHeight: 1.5, margin: 0 }}>
+                {meta.descripcion}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    ), document.body)
+  }
+
+  /* ─── Desktop: split-panel view ─── */
+  return createPortal((
     <div
       role="dialog"
       aria-modal="true"
       onClick={handleClose}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 10000,
-        backgroundColor: mob ? '#111' : 'rgba(0,0,0,0.88)',
+        backgroundColor: 'rgba(0,0,0,0.88)',
         display: 'flex',
-        alignItems: mob ? 'flex-start' : 'center',
+        alignItems: 'center',
         justifyContent: 'center',
-        overflowY: mob ? 'auto' : 'hidden',
         opacity: closing ? 0 : 1,
         transition: 'opacity 0.26s ease',
         animation: closing ? 'none' : 'lbFadeIn 0.22s ease',
@@ -87,13 +298,12 @@ export default function FotoLightbox({ fotos = [], index = 0, onClose, meta }) {
         onClick={(e) => e.stopPropagation()}
         style={{
           display: 'flex',
-          flexDirection: mob ? 'column' : 'row',
-          width: mob ? '100%' : 'auto',
-          height: mob ? 'auto' : 'auto',
-          maxHeight: mob ? 'none' : '90vh',
-          borderRadius: mob ? 0 : '10px',
-          overflow: mob ? 'visible' : 'hidden',
-          boxShadow: mob ? 'none' : '0 24px 64px rgba(0,0,0,0.6)',
+          flexDirection: 'row',
+          maxHeight: '90vh',
+          maxWidth: '92vw',
+          borderRadius: '10px',
+          overflow: 'hidden',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
         }}
       >
         {/* Área de imagen */}
@@ -103,7 +313,10 @@ export default function FotoLightbox({ fotos = [], index = 0, onClose, meta }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          flexShrink: 0,
+          maxHeight: '90vh',
+          maxWidth: meta ? '65vw' : '80vw',
+          minWidth: '300px',
+          overflow: 'hidden',
         }}>
           {/* Volver */}
           <button
@@ -160,10 +373,9 @@ export default function FotoLightbox({ fotos = [], index = 0, onClose, meta }) {
             style={{
               display: 'block',
               userSelect: 'none',
-              maxHeight: mob ? 'none' : '90vh',
-              maxWidth: mob ? '100vw' : '65vw',
-              width: mob ? '100%' : 'auto',
-              height: 'auto',
+              maxHeight: '90vh',
+              maxWidth: meta ? '65vw' : '80vw',
+              objectFit: 'contain',
             }}
           />
 
@@ -232,14 +444,14 @@ export default function FotoLightbox({ fotos = [], index = 0, onClose, meta }) {
         {/* Panel de info */}
         {meta && (
           <div style={{
-            width: mob ? '100%' : '280px',
+            width: '280px',
             flex: 'none',
             backgroundColor: '#fff',
             display: 'flex',
             flexDirection: 'column',
-            padding: mob ? '16px 18px' : '26px 22px',
-            overflowY: mob ? 'visible' : 'auto',
-            maxHeight: mob ? 'none' : '90vh',
+            padding: '26px 22px',
+            overflowY: 'auto',
+            maxHeight: '90vh',
           }}>
             {/* Avatar + nombre */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
@@ -286,5 +498,5 @@ export default function FotoLightbox({ fotos = [], index = 0, onClose, meta }) {
         )}
       </div>
     </div>
-  )
+  ), document.body)
 }

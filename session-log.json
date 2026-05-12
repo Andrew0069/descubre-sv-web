@@ -531,17 +531,35 @@
             ]
         },
         {
+            "id": 31,
+            "date": "2026-05-11",
+            "ai_tool": "Claude Code (Opus 4.7 1M)",
+            "summary": "FotoLightbox renderizado vía React Portal a document.body para garantizar cobertura completa del viewport y centrado correcto de la imagen de reseña.",
+            "files_modified": [
+                "src/components/FotoLightbox.jsx",
+                "session-log.json"
+            ],
+            "changes": [
+                "Diagnóstico: en escritorio el lightbox aparentaba estar 'cortado' porque el contenido de la página subyacente (mapa, tarjeta de reseña) se veía debajo del modal — síntoma típico de un position:fixed que no cubre todo el viewport (suele ocurrir por stacking context, ancestros con transform/filter o re-render en árbol React anidado).",
+                "FotoLightbox.jsx: agregado import { createPortal } from 'react-dom' y envueltos AMBOS returns (mobile y desktop) en createPortal(..., document.body) para que el modal se monte directamente en el body y siempre ocupe el viewport completo.",
+                "Sin cambios en el layout, posiciones ni estilos del lightbox — solo el destino de montaje del DOM. La foto sigue usando objectFit:contain y se centra como antes, pero ahora ocupa toda la pantalla en lugar de quedar contenida dentro del árbol de DetalleLugar."
+            ]
+        },
+        {
             "id": 30,
             "date": "2026-05-11",
             "ai_tool": "Claude Code",
-            "summary": "Fix FotoLightbox: imagen de reseña cortada en escritorio y móvil.",
+            "summary": "Fix FotoLightbox: imagen de reseña cortada en escritorio y móvil — reescritura de layout.",
             "files_modified": [
                 "src/components/FotoLightbox.jsx"
             ],
             "changes": [
-                "Desktop: contenedor ahora usa height:90vh con flex:1 en el área de imagen; imagen usa width/height:100% + objectFit:contain para mostrar la imagen completa sin recortar.",
-                "Mobile: overlay ahora tiene overflowY:auto (scroll propio del modal); imagen usa width:100% + height:auto para renderizar a su tamaño natural sin corte; panel tiene overflow:visible.",
-                "Eliminado overflow:hidden del contenedor en móvil para permitir scroll vertical completo."
+                "Root cause: en móvil, la imagen tenía maxHeight:none + width:100% pero el contenedor outer usaba onClick=handleClose, interceptando todos los toques e impidiendo scroll; además overflow:auto en el backdrop no funcionaba porque el contenido no tenía altura definida.",
+                "Mobile: reescrito como layout fullscreen flex-column. El área de imagen usa flex:1 con overflow:hidden y la img usa maxWidth/maxHeight:100% + objectFit:contain, mostrando la foto completa sin recorte ni necesidad de scroll.",
+                "Mobile: barra superior (Volver + contador) posicionada con absolute + gradient overlay. Panel de meta/reviewer se muestra abajo como strip oscuro con maxHeight:35vh scrollable.",
+                "Mobile: swipe horizontal para navegar entre fotos preservado; eliminado el onClick=handleClose del backdrop que impedía interacción.",
+                "Desktop: contenedor split con maxHeight:90vh + overflow:hidden; imagen usa objectFit:contain con maxHeight/maxWidth definidos; panel de info blanco scrollable a la derecha.",
+                "Ambos: la foto ahora siempre se ve completa (contain) sin recorte ni necesidad de hacer zoom out."
             ]
         }
     ]
