@@ -828,6 +828,59 @@
         "Home.jsx, DetalleLugar.jsx, AdminPage.jsx: reemplazados renders inline oscuros con <Toast msg={toast} />",
         "Guias.jsx: eliminado componente Toast local y keyframes duplicados, ahora usa el componente compartido"
       ]
+    },
+    {
+      "id": 46,
+      "date": "2026-05-12",
+      "ai_tool": "Claude Code Sonnet 4.6 (Thinking)",
+      "summary": "Página completa de Notificaciones estilo Facebook con colores crema/amarillo de la app, agrupación Hoy/Anteriores, botón Volver y redirección desde el dropdown.",
+      "files_modified": [
+        "src/pages/Notificaciones.jsx",
+        "src/App.jsx",
+        "src/pages/Home.jsx",
+        "session-log.json",
+        "CLAUDE.md"
+      ],
+      "changes": [
+        "Creado src/pages/Notificaciones.jsx: página full en /notificaciones con header sticky (botón '← Volver' + título + badge de nuevas), tabs filtro Todas/No leídas con acento amarillo #F5A623, agrupación temporal Hoy/Anteriores, animación fadeIn por sección",
+        "NotifItem: card con borde crema (#ede8e0), hover elevación (translateY -1px + sombra), avatar 56px con badge de tipo (comentario/like/sugerencia), punto amarillo para no leídas, botón descartar (×) con stopPropagation",
+        "Al entrar a la página se marcan automáticamente todas las notificaciones como leídas vía marcarTodasLeidas()",
+        "App.jsx: importada Notificaciones y registrada ruta /notificaciones — hereda transiciones page-fadeIn/fadeOut de AnimatedRoutes",
+        "Home.jsx: botón 'Ver todo' en dropdown de campana ahora cierra el panel (setCampanaOpen(false)) y navega a /notificaciones; color actualizado a #F5A623"
+      ]
+    },
+    {
+      "id": 47,
+      "date": "2026-05-12",
+      "ai_tool": "Claude Code Sonnet 4.6",
+      "summary": "Fix Toast invisible al hacer scroll: createPortal para escapar del árbol con transform; actualización CLAUDE.md.",
+      "files_modified": [
+        "src/components/Toast.jsx"
+      ],
+      "changes": [
+        "Diagnóstico: el div .page-fadeIn usa animation-fill-mode:forwards con transform:translateY(0), creando un containing block que rompía position:fixed en los hijos — el toast aparecía relativo al tope del documento, no del viewport",
+        "Toast.jsx: agregado import { createPortal } from react-dom; el return envuelto en createPortal(..., document.body) para montarse directamente en el body fuera del árbol transformado",
+        "Ahora el toast siempre aparece en el top del viewport real sin importar el scroll ni las animaciones de página"
+      ]
+    },
+    {
+      "id": 48,
+      "date": "2026-05-12",
+      "ai_tool": "Claude Code Sonnet 4.6",
+      "summary": "Swipe en mobile para imágenes de lugares y reseñas en DetalleLugar.",
+      "files_modified": [
+        "src/pages/DetalleLugar.jsx",
+        "src/App.jsx",
+        "session-log.json",
+        "CLAUDE.md"
+      ],
+      "changes": [
+        "DetalleLugar.jsx: estado carouselIdx + isMobile (< 640px con listener de resize) + refs touchStartX y didSwipeRef",
+        "En mobile, la galería de fotos del lugar muestra un carrusel full-width swipeable con animación translateX (cubic-bezier 0.38s), badge contador top-right y dots indicadores amarillos animados en la parte inferior",
+        "En desktop se mantiene el panel split 60/40 original sin cambios",
+        "Imágenes de reseñas en mobile: contenedor con overflowX:auto + scrollSnapType:x mandatory + WebkitOverflowScrolling:touch; cada imagen 70vw ancho con scrollSnapAlign:start; en desktop quedan como flex wrap de 110px original",
+        "App.jsx: clase global .hide-scrollbar::-webkit-scrollbar { display:none } para ocultar el scrollbar de WebKit en el contenedor de fotos de reseñas"
+      ]
     }
   ]
 }

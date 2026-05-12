@@ -62,6 +62,7 @@ function AnimatedRoutes() {
         .page-fadeOut {
           animation: fadeOut 0.2s ease forwards;
         }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
       <div
         className={`page-${transitionStage}`}

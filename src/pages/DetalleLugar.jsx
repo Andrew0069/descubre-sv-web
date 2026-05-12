@@ -181,10 +181,20 @@ export default function DetalleLugar() {
   const [esFavorito, setEsFavorito] = useState(false)
   const [favoritosCount, setFavoritosCount] = useState(0)
   const [resenaLightbox, setResenaLightbox] = useState(null) // { fotos, index }
+  const [carouselIdx, setCarouselIdx] = useState(0)
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640)
+  const touchStartX = useRef(null)
+  const didSwipeRef = useRef(false)
   const returnTo = `${location.pathname}${location.search}${location.hash}`
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [])
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 640)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
   }, [])
 
   useEffect(() => {
@@ -985,7 +995,7 @@ export default function DetalleLugar() {
 
           {fotosCarousel.length === 0 ? (
             <div style={{
-              height: '480px',
+              height: isMobile ? '240px' : '480px',
               borderRadius: '16px',
               background: '#f3f4f6',
               display: 'flex',
@@ -994,7 +1004,105 @@ export default function DetalleLugar() {
             }}>
               <span style={{ fontSize: '5rem' }}>🏝️</span>
             </div>
+          ) : isMobile ? (
+            /* ── Mobile: carrusel swipeable ── */
+            <div
+              style={{
+                position: 'relative',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                height: '260px',
+                background: '#f3f4f6',
+                cursor: 'pointer',
+                touchAction: 'pan-y',
+              }}
+              onTouchStart={(e) => {
+                touchStartX.current = e.touches[0].clientX
+                didSwipeRef.current = false
+              }}
+              onTouchEnd={(e) => {
+                const dx = e.changedTouches[0].clientX - touchStartX.current
+                if (Math.abs(dx) > 40) {
+                  didSwipeRef.current = true
+                  if (dx < 0) setCarouselIdx(i => Math.min(i + 1, fotosCarousel.length - 1))
+                  else setCarouselIdx(i => Math.max(i - 1, 0))
+                }
+              }}
+              onClick={() => {
+                if (!didSwipeRef.current) { setLightboxIndex(carouselIdx); setLightboxOpen(true) }
+              }}
+            >
+              {/* Strip de imágenes */}
+              <div style={{
+                display: 'flex',
+                height: '100%',
+                transform: `translateX(-${carouselIdx * 100}%)`,
+                transition: 'transform 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                willChange: 'transform',
+              }}>
+                {fotosCarousel.map((src, i) => (
+                  <img
+                    key={i}
+                    src={src}
+                    alt=""
+                    draggable={false}
+                    style={{
+                      flexShrink: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      display: 'block',
+                      userSelect: 'none',
+                    }}
+                  />
+                ))}
+              </div>
+
+              {/* Badge contador */}
+              {fotosCarousel.length > 1 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '10px',
+                  right: '12px',
+                  background: 'rgba(0,0,0,0.52)',
+                  color: '#fff',
+                  padding: '3px 10px',
+                  borderRadius: '20px',
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  backdropFilter: 'blur(4px)',
+                  pointerEvents: 'none',
+                }}>
+                  {carouselIdx + 1} / {fotosCarousel.length}
+                </div>
+              )}
+
+              {/* Dots indicadores */}
+              {fotosCarousel.length > 1 && (
+                <div style={{
+                  position: 'absolute',
+                  bottom: '12px',
+                  left: 0,
+                  right: 0,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  pointerEvents: 'none',
+                }}>
+                  {fotosCarousel.map((_, i) => (
+                    <div key={i} style={{
+                      width: i === carouselIdx ? '18px' : '6px',
+                      height: '6px',
+                      borderRadius: '3px',
+                      background: i === carouselIdx ? '#F5C842' : 'rgba(255,255,255,0.75)',
+                      transition: 'all 0.3s ease',
+                    }} />
+                  ))}
+                </div>
+              )}
+            </div>
           ) : (
+            /* ── Desktop: panel split original ── */
             <div style={{ display: 'flex', gap: '8px', height: '480px' }}>
               <div
                 style={{
@@ -1082,7 +1190,7 @@ export default function DetalleLugar() {
                       onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.filter = 'brightness(1)' }}
                     />
                   ) : <span style={{ fontSize: '2.5rem' }}>🏝️</span>}
-                  
+
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setLightboxIndex(0); setLightboxOpen(true) }}
@@ -1743,7 +1851,18 @@ export default function DetalleLugar() {
 
                           {/* Fotos */}
                           {r.fotos && r.fotos.length > 0 && (
-                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                            <div className="hide-scrollbar" style={{
+                              display: 'flex',
+                              gap: '8px',
+                              flexWrap: isMobile ? 'nowrap' : 'wrap',
+                              marginBottom: '10px',
+                              overflowX: isMobile ? 'auto' : 'visible',
+                              scrollSnapType: isMobile ? 'x mandatory' : 'none',
+                              WebkitOverflowScrolling: 'touch',
+                              scrollbarWidth: 'none',
+                              msOverflowStyle: 'none',
+                              paddingBottom: isMobile ? '4px' : 0,
+                            }}>
                               {r.fotos.map((url, i) => (
                                 <div
                                   key={i}
@@ -1758,14 +1877,15 @@ export default function DetalleLugar() {
                                     }
                                   })}
                                   style={{
-                                    width: '110px',
-                                    height: '110px',
+                                    width: isMobile ? 'min(200px, 70vw)' : '110px',
+                                    height: isMobile ? '150px' : '110px',
                                     borderRadius: '8px',
                                     overflow: 'hidden',
                                     cursor: 'pointer',
                                     boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                                     backgroundColor: '#f3f4f6',
                                     flexShrink: 0,
+                                    scrollSnapAlign: isMobile ? 'start' : 'unset',
                                   }}
                                 >
                                   <img
@@ -1773,12 +1893,14 @@ export default function DetalleLugar() {
                                     alt=""
                                     loading="lazy"
                                     decoding="async"
+                                    draggable={false}
                                     style={{
                                       width: '100%',
                                       height: '100%',
                                       objectFit: 'cover',
                                       objectPosition: 'center',
                                       transition: 'transform 0.25s ease',
+                                      userSelect: 'none',
                                     }}
                                     onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.06)' }}
                                     onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
