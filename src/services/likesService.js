@@ -69,10 +69,7 @@ export async function removeLikeResena(resenaId, userId) {
 }
 
 export async function getAllRatingsLugares() {
-  const { data, error } = await supabase
-    .from('likes_lugar')
-    .select('lugar_id, rating')
-    .not('rating', 'is', null)
+  const { data, error } = await supabase.rpc('get_ratings_lugares')
   return { data, error }
 }
 

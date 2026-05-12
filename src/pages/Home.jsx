@@ -242,28 +242,20 @@ export default function Home() {
 
     const conteosData = await getAllFavoritosConteo()
 
-    const conteoPorLugar = {}
-      ; (conteosData || []).forEach((f) => {
-        conteoPorLugar[f.lugar_id] = (conteoPorLugar[f.lugar_id] || 0) + 1
-      })
+    const conteoPorLugar = Object.fromEntries(
+      (conteosData || []).map(f => [f.lugar_id, Number(f.conteo)])
+    )
 
     const { data: ratingsData } = await getAllRatingsLugares()
 
-    const promediosPorLugar = {}
-      ; (ratingsData || []).forEach(r => {
-        if (!promediosPorLugar[r.lugar_id]) {
-          promediosPorLugar[r.lugar_id] = { suma: 0, count: 0 }
-        }
-        promediosPorLugar[r.lugar_id].suma += r.rating
-        promediosPorLugar[r.lugar_id].count += 1
-      })
+    const promediosPorLugar = Object.fromEntries(
+      (ratingsData || []).map(r => [r.lugar_id, r.promedio])
+    )
 
     const lugaresConDatos = (data ?? []).map((l) => ({
       ...l,
       favoritos_count: conteoPorLugar[l.id] || 0,
-      promedio_rating: promediosPorLugar[l.id]
-        ? (promediosPorLugar[l.id].suma / promediosPorLugar[l.id].count).toFixed(1)
-        : null
+      promedio_rating: promediosPorLugar[l.id] ?? null
     }))
 
     _lugaresCache = lugaresConDatos

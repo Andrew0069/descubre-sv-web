@@ -42,8 +42,6 @@ export async function getFavoritosByUsuario(usuarioId) {
 }
 
 export async function getAllFavoritosConteo() {
-  const { data } = await supabase
-    .from('favoritos')
-    .select('lugar_id')
+  const { data } = await supabase.rpc('get_conteos_favoritos')
   return data ?? []
 }
