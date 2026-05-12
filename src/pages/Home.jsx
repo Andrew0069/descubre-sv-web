@@ -24,17 +24,22 @@ function getUserAvatar(usuario) {
   return usuario?.foto_perfil || usuario?.avatar_url || null
 }
 
+function getPublicUserName(usuario) {
+  return usuario?.username ? `@${usuario.username}` : 'Alguien'
+}
+
 function getNotificationMeta(notification) {
+  const actorName = getPublicUserName(notification?.actor)
   switch (notification?.tipo) {
     case 'respuesta':
       return {
         iconBg: '#0EA5E9',
-        text: `${notification.actor?.nombre ?? 'Alguien'} comentó tu reseña.`,
+        text: `${actorName} comentó tu reseña.`,
       }
     case 'like':
       return {
         iconBg: '#EF4444',
-        text: `${notification.actor?.nombre ?? 'Alguien'} reaccionó a tu reseña.`,
+        text: `${actorName} reaccionó a tu reseña.`,
       }
     case 'sugerencia_aprobada':
       return {
@@ -761,10 +766,10 @@ export default function Home() {
                           >
                             <div style={{ position: 'relative', flexShrink: 0 }}>
                               {getUserAvatar(n.actor) ? (
-                                <img src={getUserAvatar(n.actor)} alt={n.actor.nombre} style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover' }} />
+                                <img src={getUserAvatar(n.actor)} alt={getPublicUserName(n.actor)} style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover' }} />
                               ) : (
                                 <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: n.tipo === 'sugerencia_aprobada' ? '#ECFDF5' : n.tipo === 'sugerencia_rechazada' ? '#FFFBEB' : '#0EA5E9', color: n.tipo === 'sugerencia_aprobada' ? '#059669' : n.tipo === 'sugerencia_rechazada' ? '#d97706' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.2rem' }}>
-                                  {n.tipo === 'sugerencia_aprobada' ? '✓' : n.tipo === 'sugerencia_rechazada' ? '!' : (n.actor?.nombre || 'U').charAt(0).toUpperCase()}
+                                  {n.tipo === 'sugerencia_aprobada' ? '✓' : n.tipo === 'sugerencia_rechazada' ? '!' : getPublicUserName(n.actor).charAt(0).toUpperCase()}
                                 </div>
                               )}
                               <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', backgroundColor: meta.iconBg, borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid #fff' }}>
@@ -781,8 +786,7 @@ export default function Home() {
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontSize: 0, color: '#111827', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', wordBreak: 'break-word', lineHeight: 1.4 }}>
-                                <span style={{ fontSize: '0.85rem' }}>{meta.text}</span><span style={{ fontWeight: 600 }}>{n.actor?.nombre ?? 'Alguien'}</span>
-                                {n.tipo === 'respuesta' ? ' comentó tu reseña.' : ' reaccionó a tu reseña.'}
+                                <span style={{ fontSize: '0.85rem' }}>{meta.text}</span>
                               </div>
                               <div style={{ fontSize: '0.8rem', color: '#0EA5E9', marginTop: '4px', fontWeight: n.leida ? 400 : 600 }}>
                                 {formatRelativeShort(n.created_at)}

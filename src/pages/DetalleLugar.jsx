@@ -69,6 +69,10 @@ function AvatarImg({ src, fallbackSrc, nombre, size = 36, fontSize = '0.85rem' }
   )
 }
 
+function getPublicUserName(usuario, fallback = 'Anónimo') {
+  return usuario?.username ? `@${usuario.username}` : fallback
+}
+
 
 function HeartIcon({ filled = false, size = 16 }) {
   return (
@@ -279,7 +283,7 @@ export default function DetalleLugar() {
     if (idsResenas.length > 0) {
       const { data: respData } = await supabase
         .from('respuestas_resena')
-        .select('*, usuarios(nombre, foto_perfil, avatar_url)')
+        .select('*, usuarios(username, foto_perfil, avatar_url)')
         .in('resena_id', idsResenas)
         .order('created_at', { ascending: true })
       const rmap = {}
@@ -324,7 +328,7 @@ export default function DetalleLugar() {
     if (!resenaIds.length) return
     const { data } = await supabase
       .from('respuestas_resena')
-      .select('*, usuarios(nombre, foto_perfil, avatar_url)')
+      .select('*, usuarios(username, foto_perfil, avatar_url)')
       .in('resena_id', resenaIds)
       .order('created_at', { ascending: true })
     const map = {}
@@ -574,7 +578,7 @@ export default function DetalleLugar() {
       contenido: contenidoRespuesta,
       created_at: new Date().toISOString(),
       usuarios: {
-        nombre: usuarioRow.nombre ?? 'Tú',
+        username: usuarioRow.username ?? null,
         foto_perfil: usuarioRow.foto_perfil ?? null,
         avatar_url: usuarioRow.avatar_url ?? null,
       },
@@ -709,7 +713,7 @@ export default function DetalleLugar() {
       fotos: urlsFotos,
       created_at: new Date().toISOString(),
       usuarios: {
-        nombre: usuarioRow.nombre ?? '',
+        username: usuarioRow.username ?? null,
         foto_perfil: usuarioRow.foto_perfil ?? null,
         avatar_url: usuarioRow.avatar_url ?? null,
       },
@@ -1698,8 +1702,7 @@ export default function DetalleLugar() {
             ) : (
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column' }}>
                 {resenas.map((r) => {
-                  const nombre = r.usuarios?.nombre?.trim()
-                  const autor = nombre || t.anonimo
+                  const autor = getPublicUserName(r.usuarios, t.anonimo)
                   const rLikeCount = resenaLikeCounts[r.id] ?? 0
                   const rUserLiked = !!userResenaLikes[r.id]
 
@@ -1768,7 +1771,7 @@ export default function DetalleLugar() {
                                     fotos: r.fotos,
                                     index: i,
                                     meta: {
-                                      title: r.usuarios?.nombre ?? 'Usuario',
+                                      title: autor,
                                       avatar: r.usuarios?.foto_perfil || r.usuarios?.avatar_url || null,
                                       rating: r.rating ?? null,
                                       descripcion: r.contenido ?? null,
@@ -1896,7 +1899,7 @@ export default function DetalleLugar() {
 
                           {/* Respuestas */}
                           {(respuestas[r.id] ?? []).map((rep) => {
-                            const repNombre = rep.usuarios?.nombre?.trim() || 'Anónimo'
+                            const repNombre = getPublicUserName(rep.usuarios, 'Anónimo')
                             return (
                               <div key={rep.id} style={{
                                 marginTop: '12px',

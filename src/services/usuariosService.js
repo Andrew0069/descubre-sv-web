@@ -15,14 +15,14 @@ export async function getUsuarioId(authId) {
 }
 
 /**
- * Obtiene id, nombre y campos de avatar dado un auth_id.
+ * Obtiene id, nombre publico y campos de avatar dado un auth_id.
  * @param {string} authId - session.user.id
- * @returns {Promise<{id, nombre, foto_perfil, avatar_url}|null>}
+ * @returns {Promise<{id, username, foto_perfil, avatar_url}|null>}
  */
 export async function getUsuarioPerfil(authId) {
   const { data } = await supabase
     .from('usuarios')
-    .select('id, nombre, foto_perfil, avatar_url')
+    .select('id, username, foto_perfil, avatar_url')
     .eq('auth_id', authId)
     .maybeSingle()
   return data ?? null
@@ -43,16 +43,20 @@ export async function getUsuarioCompleto(authId) {
 }
 
 /**
- * Actualiza nombre y bio de un usuario.
+ * Actualiza nombre privado, nombre de usuario y bio de un usuario.
  * @param {string} authId
  * @param {string} nombre
+ * @param {string} username
  * @param {string} bio
  * @returns {Promise<{error}>}
  */
-export async function updateUsuarioPerfil(authId, nombre, bio) {
+export async function updateUsuarioPerfil(authId, nombre, username, bio) {
+  const payload = { nombre, bio }
+  if (username != null) payload.username = username
+
   const { error } = await supabase
     .from('usuarios')
-    .update({ nombre, bio })
+    .update(payload)
     .eq('auth_id', authId)
   return { error }
 }

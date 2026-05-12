@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getUsuarioCompleto } from '../services/usuariosService'
 
@@ -34,13 +34,6 @@ const pagePalette = {
   errorText: '#8b3f2d',
 }
 
-function SpotterWordmark() {
-  return (
-    <span style={{ fontSize: '1rem', fontWeight: 800, color: pagePalette.text, letterSpacing: '-0.03em' }}>
-      <span style={{ color: pagePalette.accent }}>S</span>potter
-    </span>
-  )
-}
 
 function PageShell({ children }) {
   return (
@@ -552,6 +545,7 @@ function PageShell({ children }) {
 }
 
 export default function SugerirLugar() {
+  const navigate = useNavigate()
   const [form, setForm] = useState(initialForm)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -569,6 +563,11 @@ export default function SugerirLugar() {
       const currentSession = data.session ?? null
       setSession(currentSession)
 
+      if (!currentSession) {
+        navigate('/login', { replace: true })
+        return
+      }
+
       if (currentSession?.user?.id) {
         const profile = await getUsuarioCompleto(currentSession.user.id)
         const accountEmail = currentSession.user.email || profile?.email || ''
@@ -582,7 +581,7 @@ export default function SugerirLugar() {
 
       setSessionLoading(false)
     })
-  }, [])
+  }, [navigate])
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }))
@@ -658,52 +657,6 @@ export default function SugerirLugar() {
           </div>
           <h1>Preparando tu acceso</h1>
           <p>Estamos verificando tu sesion para mostrarte la experiencia correcta sin alterar el flujo actual.</p>
-        </div>
-      </PageShell>
-    )
-  }
-
-  if (!session) {
-    return (
-      <PageShell>
-        <div className="suggest-page suggest-login-shell">
-          <div style={{ marginBottom: '1.2rem' }}>
-            <Link to="/" className="suggest-back-link">
-              <span aria-hidden>&larr;</span>
-              <span>Volver al inicio</span>
-            </Link>
-          </div>
-
-          <div className="suggest-card suggest-login-card">
-            <div className="suggest-pill" style={{ margin: '0 auto 1.15rem' }}>
-              Acceso protegido
-            </div>
-            <div className="suggest-lock-orb" style={{ marginLeft: 'auto', marginRight: 'auto' }}>
-              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path d="M7 10V7.8C7 5.15 9.15 3 11.8 3C14.45 3 16.6 5.15 16.6 7.8V10" stroke={pagePalette.teal} strokeWidth="1.8" strokeLinecap="round" />
-                <rect x="5" y="10" width="14" height="10" rx="3" fill={pagePalette.accent} />
-                <circle cx="12" cy="15" r="1.55" fill="#fffaf3" />
-                <path d="M12 15.8V17.2" stroke="#fffaf3" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </div>
-
-            <h1>Inicia sesion para sugerir un nuevo lugar</h1>
-            <p>
-              Necesitas una cuenta para continuar en <SpotterWordmark />. Mantenemos este acceso cerrado para conservar el flujo actual
-              de sugerencias y relacionarlo correctamente con la cuenta del usuario.
-            </p>
-
-            <div className="suggest-login-actions">
-              <Link to="/login" className="suggest-button suggest-button-primary">
-                Ir al login
-              </Link>
-              <Link to="/" className="suggest-button suggest-button-secondary">
-                Volver a explorar
-              </Link>
-            </div>
-          </div>
-
-          <p className="suggest-footer">© 2026 Spotter · Tu guia local, siempre.</p>
         </div>
       </PageShell>
     )

@@ -32,8 +32,21 @@ Al **finalizar cada sesión**, actualiza el archivo `session-log.json` en la ra�
 
 ## Resumen de sesiones recientes
 
-### 2026-05-12 - Claude Code Opus 4.7 (sesión 31)
-- **FotoLightbox — React Portal:** El modal se montaba dentro del árbol de `DetalleLugar`, causando que el contenido de la página se viera detrás. Se envolvieron ambos `return` (mobile y desktop) en `createPortal(..., document.body)`. Sin cambios de layout ni estilos.
+### 2026-05-12 - Claude Code Sonnet 4.6 (sesión 41)
+- **Username case-insensitive + email duplicado en registro:**
+  - Supabase: índice único cambiado a `LOWER(username)`; trigger `handle_new_user` guarda `LOWER(username)`; constraint acepta `[A-Za-z0-9_]`.
+  - `authValidation.js`: `validateUsername` acepta mayúsculas (`^[A-Za-z0-9_]+$`).
+  - `Login.jsx`: input username no fuerza lowercase al escribir; chequeo de email duplicado en tabla `usuarios` antes del signUp.
+
+### 2026-05-12 - Claude Code Sonnet 4.6 (sesión 39)
+- **Viewer de guías con mapa de ruta:**
+  - `lugaresService.js`: función `getLugaresByIds(ids)` con lat/lng, dirección, categorías y departamentos.
+  - `Guias.jsx`: `useSearchParams` lee `?ver={id}` (abre viewer) y `?editar={id}` (pre-carga editor). Componentes `ViewerStop`, `GuiaViewer` y helper `buildRouteMapUrl` (iframe Google Maps `/dir/` multi-waypoint sin API key). Render guard al inicio del return.
+  - `Perfil.jsx` — TabGuias: dos botones por guía — "Ver ruta" (`/guias?ver=id`) y "Editar" (`/guias?editar=id`).
+  - `Perfil.css`: clase `.perfil-guia-btn--ver` (outlined amarillo).
+
+### 2026-05-12 - Claude Code Sonnet 4.6 (sesión 38)
+- **Fix post-registro en Login:** tras `signUp` exitoso el form vuelve a modo login con correo prellenado; eliminado mensaje falso de confirmación por correo.
 
 ### 2026-05-13 - Claude Code Sonnet 4.6 (sesión 34)
 - **Tab "Mis Guías" en Perfil:** Nueva tab en el perfil privado que muestra las rutas guardadas del usuario.

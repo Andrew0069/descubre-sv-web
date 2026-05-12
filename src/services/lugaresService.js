@@ -61,3 +61,13 @@ export async function updateImagenPrincipal(id, url) {
     .eq('id', id)
   return { error }
 }
+
+export async function getLugaresByIds(ids) {
+  if (!ids || ids.length === 0) return { data: [], error: null }
+  const { data, error } = await supabase
+    .from('lugares')
+    .select('id, nombre, latitud, longitud, direccion, imagen_principal, categorias(nombre, color), departamentos(nombre)')
+    .in('id', ids)
+    .eq('aprobado', true)
+  return { data: data ?? [], error }
+}

@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { getUsuarioCompleto, updateUsuarioPerfil, updateUsuarioFoto } from '../services/usuariosService'
 import { getGuiasByUser } from '../services/guiasService'
 import { resolveImageUrl } from '../lib/imageUrl'
+import { normalizeUsername, validateProfileName, validateUsername } from '../lib/authValidation'
 import Loader from '../components/Loader'
 import PhotoPickerSheet from '../components/PhotoPickerSheet'
 import './Perfil.css'
@@ -64,6 +65,7 @@ export default function Perfil() {
 
   // edit bio
   const [editNombre, setEditNombre] = useState('')
+  const [editUsername, setEditUsername] = useState('')
   const [editBio, setEditBio] = useState('')
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState(null) // {type,text}
@@ -90,6 +92,7 @@ export default function Perfil() {
     if (!u) { setLoading(false); return }
     setPerfil(u)
     setEditNombre(u.nombre || '')
+    setEditUsername(u.username || '')
     setEditBio(u.bio || '')
 
     const uid = u.id
@@ -132,7 +135,23 @@ export default function Perfil() {
     }
 
     // guias
-    const { data: guiasData } = await getGuiasByUser(uid)
+    const { data: guiasData } = await getGuiasByUser(sess.user.id)
+    if (guiasData && guiasData.length > 0) {
+      const allLugarIds = new Set()
+      guiasData.forEach(g => g.lugares_ids?.forEach(id => allLugarIds.add(id)))
+      if (allLugarIds.size > 0) {
+        const { data: lugaresGuias } = await supabase
+          .from('lugares')
+          .select('id, nombre')
+          .in('id', Array.from(allLugarIds))
+        if (lugaresGuias) {
+          const lugaresMap = Object.fromEntries(lugaresGuias.map(l => [l.id, l.nombre]))
+          guiasData.forEach(g => {
+            g.nombres_lugares = g.lugares_ids?.map(id => lugaresMap[id]).filter(Boolean) || []
+          })
+        }
+      }
+    }
     setGuias(guiasData ?? [])
 
     setLoading(false)
@@ -147,17 +166,42 @@ export default function Perfil() {
   /* ── save bio ── */
   const handleSaveBio = async () => {
     setMsg(null)
-    if (!editNombre.trim() || editNombre.trim().length < 3) {
-      setMsg({ type: 'error', text: 'El nombre debe tener al menos 3 caracteres.' }); return
+    const nombreError = validateProfileName(editNombre)
+    if (nombreError) {
+      setMsg({ type: 'error', text: nombreError }); return
+    }
+    const wantsUsername = Boolean(editUsername.trim())
+    if (wantsUsername) {
+      const usernameError = validateUsername(editUsername)
+      if (usernameError) {
+        setMsg({ type: 'error', text: usernameError }); return
+      }
     }
     if (editBio.length > 200) {
       setMsg({ type: 'error', text: 'La descripción no puede superar 200 caracteres.' }); return
     }
     setSaving(true)
-    const { error } = await updateUsuarioPerfil(session.user.id, editNombre.trim(), editBio.trim())
+    const normalizedUsername = wantsUsername ? normalizeUsername(editUsername) : null
+    if (normalizedUsername) {
+      const { data: existingUsername, error: usernameCheckErr } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('username', normalizedUsername)
+        .neq('auth_id', session.user.id)
+        .maybeSingle()
+      if (usernameCheckErr) {
+        setSaving(false)
+        setMsg({ type: 'error', text: 'No pudimos validar el nombre de usuario.' }); return
+      }
+      if (existingUsername) {
+        setSaving(false)
+        setMsg({ type: 'error', text: 'Ese nombre de usuario ya está en uso.' }); return
+      }
+    }
+    const { error } = await updateUsuarioPerfil(session.user.id, editNombre.trim(), normalizedUsername, editBio.trim())
     setSaving(false)
     if (error) { setMsg({ type: 'error', text: 'Error al guardar.' }); return }
-    setPerfil(p => ({ ...p, nombre: editNombre.trim(), bio: editBio.trim() }))
+    setPerfil(p => ({ ...p, nombre: editNombre.trim(), ...(normalizedUsername ? { username: normalizedUsername } : {}), bio: editBio.trim() }))
     setMsg({ type: 'success', text: '¡Perfil actualizado!' })
     setTimeout(() => setModalType(null), 800)
   }
@@ -227,6 +271,7 @@ export default function Perfil() {
           </div>
           <div className="perfil-info">
             <h1>{perfil?.nombre || 'Usuario'}</h1>
+            {perfil?.username && <p className="username">@{perfil.username}</p>}
             {perfil?.bio && <p className="bio">{perfil.bio}</p>}
             {joinDate && <p className="joined">📅 Se unió en {joinDate}</p>}
           </div>
@@ -269,9 +314,12 @@ export default function Perfil() {
           <div className="perfil-modal" onClick={e => e.stopPropagation()}>
             <h2>Editar perfil</h2>
             {msg && <div className={`perfil-msg ${msg.type}`}>{msg.text}</div>}
-            <label>Nombre de usuario</label>
-            <input type="text" value={editNombre} onChange={e => setEditNombre(e.target.value.slice(0, 30))} placeholder="Tu nombre público" />
-            <div className="counter">{editNombre.length}/30</div>
+            <label>Nombre</label>
+            <input type="text" value={editNombre} onChange={e => setEditNombre(e.target.value.slice(0, 60))} placeholder="Tu nombre privado" />
+            <div className="counter">{editNombre.length}/60</div>
+            <label style={{ marginTop: '1rem' }}>Nombre de usuario</label>
+            <input type="text" value={editUsername} onChange={e => setEditUsername(normalizeUsername(e.target.value).slice(0, 30))} placeholder="Tu usuario público" />
+            <div className="counter">{editUsername.length}/30</div>
             <label style={{ marginTop: '1rem' }}>Descripción <span style={{ fontWeight: 400, color: '#9ca3af' }}>(opcional)</span></label>
             <textarea value={editBio} onChange={e => setEditBio(e.target.value.slice(0, 200))} placeholder="Contá algo sobre vos..." rows={3} />
             <div className="counter">{editBio.length}/200</div>
@@ -475,11 +523,21 @@ function TabGuias({ guias }) {
             <div className="perfil-guia-thumb">🗺️</div>
             <div className="perfil-guia-info">
               <h3>{g.nombre}</h3>
+              {g.nombres_lugares && g.nombres_lugares.length > 0 && (
+                <p style={{ fontSize: '0.8rem', color: '#6b7280', margin: '2px 0 4px', fontWeight: 500 }}>
+                  {g.nombres_lugares.join(' → ')}
+                </p>
+              )}
               <p>{paradas} parada{paradas !== 1 ? 's' : ''}{fecha ? ` · ${fecha}` : ''}</p>
             </div>
-            <button className="perfil-guia-btn" onClick={() => navigate('/guias')}>
-              Editar
-            </button>
+            <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+              <button className="perfil-guia-btn perfil-guia-btn--ver" onClick={() => navigate(`/guias?ver=${g.id}`)}>
+                Ver ruta
+              </button>
+              <button className="perfil-guia-btn" onClick={() => navigate(`/guias?editar=${g.id}`)}>
+                Editar
+              </button>
+            </div>
           </div>
         )
       })}

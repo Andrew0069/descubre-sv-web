@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { getLugaresHome } from '../services/lugaresService'
+import { getLugaresHome, getLugaresByIds } from '../services/lugaresService'
 import { getGuiasByUser, createGuia, updateGuia, deleteGuia } from '../services/guiasService'
 import { resolveImageUrl } from '../lib/imageUrl'
 
@@ -391,10 +391,151 @@ function GuiaItem({ guia, lugares, onCargar, onEliminar }) {
   )
 }
 
+// ─── guia viewer helpers ─────────────────────────────────────────────────────
+
+function buildRouteMapUrl(lugaresList) {
+  if (!lugaresList || lugaresList.length === 0) return null
+  const wps = lugaresList.map((l) =>
+    l.latitud && l.longitud
+      ? `${l.latitud},${l.longitud}`
+      : encodeURIComponent(`${l.nombre}, El Salvador`)
+  )
+  if (wps.length === 1) return `https://www.google.com/maps?q=${wps[0]}&output=embed`
+  return `https://www.google.com/maps/dir/${wps.join('/')}/?output=embed`
+}
+
+function ViewerStop({ lugar, index, isLast }) {
+  return (
+    <li style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: '50%',
+          background: '#F5C842', color: '#111827',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '0.78rem', fontWeight: 800, flexShrink: 0,
+        }}>{index + 1}</div>
+        {!isLast && (
+          <div style={{ width: 2, flex: 1, minHeight: 20, background: 'rgba(245,200,66,0.25)', margin: '4px 0' }} />
+        )}
+      </div>
+      <div style={{ paddingTop: 4, minWidth: 0 }}>
+        <p style={{ fontSize: '0.88rem', fontWeight: 700, color: '#fff', margin: '0 0 2px', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {lugar.nombre}
+        </p>
+        {lugar.departamentos?.nombre && (
+          <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+            📍 {lugar.departamentos.nombre}
+          </p>
+        )}
+        {lugar.categorias?.nombre && (
+          <span style={{
+            display: 'inline-block', marginTop: 4,
+            fontSize: '0.65rem', fontWeight: 600,
+            background: `${lugar.categorias.color || '#0EA5E9'}25`,
+            color: lugar.categorias.color || '#93c5fd',
+            borderRadius: 20, padding: '2px 7px',
+          }}>
+            {lugar.categorias.nombre}
+          </span>
+        )}
+      </div>
+    </li>
+  )
+}
+
+function GuiaViewer({ guia, lugares, loading, navigate }) {
+  const mapSrc = buildRouteMapUrl(lugares)
+  return (
+    <div style={{ minHeight: '100vh', background: '#0d0d1a' }}>
+      <style>{`
+        .gv-layout { display:flex; flex-direction:column; }
+        .gv-panel  { min-height:240px; overflow-y:auto; }
+        .gv-map    { min-height:280px; height:280px; }
+        @media (min-width:768px) {
+          .gv-layout { flex-direction:row; height:calc(100vh - 56px); }
+          .gv-panel  { width:320px; height:100%; overflow-y:auto; }
+          .gv-map    { flex:1; height:100% !important; }
+        }
+      `}</style>
+
+      {/* Barra superior */}
+      <div style={{
+        background: '#1a1a2e', padding: '12px 20px',
+        display: 'flex', alignItems: 'center', gap: 12,
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        position: 'sticky', top: 0, zIndex: 10,
+      }}>
+        <button
+          onClick={() => navigate('/guias')}
+          style={{ background: 'none', border: 'none', color: '#F5C842', cursor: 'pointer', fontSize: '1.3rem', lineHeight: 1, padding: 0 }}
+        >←</button>
+        <h2 style={{ color: '#fff', fontSize: '1rem', fontWeight: 700, margin: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {guia.nombre}
+        </h2>
+        <button
+          onClick={() => navigate(`/guias?editar=${guia.id}`)}
+          style={{ background: '#F5C842', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, color: '#111827', cursor: 'pointer', flexShrink: 0 }}
+        >
+          Editar ruta
+        </button>
+      </div>
+
+      {/* Cuerpo dos paneles */}
+      <div className="gv-layout">
+        {/* Panel lista oscuro */}
+        <div className="gv-panel" style={{ background: '#1a1a2e', padding: '20px 16px' }}>
+          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 16 }}>
+            Puntos de la ruta
+          </p>
+          {loading ? (
+            <p style={{ color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 40 }}>Cargando paradas…</p>
+          ) : lugares.length === 0 ? (
+            <p style={{ color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 40 }}>Esta guía no tiene lugares.</p>
+          ) : (
+            <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {lugares.map((l, i) => (
+                <ViewerStop key={l.id} lugar={l} index={i} isLast={i === lugares.length - 1} />
+              ))}
+            </ol>
+          )}
+          {guia.descripcion && (
+            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.8rem', marginTop: 24, lineHeight: 1.5 }}>
+              {guia.descripcion}
+            </p>
+          )}
+        </div>
+
+        {/* Panel mapa */}
+        <div className="gv-map" style={{ position: 'relative', background: '#0d0d1a' }}>
+          {!mapSrc || loading ? (
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.25)', fontSize: '0.85rem', padding: '0 1.5rem', textAlign: 'center' }}>
+              {loading ? 'Cargando mapa…' : 'Agregá al menos 2 lugares para ver la ruta'}
+            </div>
+          ) : (
+            <iframe
+              title={`Ruta: ${guia.nombre}`}
+              src={mapSrc}
+              width="100%"
+              height="100%"
+              style={{ border: 0, display: 'block', minHeight: 280 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── main page ───────────────────────────────────────────────────────────────
 
 export default function Guias() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const verIdParam    = searchParams.get('ver')
+  const editarParam   = searchParams.get('editar')
 
   const [lugares, setLugares] = useState([])
   const [categorias, setCategorias] = useState([])
@@ -409,6 +550,11 @@ export default function Guias() {
   const [guiaEditandoId, setGuiaEditandoId] = useState(null)
   const [loadingLugares, setLoadingLugares] = useState(true)
   const timelineRef = useRef(null)
+
+  // viewer state
+  const [guiaViewer, setGuiaViewer]       = useState(null)
+  const [viewerLugares, setViewerLugares] = useState([])
+  const [viewerLoading, setViewerLoading] = useState(false)
 
   const showToast = useCallback((msg, ms = 3000) => {
     setToast(msg)
@@ -459,6 +605,32 @@ export default function Guias() {
       })()
     return () => { cancelled = true }
   }, [user])
+
+  // ?ver= param → open viewer
+  useEffect(() => {
+    if (!verIdParam) { setGuiaViewer(null); return }
+    const guia = misGuias.find((g) => g.id === verIdParam)
+    if (!guia) return
+    let cancelled = false
+    setViewerLoading(true)
+    setGuiaViewer(guia)
+    ;(async () => {
+      const { data } = await getLugaresByIds(guia.lugares_ids || [])
+      if (cancelled) return
+      const map = Object.fromEntries((data ?? []).map((l) => [l.id, l]))
+      setViewerLugares((guia.lugares_ids || []).map((id) => map[id]).filter(Boolean))
+      setViewerLoading(false)
+    })()
+    return () => { cancelled = true }
+  }, [verIdParam, misGuias])
+
+  // ?editar= param → pre-load guide into editor
+  useEffect(() => {
+    if (!editarParam || misGuias.length === 0 || lugares.length === 0) return
+    const guia = misGuias.find((g) => g.id === editarParam)
+    if (guia) handleCargar(guia)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editarParam, misGuias, lugares])
 
   // filtered search results
   const lugaresVisibles = useMemo(() => {
@@ -546,6 +718,17 @@ export default function Guias() {
     setMisGuias((prev) => prev.filter((g) => g.id !== id))
     if (guiaEditandoId === id) handleLimpiar()
     showToast('Ruta eliminada.')
+  }
+
+  if (guiaViewer) {
+    return (
+      <GuiaViewer
+        guia={guiaViewer}
+        lugares={viewerLugares}
+        loading={viewerLoading}
+        navigate={navigate}
+      />
+    )
   }
 
   return (

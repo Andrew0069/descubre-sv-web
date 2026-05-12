@@ -55,3 +55,39 @@ export function validateStrongPassword(password) {
 
   return ''
 }
+
+export function normalizeUsername(username) {
+  return String(username ?? '').trim().toLowerCase()
+}
+
+export function validateProfileName(name) {
+  const value = String(name ?? '').trim()
+
+  if (value.length < 2) {
+    return 'Ingresá tu nombre.'
+  }
+
+  if (value.length > 60) {
+    return 'El nombre no puede superar 60 caracteres.'
+  }
+
+  return ''
+}
+
+export function validateUsername(username) {
+  const value = String(username ?? '').trim()
+
+  if (value.length < 3) {
+    return 'El nombre de usuario debe tener al menos 3 caracteres.'
+  }
+
+  if (value.length > 30) {
+    return 'El nombre de usuario no puede superar 30 caracteres.'
+  }
+
+  if (!/^[A-Za-z0-9_]+$/.test(value)) {
+    return 'Usá solo letras, números y guion bajo (_). No se permiten caracteres especiales.'
+  }
+
+  return ''
+}

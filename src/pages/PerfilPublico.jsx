@@ -39,7 +39,7 @@ export default function PerfilPublico() {
     // Fetch user by internal id
     const { data: user, error: userErr } = await supabase
       .from('usuarios')
-      .select('id, nombre, foto_perfil, avatar_url, bio, created_at')
+      .select('id, username, foto_perfil, avatar_url, bio, created_at')
       .eq('id', id)
       .maybeSingle()
 
@@ -98,7 +98,8 @@ export default function PerfilPublico() {
   }
 
   const foto = usuario.foto_perfil || usuario.avatar_url
-  const inicial = (usuario.nombre || 'U').charAt(0).toUpperCase()
+  const publicName = usuario.username || 'Usuario'
+  const inicial = publicName.charAt(0).toUpperCase()
   const joinDate = usuario.created_at
     ? new Date(usuario.created_at).toLocaleDateString('es', { month: 'long', year: 'numeric' })
     : ''
@@ -119,11 +120,11 @@ export default function PerfilPublico() {
       <div className="pub-profile-banner">
         <div className="pub-profile-banner-inner">
           {foto
-            ? <img src={foto} alt={usuario.nombre} className="pub-profile-avatar" />
+            ? <img src={foto} alt={publicName} className="pub-profile-avatar" />
             : <div className="pub-profile-avatar-placeholder">{inicial}</div>
           }
           <div className="pub-profile-info">
-            <h1>{usuario.nombre || 'Usuario'}</h1>
+            <h1>@{publicName}</h1>
             {usuario.bio && <p className="bio">{usuario.bio}</p>}
             {joinDate && <p className="joined">📅 Se unió en {joinDate}</p>}
             <div className="pub-profile-stats">

@@ -1,648 +1,782 @@
 {
-    "project": "Destino SV App",
-    "last_updated": "2026-05-13",
-    "sessions": [
-        {
-            "id": 1,
-            "date": "2026-05-06",
-            "ai_tool": "Claude Code",
-            "summary": "Sesión inicial de configuración del sistema de registro de sesiones.",
-            "files_modified": [
-                "session-log.json",
-                "CLAUDE.md"
-            ],
-            "changes": [
-                "Creado session-log.json para registro de cambios por sesión de AI",
-                "Creado CLAUDE.md con instrucciones de proyecto para agentes de AI"
-            ]
-        },
-        {
-            "id": 2,
-            "date": "2026-05-06",
-            "ai_tool": "Claude Code",
-            "summary": "Mejora de experiencia de carga en Home: eliminación del fondo estático hero-bg.png y creación de splash screen branded con animación de puntos.",
-            "files_modified": [
-                "src/pages/Home.jsx"
-            ],
-            "changes": [
-                "Eliminado backgroundImage hero-bg.png del div de fondo del hero para evitar flash visual al cargar",
-                "Agregados estados splashVisible y splashFading para controlar el ciclo de vida del splash screen",
-                "Agregado useEffect que pre-carga la primera imagen hero con new Image() y dispara el fade-out al completar",
-                "Creado splash screen fullscreen con logo Spotter SVG y 3 puntos animados en naranja (#F5A623)",
-                "Fade-out de 0.6s del splash garantiza que la imagen hero esté lista antes de mostrarse"
-            ]
-        },
-        {
-            "id": 3,
-            "date": "2026-05-06",
-            "ai_tool": "Codex",
-            "summary": "Ajuste quirurgico del carrusel hero en Home para reducir el delay visual inicial y mejorar la nitidez de las imagenes sin cambiar dimensiones ni layout.",
-            "files_modified": [
-                "src/pages/Home.jsx",
-                "session-log.json",
-                "CLAUDE.md"
-            ],
-            "changes": [
-                "El carrusel hero ahora renderiza las imagenes reales como elementos img en vez de background-image",
-                "La primera imagen del hero usa loading eager y fetchPriority high para mejorar la prioridad de carga",
-                "Se mantiene hero-bg.png como fondo inmediato debajo del carrusel mientras cargan las imagenes remotas",
-                "La transformacion de Supabase para el hero subio de 1400x700 a 2400x1200 para reducir pixelado en pantallas anchas",
-                "Se agrego reset de heroIdx al cambiar la lista de imagenes para evitar estados visuales inconsistentes",
-                "Validado con npm run build; quedo un warning preexistente de border duplicado en Home.jsx no relacionado con el cambio"
-            ]
-        },
-        {
-            "id": 4,
-            "date": "2026-05-06",
-            "ai_tool": "Claude Code",
-            "summary": "Rediseño del lightbox de fotos en DetalleLugar: layout dos columnas estilo Yelp con imagen centrada a la izquierda y panel de información a la derecha.",
-            "files_modified": [
-                "src/pages/DetalleLugar.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "Reemplazado lightbox de pantalla completa por layout de dos columnas: imagen a la izquierda en fondo oscuro, panel de info blanco a la derecha (320px)",
-                "Panel derecho muestra nombre del lugar, contador de fotos (ej. '1 de 5 fotos'), rating en corazones (❤️/🩷/🤍) con valor numérico, y descripción del lugar",
-                "Botón de cierre reemplazado por botón '← Volver' con estilo pill en esquina superior izquierda del área de imagen",
-                "Imagen ahora usa maxHeight: 100vh garantizando centrado vertical correcto sin necesidad de scroll",
-                "Flechas de navegación reubicadas dentro del panel de imagen con stopPropagation correcto"
-            ]
-        },
-        {
-            "id": 5,
-            "date": "2026-05-07",
-            "ai_tool": "Codex",
-            "summary": "Correcciones de notificaciones, visor de foto de perfil y endurecimiento conservador de seguridad en Supabase.",
-            "files_modified": [
-                "src/pages/Home.jsx",
-                "src/pages/Perfil.jsx",
-                "src/lib/useNotificaciones.js",
-                "src/services/notificacionesService.js",
-                "session-log.json",
-                "Supabase database policies/functions"
-            ],
-            "changes": [
-                "El panel de notificaciones ahora filtra correctamente entre Todas y No leidas, y Ver todo marca las notificaciones como leidas",
-                "Abrir la campana ya no marca automaticamente todas las notificaciones como leidas",
-                "Al usar una notificacion accionable se descarta localmente, se intenta eliminar en Supabase y no vuelve a mostrarse en ese navegador",
-                "Removido el boton de tres puntos del encabezado del panel de notificaciones",
-                "El avatar del navbar en Home vuelve a navegar al perfil; el visor de foto se movio a Perfil.jsx al hacer clic en la foto dentro del perfil",
-                "Agregada funcion deleteNotificacion y hook descartarNotificacion para permitir borrar notificaciones propias",
-                "Configurado y autenticado el MCP remoto de Supabase para el proyecto Descubre-sv",
-                "Aplicadas migraciones de seguridad: RLS activado en rate_limits, politicas mas estrictas para admin_logs, sugerencias, notificaciones y avatares",
-                "Endurecidas funciones de Supabase con search_path fijo y permisos EXECUTE reducidos para funciones internas",
-                "Validado con npm run build despues de los cambios de frontend"
-            ]
-        },
-        {
-            "id": 6,
-            "date": "2026-05-06",
-            "ai_tool": "Claude Code",
-            "summary": "Rediseño responsive del lightbox de fotos y fix del panel de notificaciones en móvil.",
-            "files_modified": [
-                "src/pages/DetalleLugar.jsx",
-                "src/pages/Home.jsx",
-                "session-log.json",
-                "CLAUDE.md"
-            ],
-            "changes": [
-                "Lightbox rediseñado con layout estilo Yelp: backdrop centrado + contenedor fila que se ajusta al tamaño natural de la imagen",
-                "Panel de info blanco ahora ocupa exactamente el mismo alto que la imagen (no toda la pantalla)",
-                "Lightbox responsive: en móvil (<768px) cambia a layout vertical — imagen arriba (58vh), panel info abajo scrollable",
-                "En móvil el lightbox ocupa pantalla completa sin backdrop; en desktop mantiene el diseño con sombra y border-radius",
-                "Panel de notificaciones corregido en móvil: cambia de position:absolute a position:fixed con left/right:12px para no cortarse",
-                "Validado con npm run build en todos los cambios"
-            ]
-        },
-        {
-            "id": 7,
-            "date": "2026-05-07",
-            "ai_tool": "Claude Code",
-            "summary": "Acceso a fotos en móvil con PhotoPickerSheet y sistema de seguridad con geolocalización/IP.",
-            "files_modified": [
-                "src/components/PhotoPickerSheet.jsx",
-                "src/services/securityService.js",
-                "src/App.jsx",
-                "src/pages/Perfil.jsx",
-                "src/pages/DetalleLugar.jsx",
-                "src/pages/AdminPage.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "Creado componente PhotoPickerSheet: bottom-sheet en móvil con opciones Tomar foto (cámara) y Elegir de galería",
-                "En Perfil.jsx: botón de foto en móvil abre el sheet en vez del selector genérico",
-                "En DetalleLugar.jsx: botón '+' de fotos de reseña en móvil abre el sheet (con multiple para galería)",
-                "Creado securityService.js: recopila GPS (navigator.geolocation) e IP (ipapi.co) en paralelo, inserta en security_logs",
-                "En App.jsx: onAuthStateChange captura SIGNED_IN (email y Google OAuth) y llama logSecurityEvent en modo fire-and-forget",
-                "Creada tabla security_logs en Supabase con RLS (solo admins pueden leer)",
-                "En AdminPage.jsx: nueva sección 'Seguridad' en sidebar con tabla de accesos (IP, país, GPS, proxy), filtros y botones Marcar/Bloquear usuario",
-                "Build validado con npm run build"
-            ]
-        },
-        {
-            "id": 8,
-            "date": "2026-05-07",
-            "ai_tool": "Codex",
-            "summary": "Mejora del selector de color de categorias en Admin para hacerlo mas interactivo y parecido a una paleta visual.",
-            "files_modified": [
-                "src/components/CategoryColorPicker.jsx",
-                "src/components/EditLugarForm.jsx",
-                "src/components/NewLugarForm.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "Creado CategoryColorPicker reutilizable con paleta de colores del sistema, colores guardados y selector de color personalizado",
-                "Reemplazado el input type=color simple en EditLugarForm para editar colores de categorias existentes y nuevas",
-                "Reemplazado el input type=color simple en NewLugarForm para crear lugares con seleccion visual de color",
-                "El selector mantiene el contrato name/value/onChange para no cambiar la logica de guardado en AdminPage.jsx",
-                "La paleta muestra el color seleccionado con swatch, codigo HEX y estado visual de seleccion",
-                "Validado con npm run build; Vite solo reporto el warning existente de chunk mayor a 500 kB"
-            ]
-        },
-        {
-            "id": 9,
-            "date": "2026-05-07",
-            "ai_tool": "Claude Code",
-            "summary": "Fix del panel de notificaciones recortado en móvil y reposicionamiento del botón de configuración en Perfil.",
-            "files_modified": [
-                "src/pages/Home.jsx",
-                "src/pages/Perfil.css",
-                "session-log.json"
-            ],
-            "changes": [
-                "Panel de notificaciones en móvil (<640px) ahora usa position:fixed con left/right:12px y top:60px para no cortarse fuera del viewport",
-                "En desktop el panel mantiene position:absolute con width:360px y right:0 sin cambios",
-                "Perfil.css: en móvil el banner aumenta padding-top a 4rem para que el avatar/info no quede debajo del botón Configuración",
-                "Botón Configuración en móvil: se reduce padding (6px 10px) y font-size (0.78rem) para mayor comodidad visual",
-                "Build validado con npm run build"
-            ]
-        },
-        {
-            "id": 10,
-            "date": "2026-05-07",
-            "ai_tool": "Claude Code",
-            "summary": "Empty state de reseñas rediseñado en DetalleLugar con ícono SVG, textos sobrios y botón Escribir reseña.",
-            "files_modified": [
-                "src/pages/DetalleLugar.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "Reemplazado emoji ✍️ por ícono SVG de bocadillo de chat dentro de un círculo con gradiente azul claro",
-                "Título 'Aún no hay reseñas' en negro bold sobre el ícono",
-                "Subtexto 'Sé el primero en compartir tu experiencia' en gris claro",
-                "Botón 'Escribir reseña' con estilo pill Spotter (fondo #0EA5E9, bordes redondeados 50px) que abre el modal o el flujo de login",
-                "Soporte bilingüe (idioma en/es) para título, subtexto y botón",
-                "Build validado con npm run build"
-            ]
-        },
-        {
-            "id": 11,
-            "date": "2026-05-07",
-            "ai_tool": "Claude Code",
-            "summary": "Bloque de Overall Rating con corazones y barras de distribución insertado en la sección de reseñas de DetalleLugar.",
-            "files_modified": [
-                "src/pages/DetalleLugar.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "Insertar bloque de resumen de rating entre el header de Reseñas y la lista/empty-state",
-                "Solo se renderiza cuando hay al menos una reseña (resenas.length > 0)",
-                "Lado izquierdo: promedio numérico en grande (40px), fila de 5 corazones ♥/♡ con fill parcial en 0.5, contador de reseñas",
-                "Divisor vertical de 1px separando los dos lados",
-                "Lado derecho: barras de distribución del 5 al 1, con colores diferenciados (rosa ≥4, naranja =3, amarillo ≤2)",
-                "Build validado con npm run build"
-            ]
-        },
-        {
-            "id": 12,
-            "date": "2026-05-07",
-            "ai_tool": "Claude Code",
-            "summary": "Campos latitud/longitud agregados en EditLugarForm y payload de actualización en AdminPage.",
-            "files_modified": [
-                "src/components/EditLugarForm.jsx",
-                "src/pages/AdminPage.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "EditLugarForm.jsx: fila de dos inputs (latitud/longitud) con step=any, antes de los botones Cancelar/Guardar",
-                "Nota de ayuda '💡 Obtén las coordenadas desde Google Maps...' debajo de los inputs",
-                "AdminPage.jsx — handleUpdateLugar: payload ahora incluye latitud y longitud (Number o null si vacío)",
-                "Build validado con npm run build"
-            ]
-        },
-        {
-            "id": 13,
-            "date": "2026-05-07",
-            "ai_tool": "Claude Code",
-            "summary": "Bloque de ubicación en DetalleLugar reemplazado por embed de Google Maps con botón Cómo llegar.",
-            "files_modified": [
-                "src/pages/DetalleLugar.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "Campo verificado: lugar.direccion (confirmado en lugaresService.js y la query SELECT)",
-                "Reemplazado h3+p de dirección por: título '📍 Ubicación', texto de dirección, iframe embed de Google Maps (220px alto), botón 'Cómo llegar'",
-                "Si lugar.latitud y lugar.longitud existen, el mapa usa coordenadas precisas; si no, usa encodeURIComponent(lugar.direccion)",
-                "Sección de horarios (lugar.horarios) se mantiene intacta debajo del mapa dentro del mismo contenedor",
-                "Soporte bilingüe: 'Ubicación'/'Location' y 'Cómo llegar'/'Get directions'",
-                "Build validado con npm run build"
-            ]
-        },
-        {
-            "id": 14,
-            "date": "2026-05-07",
-            "ai_tool": "Claude Code",
-            "summary": "Features 1–3: empty state reseñas en azul Spotter, overall rating con corazones azules y distribución, y módulo de horarios en admin actualizado.",
-            "files_modified": [
-                "src/pages/DetalleLugar.jsx",
-                "src/pages/AdminPage.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "Feature 1 — DetalleLugar: empty state de reseñas cambiado de tema rosa (#E8476A/#FFF0F3) a azul Spotter (#0ea5e9/#e0f2fe): círculo de fondo, trazo del bocadillo, puntos y botón CTA",
-                "Feature 2 — DetalleLugar: bloque de overall rating reemplaza colores rosa por azul Spotter; renderCorazones simplificado sin lógica de medio corazón; barras de distribución usan gradiente azul (#0ea5e9 → #38bdf8 → #bae6fd); campo confirmado como r.estrellas",
-                "Feature 3a — AdminPage: verificado que horarios/latitud/longitud ya existían en setFormData del useEffect de edición; sin cambios necesarios",
-                "Feature 3b — AdminPage: módulo de horarios actualizado con guardia lugarSeleccionado&&, borderTop separador visual, handleHorarioChange refactorizado con spread correcto de prev.horarios, botón 'Guardar horarios' cambiado de negro (#1a1a1a) a azul Spotter (#0ea5e9)",
-                "Build validado con npm run build — sin errores"
-            ]
-        },
-        {
-            "id": 15,
-            "date": "2026-05-07",
-            "ai_tool": "Claude Code",
-            "summary": "Verificación de Features 3c y 4 en DetalleLugar: display de horarios y embed de Google Maps ya implementados en sesiones previas.",
-            "files_modified": [
-                "session-log.json"
-            ],
-            "changes": [
-                "Feature 3c — DetalleLugar: verificado que el display de horarios (7 días, abierto/cerrado, separadores) ya estaba implementado desde sesión 13",
-                "Feature 4 — DetalleLugar: verificado que el embed de Google Maps con iframe (220px), lógica latitud/longitud vs encodeURIComponent, y botón 'Cómo llegar' ya estaban implementados desde sesión 13",
-                "No se requirieron cambios de código; ambas features estaban operativas"
-            ]
-        },
-        {
-            "id": 16,
-            "date": "2026-05-07",
-            "ai_tool": "Codex",
-            "summary": "Ajustes visuales en Perfil, nuevo empty state de reseñas rosa Spotter y soporte de horarios en Admin/DetalleLugar.",
-            "files_modified": [
-                "src/pages/Perfil.css",
-                "src/pages/DetalleLugar.jsx",
-                "src/pages/AdminPage.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "Perfil.css: el banner del perfil cambió de gradiente azul a una paleta blanco+dorado alineada con el acento de Spotter, con ajustes de contraste en avatar, textos y botón de configuración",
-                "Supabase: aplicada la ampliación de la tabla lugares para soportar horarios (jsonb), latitud y longitud sin errores",
-                "DetalleLugar.jsx: el empty state de reseñas se reemplazó por una versión con icono SVG y CTA rosa (#E8476A) que respeta el flujo de login o apertura del modal",
-                "AdminPage.jsx: formData de edición ahora hidrata y resetea latitud, longitud y horarios; se agregó un módulo para editar y guardar horarios por día en lugares.horarios",
-                "DetalleLugar.jsx: los horarios ahora se muestran debajo de la dirección en la columna izquierda con estado abierto/cerrado por día"
-            ]
-        },
-        {
-            "id": 18,
-            "date": "2026-05-10",
-            "ai_tool": "Claude Code",
-            "summary": "Animación de entrada agregada a Login.jsx para eliminar el tropiezo visual al cargar la página.",
-            "files_modified": [
-                "src/pages/Login.jsx"
-            ],
-            "changes": [
-                "Agregado estado visible (inicia false, pasa a true tras 30ms via useEffect) para controlar la animación de entrada",
-                "El contenedor raíz hace fade-in con opacity 0→1 en 0.35s ease",
-                "El card blanco hace slide-up (translateY 18px→0) + fade-in con curva cubic-bezier(0.22,1,0.36,1) en 0.4s, igual que las animaciones del resto de la app"
-            ]
-        },
-        {
-            "id": 17,
-            "date": "2026-05-07",
-            "ai_tool": "Claude Code",
-            "summary": "Diagnóstico y fix de horarios en Admin y Overall Rating en DetalleLugar; migración de datos de prueba en Supabase.",
-            "files_modified": [
-                "src/pages/AdminPage.jsx",
-                "src/pages/DetalleLugar.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "Supabase: verificado que la columna horarios (jsonb) ya existía en tabla lugares — no se requirió migración",
-                "Supabase: UPDATE de prueba en BINAES con horarios Lun–Vie 08:00–17:00, Sáb 08:00–12:00, Dom cerrado para verificar que el bloque en DetalleLugar funciona",
-                "AdminPage.jsx: eliminada variable intermedia horariosActual; cada iteración del map ahora lee (formData.horarios || {})[key] directamente para garantizar reactividad al hacer check en checkbox Abierto",
-                "DetalleLugar.jsx: Overall Rating — agregado Number() en reduce y filter para manejar estrellas almacenadas como string vs número; campo confirmado como r.estrellas; posición confirmada correcta (líneas 1533–1570)",
-                "Diagnóstico: tarjetas de reseña individual no muestran r.estrellas en el JSX — campo se guarda pero nunca se renderiza por reseña",
-                "Build validado con npm run build — sin errores"
-            ]
-        },
-        {
-            "id": 19,
-            "date": "2026-05-10",
-            "ai_tool": "Codex",
-            "summary": "Login reducido a correo y redirecciÃ³n de favoritos/reseÃ±as hacia /login con retorno a la ruta original.",
-            "files_modified": [
-                "src/pages/Login.jsx",
-                "src/components/LugarCard.jsx",
-                "src/pages/Home.jsx",
-                "src/pages/DetalleLugar.jsx",
-                "src/pages/MisFavoritos.jsx",
-                "src/components/LoginModal.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "Login.jsx: eliminada la opciÃ³n de Google OAuth y agregado soporte para volver a la ruta original usando location.state.from despuÃ©s del login por correo",
-                "LugarCard.jsx: el corazÃ³n de favoritos ahora redirige directo a /login cuando no hay sesiÃ³n, preservando pathname, search y hash actuales",
-                "Home.jsx: removido el listener show-login-modal y la dependencia del modal de login para el flujo de favoritos",
-                "DetalleLugar.jsx: acciones protegidas de favoritos, calificaciones, likes, respuestas y publicaciÃ³n de reseÃ±as ahora redirigen a /login en lugar de abrir modal",
-                "MisFavoritos.jsx y LoginModal.jsx: CTAs actualizados para no mencionar Google y mantener el lenguaje de acceso por correo",
-                "Build validado con npm run build"
-            ]
-        },
-        {
-            "id": 20,
-            "date": "2026-05-10",
-            "ai_tool": "Codex",
-            "summary": "Fix de avatar en reseñas y respuestas: el detalle del lugar ahora usa foto_perfil de forma consistente.",
-            "files_modified": [
-                "src/services/usuariosService.js",
-                "src/services/resenasService.js",
-                "src/pages/DetalleLugar.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "Diagnóstico del cambio previo en login: quitar Google OAuth no afectaba el render; la foto faltaba porque reseñas/respuestas seguían leyendo usuarios.avatar_url mientras Perfil y Home ya usan usuarios.foto_perfil",
-                "usuariosService.getUsuarioPerfil: select actualizado de avatar_url a foto_perfil para devolver el mismo campo que persiste Perfil.jsx",
-                "resenasService y DetalleLugar.jsx: joins de usuarios en reseñas y respuestas cambiados a foto_perfil",
-                "DetalleLugar.jsx: render de AvatarImg y objetos optimistas de reseñas/respuestas actualizados para consumir usuarios.foto_perfil",
-                "Build validado con npm run build"
-            ]
-        },
-        {
-            "id": 21,
-            "date": "2026-05-10",
-            "ai_tool": "Codex",
-            "summary": "Compatibilidad de avatar para cuentas legacy/admin: la UI ahora acepta foto_perfil o avatar_url.",
-            "files_modified": [
-                "src/services/usuariosService.js",
-                "src/services/resenasService.js",
-                "src/services/notificacionesService.js",
-                "src/pages/DetalleLugar.jsx",
-                "src/pages/Home.jsx",
-                "src/pages/Perfil.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "Diagnóstico del caso Test2/admin: algunas cuentas antiguas siguen teniendo la imagen en avatar_url, por eso el fallback de inicial seguía apareciendo aunque Test1 ya funcionara con foto_perfil",
-                "usuariosService, resenasService y notificacionesService: selects ampliados para traer foto_perfil y avatar_url",
-                "DetalleLugar.jsx y Home.jsx: agregado helper getUserAvatar para renderizar foto_perfil || avatar_url en reseñas, respuestas, notificaciones y avatar del navbar",
-                "Perfil.jsx: la vista del perfil ahora también muestra la foto existente aunque venga de avatar_url",
-                "Build validado con npm run build"
-            ]
-        },
-        {
-            "id": 22,
-            "date": "2026-05-10",
-            "ai_tool": "Codex",
-            "summary": "Fallback secuencial de avatar en reseñas: prueba foto_perfil y luego avatar_url para cuentas con cargas parciales o errores de imagen.",
-            "files_modified": [
-                "src/pages/DetalleLugar.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "Verificado en Supabase que Test2 sí tiene foto_perfil y avatar_url, y que ambas URLs responden 200, por lo que el problema no estaba en datos ni storage",
-                "AvatarImg en DetalleLugar.jsx: eliminado crossOrigin=anonymous y agregado fallback secuencial src -> fallbackSrc en onError",
-                "Reseñas y respuestas ahora envían foto_perfil como origen principal y avatar_url como respaldo explícito",
-                "Build validado con npm run build"
-            ]
-        },
-        {
-            "id": 23,
-            "date": "2026-05-10",
-            "ai_tool": "Codex",
-            "summary": "Limpieza de transicion del carrusel hero en Home: precarga de slides, crossfade controlado y reinicio correcto del zoom por imagen.",
-            "files_modified": [
-                "src/pages/Home.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "El carrusel hero dejo de renderizar todas las portadas a la vez y ahora hace la transicion solo entre la imagen actual y la siguiente",
-                "Se agrego precarga explicita de la primera imagen y del siguiente slide para evitar que reaparezca el banner anterior durante el cambio",
-                "La rotacion automatica ahora espera a que la siguiente imagen este cargada antes de iniciar el crossfade",
-                "Se agregaron keys separadas para la capa actual y la capa siguiente, reiniciando correctamente la animacion heroSlowZoom en cada portada",
-                "Build validado con npm run build"
-            ]
-        },
-        {
-            "id": 24,
-            "date": "2026-05-10",
-            "ai_tool": "Claude Code",
-            "summary": "Fix de carrusel hero deadlocked y blink inicial en Home.",
-            "files_modified": [
-                "src/pages/Home.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "Carrusel: removido heroNextIdx del array de dependencias del efecto auto-rotate — cuando setHeroNextIdx se llamaba dentro del timer, el cleanup del efecto fijaba cancelled=true bloqueando el requestAnimationFrame que llama setHeroIsFading(true), dejando el carrusel en heroNextIdx=1/heroIsFading=false para siempre",
-                "Blink inicial: agregado heroImgRef (useRef) apuntando al img actual del hero; en el efecto de splash, tras preloadHeroImage se llama heroImgRef.current?.decode() antes de setSplashFading para garantizar que el img del DOM haya decodificado la imagen antes de que el splash empiece a desvanecerse",
-                "Eliminado decoding='async' del img actual del hero para no diferir la decodificación en el momento de pintar"
-            ]
-        },
-        {
-            "id": 27,
-            "date": "2026-05-10",
-            "ai_tool": "Claude Code",
-            "summary": "Fix del parpadeo en la transicion 1->2 del carrusel hero en arranque limpio y splash mas visible.",
-            "files_modified": [
-                "src/pages/Home.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "Carrusel: el parpadeo aparecia solo en arranque limpio (no en reload) porque preloadHeroImage usa Image() off-DOM, que cachea el archivo pero NO garantiza que el <img> del DOM lo haya decodificado/pintado antes del crossfade. Tras setHeroNextIdx + 2 rAFs, el <img next> recien montado entraba al fade sin textura -> flash",
-                "Agregado heroNextImgRef y pasado al <img next> en el JSX",
-                "Auto-rotate refactorizado: ahora solo precarga y hace setHeroNextIdx, ya no dispara el fade directamente",
-                "Nuevo efecto sobre heroNextIdx: espera load + decode() del DOM <img next> (con addEventListener once:true), luego doble rAF, y recien ahi setHeroIsFading(true). Esto elimina el parpadeo cold-start sin afectar el flujo de hot/reload",
-                "Splash: MIN_SPLASH_MS subido de 900 a 1500ms para que el splash se perciba claramente como pantalla de carga",
-                "Splash: SVG del logo subido de height 52 a 72 y puntos de 8x8px a 11x11px con gap de 10px para mas visibilidad en pantallas grandes"
-            ]
-        },
-        {
-            "id": 26,
-            "date": "2026-05-10",
-            "ai_tool": "Claude Code",
-            "summary": "Fix del blink inicial y de los puntos invisibles del splash en Home tras los cambios para mejorar la transicion del carrusel.",
-            "files_modified": [
-                "src/pages/Home.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "Splash effect: reemplazado setTimeout(60ms) por doble requestAnimationFrame para garantizar que el navegador haya pintado al menos un frame con la imagen antes de desvanecer el splash — elimina el blink blanco/azul al cargar",
-                "Splash effect: agregado MIN_SPLASH_MS=900ms medido con performance.now() para asegurar que la animacion splashDot (1.2s por ciclo) alcance a verse al menos un ciclo cuando los lugares y la imagen vienen de cache",
-                "Splash effect: la espera de imgEl ahora usa addEventListener('load'/'error', { once: true }) en vez de asignar imgEl.onload directamente, evitando pisar handlers internos que React/Vite puedan colocar en el elemento",
-                "El check de cancelled se duplica despues de la espera minima del splash para no llamar setSplashFading sobre un efecto ya limpiado"
-            ]
-        },
-        {
-            "id": 25,
-            "date": "2026-05-10",
-            "ai_tool": "Gemini 3.1 Pro (High)",
-            "summary": "Solución al tropiezo del carrusel y corrección del blink de carga inicial en Home.",
-            "files_modified": [
-                "src/index.css",
-                "src/pages/Home.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "Se añadió una validación estricta en el splash screen para esperar a que el DOM img dispare onload y decode() completo, en lugar de solo confiar en el preload en memoria",
-                "Se insertó una pausa de 60ms antes de desvanecer el splash screen para darle tiempo al navegador de subir la textura a la GPU (compositing layer) y evitar el destello o blink blanco",
-                "Re-implementada la aceleración por hardware (translateZ, backfaceVisibility y scale 1.001) para asegurar un heroSlowZoom totalmente fluido sin tropiezos ni temblores"
-            ]
-        },
-        {
-            "id": 28,
-            "date": "2026-05-10",
-            "ai_tool": "Claude Code",
-            "summary": "Fix de tamaño de cards, filtro y transición del cat-bar sticky en Home.",
-            "files_modified": [
-                "src/pages/Home.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "Cards: eliminado md:col-span-2 del primer card (isFeatured) — ahora todos los cards tienen el mismo ancho en la grilla (1/3 en lg, 1/2 en md), el prop isFeatured se conserva solo para resolución de imagen",
-                "Filtro: padding del estado no-sticky reducido de 16px a 10px en la section y de 0.5rem 1rem a 0.4rem 0.75rem en el inner div para que el cat-bar se vea más compacto sin alterar el comportamiento sticky",
-                "Transición suave: reemplazados transparent/none por rgba(255,255,255,0), rgba(229,231,235,0) y 0 2px 12px rgba(0,0,0,0) — CSS no puede interpolar entre none/transparent y un valor real, lo que causaba saltos de color/sombra; con valores rgba correctos la interpolación es suave",
-                "Transición suave (cont): agregado opacity y transform al transition inline del section para que la animación stickySlideIn no cause snap si se interrumpe antes de completarse (0.3s) al hacer scroll rápido",
-                "Build validado con npm run build — sin errores"
-            ]
-        },
-        {
-            "id": 29,
-            "date": "2026-05-11",
-            "ai_tool": "Claude Code",
-            "summary": "Fix del hero en navegación de regreso a Home, thumbnails de reseñas y lightbox de fotos de reseña con layout split.",
-            "files_modified": [
-                "src/pages/Home.jsx",
-                "src/pages/DetalleLugar.jsx",
-                "src/components/FotoLightbox.jsx",
-                "session-log.json",
-                "CLAUDE.md"
-            ],
-            "changes": [
-                "Home.jsx: agregado _lugaresCache a nivel de módulo (igual que _splashShownOnce) para inicializar el estado lugares con datos cacheados al regresar desde DetalleLugar — elimina el parpadeo de hero azul vacío durante el re-fetch",
-                "DetalleLugar.jsx: thumbnails de fotos de reseña cambiados de height:120px/width:auto a contenedores cuadrados fijos de 110x110px con overflow:hidden y objectFit:cover centrado — evita recortes inesperados en fotos verticales u horizontales; hover hace zoom sutil (scale 1.06)",
-                "DetalleLugar.jsx: al abrir el lightbox de reseña ahora se pasan datos del reviewer (nombre, avatar, rating, contenido) en el campo meta del estado resenaLightbox",
-                "FotoLightbox.jsx: reescrito para usar el mismo layout split del lightbox de lugares — imagen oscura a la izquierda con botón '← Volver' pill y contador, panel blanco a la derecha con avatar+nombre del reviewer, conteo de fotos, corazones de rating y texto de reseña; en móvil el panel aparece debajo de la imagen (layout vertical); transición de cierre con fade-out de 260ms"
-            ]
-        },
-        {
-            "id": 32,
-            "date": "2026-05-12",
-            "ai_tool": "Claude Code (Sonnet 4.6)",
-            "summary": "Feature Guías interactivas de viaje: página /guias con constructor de ruta en timeline horizontal, buscador de lugares con filtro por categoría, y guardado de rutas en Supabase.",
-            "files_modified": [
-                "src/pages/Guias.jsx",
-                "src/services/guiasService.js",
-                "src/App.jsx",
-                "src/pages/Home.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "Supabase: creada tabla 'guias' (id, user_id, nombre, descripcion, lugares_ids uuid[], created_at, is_public) con RLS — usuarios solo ven y modifican sus propias guías",
-                "guiasService.js: funciones getGuiasByUser, createGuia, updateGuia, deleteGuia",
-                "Guias.jsx: página completa en /guias con hero crema+amarillo, timeline horizontal scrollable con cards conectadas por flechas SVG, StepperDots animados, buscador con search+filtro de categoría, grid responsive de mini-cards, sección 'Mis rutas guardadas' con editar/eliminar, y CTA de login si no hay sesión",
-                "App.jsx: agregada ruta /guias con import de Guias.jsx",
-                "Home.jsx: ítem 'Guías' en menú hamburguesa, handleFooterNav y footer ahora navegan a /guias en lugar de mostrar toast 'próximamente'; eliminado string guiasProx innecesario",
-                "Build validado con npm run build — sin errores"
-            ]
-        },
-        {
-            "id": 31,
-            "date": "2026-05-11",
-            "ai_tool": "Claude Code (Opus 4.7 1M)",
-            "summary": "FotoLightbox renderizado vía React Portal a document.body para garantizar cobertura completa del viewport y centrado correcto de la imagen de reseña.",
-            "files_modified": [
-                "src/components/FotoLightbox.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "Diagnóstico: en escritorio el lightbox aparentaba estar 'cortado' porque el contenido de la página subyacente (mapa, tarjeta de reseña) se veía debajo del modal — síntoma típico de un position:fixed que no cubre todo el viewport (suele ocurrir por stacking context, ancestros con transform/filter o re-render en árbol React anidado).",
-                "FotoLightbox.jsx: agregado import { createPortal } from 'react-dom' y envueltos AMBOS returns (mobile y desktop) en createPortal(..., document.body) para que el modal se monte directamente en el body y siempre ocupe el viewport completo.",
-                "Sin cambios en el layout, posiciones ni estilos del lightbox — solo el destino de montaje del DOM. La foto sigue usando objectFit:contain y se centra como antes, pero ahora ocupa toda la pantalla en lugar de quedar contenida dentro del árbol de DetalleLugar."
-            ]
-        },
-        {
-            "id": 30,
-            "date": "2026-05-11",
-            "ai_tool": "Claude Code",
-            "summary": "Fix FotoLightbox: imagen de reseña cortada en escritorio y móvil — reescritura de layout.",
-            "files_modified": [
-                "src/components/FotoLightbox.jsx"
-            ],
-            "changes": [
-                "Root cause: en móvil, la imagen tenía maxHeight:none + width:100% pero el contenedor outer usaba onClick=handleClose, interceptando todos los toques e impidiendo scroll; además overflow:auto en el backdrop no funcionaba porque el contenido no tenía altura definida.",
-                "Mobile: reescrito como layout fullscreen flex-column. El área de imagen usa flex:1 con overflow:hidden y la img usa maxWidth/maxHeight:100% + objectFit:contain, mostrando la foto completa sin recorte ni necesidad de scroll.",
-                "Mobile: barra superior (Volver + contador) posicionada con absolute + gradient overlay. Panel de meta/reviewer se muestra abajo como strip oscuro con maxHeight:35vh scrollable.",
-                "Mobile: swipe horizontal para navegar entre fotos preservado; eliminado el onClick=handleClose del backdrop que impedía interacción.",
-                "Desktop: contenedor split con maxHeight:90vh + overflow:hidden; imagen usa objectFit:contain con maxHeight/maxWidth definidos; panel de info blanco scrollable a la derecha.",
-                "Ambos: la foto ahora siempre se ve completa (contain) sin recorte ni necesidad de hacer zoom out."
-            ]
-        }
-        ,
-        {
-            "id": 34,
-            "date": "2026-05-13",
-            "ai_tool": "Claude Code (Sonnet 4.6)",
-            "summary": "Nueva tab 'Mis Guías' en el perfil privado del usuario: muestra las rutas guardadas con opciones de editar.",
-            "files_modified": [
-                "src/pages/Perfil.jsx",
-                "src/pages/Perfil.css",
-                "session-log.json",
-                "CLAUDE.md"
-            ],
-            "changes": [
-                "Perfil.jsx: importado getGuiasByUser desde guiasService",
-                "Perfil.jsx: estado guias[] y carga en loadData vía getGuiasByUser(uid)",
-                "Perfil.jsx: tab '🗺️ Mis Guías' agregado al array de tabs; usa clase perfil-tab-guias para acento amarillo cuando está activa",
-                "Perfil.jsx: componente TabGuias — lista con animación perfilFadeUp escalonada, card con borde izquierdo amarillo (#F5C842), thumb degradado crema+amarillo, botón 'Editar' que navega a /guias, empty state con CTA 'Crear mi primera ruta'",
-                "Perfil.css: estilos .perfil-guia-* y .perfil-guias-* con paleta amarilla; overflow-x:auto en .perfil-tabs para móvil con 4 tabs; animación perfilFadeUp",
-                "Build validado con npm run build — sin errores"
-            ]
-        },
-        {
-            "id": 33,
-            "date": "2026-05-12",
-            "ai_tool": "Codex",
-            "summary": "Refinamiento de SugerirLugar: menos texto, mas enfasis en el valor de la sugerencia del usuario y paleta blanco hueso con amarillo.",
-            "files_modified": [
-                "src/pages/SugerirLugar.jsx",
-                "session-log.json"
-            ],
-            "changes": [
-                "Rehecho el layout de SugerirLugar sin cambiar el flujo de login ni el insert en Supabase",
-                "Reducido el bloque informativo para que el formulario tenga mas protagonismo y sea mas facil de leer",
-                "Eliminado el panel lateral que competia visualmente con los campos y reemplazado por dos mensajes cortos de apoyo",
-                "Actualizada la paleta visual a blanco hueso y amarillo, con fondos mas limpios y acentos calidos",
-                "Mantenido el enfoque en que la sugerencia del usuario importa, reforzando ese mensaje en el encabezado",
-                "Validado con npm run build despues del ajuste"
-            ]
-        },
-        {
-            "id": 35,
-            "date": "2026-05-13",
-            "ai_tool": "Codex",
-            "summary": "Moderacion de sugerencias en Admin con aprobacion/rechazo, creacion de borradores y notificaciones al usuario.",
-            "files_modified": [
-                "src/pages/AdminPage.jsx",
-                "src/pages/Home.jsx",
-                "src/pages/SugerirLugar.jsx",
-                "src/services/lugaresService.js",
-                "session-log.json"
-            ],
-            "changes": [
-                "AdminPage.jsx: agregada seccion Sugerencias al sidebar con contador de pendientes y listado moderable con estado, descripcion, motivo y datos de contacto",
-                "AdminPage.jsx: aprobar una sugerencia ahora cambia su estado a aprobada, crea un borrador en lugares con aprobado=false, registra admin_logs y envia una notificacion al usuario",
-                "AdminPage.jsx: rechazar una sugerencia cambia el estado a denegada, registra admin_logs y notifica al usuario sin crear un lugar",
-                "lugaresService.js: getLugaresHome y getLugarById ahora filtran aprobado=true para ocultar borradores y lugares no publicos fuera del admin",
-                "SugerirLugar.jsx: el insert de sugerencias fuerza estado='pendiente' para mantener el flujo de moderacion consistente",
-                "Home.jsx: extendido el panel de notificaciones para soportar sugerencia_aprobada y sugerencia_rechazada con navegacion a /perfil y estilos diferenciados",
-                "Validado con npm run build; solo permanece el warning preexistente de chunk grande en Vite"
-            ]
-        }
-    ]
+  "project": "Destino SV App",
+  "last_updated": "2026-05-12",
+  "sessions": [
+    {
+      "id": 1,
+      "date": "2026-05-06",
+      "ai_tool": "Claude Code",
+      "summary": "Sesión inicial de configuración del sistema de registro de sesiones.",
+      "files_modified": [
+        "session-log.json",
+        "CLAUDE.md"
+      ],
+      "changes": [
+        "Creado session-log.json para registro de cambios por sesión de AI",
+        "Creado CLAUDE.md con instrucciones de proyecto para agentes de AI"
+      ]
+    },
+    {
+      "id": 2,
+      "date": "2026-05-06",
+      "ai_tool": "Claude Code",
+      "summary": "Mejora de experiencia de carga en Home: eliminación del fondo estático hero-bg.png y creación de splash screen branded con animación de puntos.",
+      "files_modified": [
+        "src/pages/Home.jsx"
+      ],
+      "changes": [
+        "Eliminado backgroundImage hero-bg.png del div de fondo del hero para evitar flash visual al cargar",
+        "Agregados estados splashVisible y splashFading para controlar el ciclo de vida del splash screen",
+        "Agregado useEffect que pre-carga la primera imagen hero con new Image() y dispara el fade-out al completar",
+        "Creado splash screen fullscreen con logo Spotter SVG y 3 puntos animados en naranja (#F5A623)",
+        "Fade-out de 0.6s del splash garantiza que la imagen hero esté lista antes de mostrarse"
+      ]
+    },
+    {
+      "id": 3,
+      "date": "2026-05-06",
+      "ai_tool": "Codex",
+      "summary": "Ajuste quirurgico del carrusel hero en Home para reducir el delay visual inicial y mejorar la nitidez de las imagenes sin cambiar dimensiones ni layout.",
+      "files_modified": [
+        "src/pages/Home.jsx",
+        "session-log.json",
+        "CLAUDE.md"
+      ],
+      "changes": [
+        "El carrusel hero ahora renderiza las imagenes reales como elementos img en vez de background-image",
+        "La primera imagen del hero usa loading eager y fetchPriority high para mejorar la prioridad de carga",
+        "Se mantiene hero-bg.png como fondo inmediato debajo del carrusel mientras cargan las imagenes remotas",
+        "La transformacion de Supabase para el hero subio de 1400x700 a 2400x1200 para reducir pixelado en pantallas anchas",
+        "Se agrego reset de heroIdx al cambiar la lista de imagenes para evitar estados visuales inconsistentes",
+        "Validado con npm run build; quedo un warning preexistente de border duplicado en Home.jsx no relacionado con el cambio"
+      ]
+    },
+    {
+      "id": 4,
+      "date": "2026-05-06",
+      "ai_tool": "Claude Code",
+      "summary": "Rediseño del lightbox de fotos en DetalleLugar: layout dos columnas estilo Yelp con imagen centrada a la izquierda y panel de información a la derecha.",
+      "files_modified": [
+        "src/pages/DetalleLugar.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Reemplazado lightbox de pantalla completa por layout de dos columnas: imagen a la izquierda en fondo oscuro, panel de info blanco a la derecha (320px)",
+        "Panel derecho muestra nombre del lugar, contador de fotos (ej. '1 de 5 fotos'), rating en corazones (❤️/🩷/🤍) con valor numérico, y descripción del lugar",
+        "Botón de cierre reemplazado por botón '← Volver' con estilo pill en esquina superior izquierda del área de imagen",
+        "Imagen ahora usa maxHeight: 100vh garantizando centrado vertical correcto sin necesidad de scroll",
+        "Flechas de navegación reubicadas dentro del panel de imagen con stopPropagation correcto"
+      ]
+    },
+    {
+      "id": 5,
+      "date": "2026-05-07",
+      "ai_tool": "Codex",
+      "summary": "Correcciones de notificaciones, visor de foto de perfil y endurecimiento conservador de seguridad en Supabase.",
+      "files_modified": [
+        "src/pages/Home.jsx",
+        "src/pages/Perfil.jsx",
+        "src/lib/useNotificaciones.js",
+        "src/services/notificacionesService.js",
+        "session-log.json",
+        "Supabase database policies/functions"
+      ],
+      "changes": [
+        "El panel de notificaciones ahora filtra correctamente entre Todas y No leidas, y Ver todo marca las notificaciones como leidas",
+        "Abrir la campana ya no marca automaticamente todas las notificaciones como leidas",
+        "Al usar una notificacion accionable se descarta localmente, se intenta eliminar en Supabase y no vuelve a mostrarse en ese navegador",
+        "Removido el boton de tres puntos del encabezado del panel de notificaciones",
+        "El avatar del navbar en Home vuelve a navegar al perfil; el visor de foto se movio a Perfil.jsx al hacer clic en la foto dentro del perfil",
+        "Agregada funcion deleteNotificacion y hook descartarNotificacion para permitir borrar notificaciones propias",
+        "Configurado y autenticado el MCP remoto de Supabase para el proyecto Descubre-sv",
+        "Aplicadas migraciones de seguridad: RLS activado en rate_limits, politicas mas estrictas para admin_logs, sugerencias, notificaciones y avatares",
+        "Endurecidas funciones de Supabase con search_path fijo y permisos EXECUTE reducidos para funciones internas",
+        "Validado con npm run build despues de los cambios de frontend"
+      ]
+    },
+    {
+      "id": 6,
+      "date": "2026-05-06",
+      "ai_tool": "Claude Code",
+      "summary": "Rediseño responsive del lightbox de fotos y fix del panel de notificaciones en móvil.",
+      "files_modified": [
+        "src/pages/DetalleLugar.jsx",
+        "src/pages/Home.jsx",
+        "session-log.json",
+        "CLAUDE.md"
+      ],
+      "changes": [
+        "Lightbox rediseñado con layout estilo Yelp: backdrop centrado + contenedor fila que se ajusta al tamaño natural de la imagen",
+        "Panel de info blanco ahora ocupa exactamente el mismo alto que la imagen (no toda la pantalla)",
+        "Lightbox responsive: en móvil (<768px) cambia a layout vertical — imagen arriba (58vh), panel info abajo scrollable",
+        "En móvil el lightbox ocupa pantalla completa sin backdrop; en desktop mantiene el diseño con sombra y border-radius",
+        "Panel de notificaciones corregido en móvil: cambia de position:absolute a position:fixed con left/right:12px para no cortarse",
+        "Validado con npm run build en todos los cambios"
+      ]
+    },
+    {
+      "id": 7,
+      "date": "2026-05-07",
+      "ai_tool": "Claude Code",
+      "summary": "Acceso a fotos en móvil con PhotoPickerSheet y sistema de seguridad con geolocalización/IP.",
+      "files_modified": [
+        "src/components/PhotoPickerSheet.jsx",
+        "src/services/securityService.js",
+        "src/App.jsx",
+        "src/pages/Perfil.jsx",
+        "src/pages/DetalleLugar.jsx",
+        "src/pages/AdminPage.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Creado componente PhotoPickerSheet: bottom-sheet en móvil con opciones Tomar foto (cámara) y Elegir de galería",
+        "En Perfil.jsx: botón de foto en móvil abre el sheet en vez del selector genérico",
+        "En DetalleLugar.jsx: botón '+' de fotos de reseña en móvil abre el sheet (con multiple para galería)",
+        "Creado securityService.js: recopila GPS (navigator.geolocation) e IP (ipapi.co) en paralelo, inserta en security_logs",
+        "En App.jsx: onAuthStateChange captura SIGNED_IN (email y Google OAuth) y llama logSecurityEvent en modo fire-and-forget",
+        "Creada tabla security_logs en Supabase con RLS (solo admins pueden leer)",
+        "En AdminPage.jsx: nueva sección 'Seguridad' en sidebar con tabla de accesos (IP, país, GPS, proxy), filtros y botones Marcar/Bloquear usuario",
+        "Build validado con npm run build"
+      ]
+    },
+    {
+      "id": 8,
+      "date": "2026-05-07",
+      "ai_tool": "Codex",
+      "summary": "Mejora del selector de color de categorias en Admin para hacerlo mas interactivo y parecido a una paleta visual.",
+      "files_modified": [
+        "src/components/CategoryColorPicker.jsx",
+        "src/components/EditLugarForm.jsx",
+        "src/components/NewLugarForm.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Creado CategoryColorPicker reutilizable con paleta de colores del sistema, colores guardados y selector de color personalizado",
+        "Reemplazado el input type=color simple en EditLugarForm para editar colores de categorias existentes y nuevas",
+        "Reemplazado el input type=color simple en NewLugarForm para crear lugares con seleccion visual de color",
+        "El selector mantiene el contrato name/value/onChange para no cambiar la logica de guardado en AdminPage.jsx",
+        "La paleta muestra el color seleccionado con swatch, codigo HEX y estado visual de seleccion",
+        "Validado con npm run build; Vite solo reporto el warning existente de chunk mayor a 500 kB"
+      ]
+    },
+    {
+      "id": 9,
+      "date": "2026-05-07",
+      "ai_tool": "Claude Code",
+      "summary": "Fix del panel de notificaciones recortado en móvil y reposicionamiento del botón de configuración en Perfil.",
+      "files_modified": [
+        "src/pages/Home.jsx",
+        "src/pages/Perfil.css",
+        "session-log.json"
+      ],
+      "changes": [
+        "Panel de notificaciones en móvil (<640px) ahora usa position:fixed con left/right:12px y top:60px para no cortarse fuera del viewport",
+        "En desktop el panel mantiene position:absolute con width:360px y right:0 sin cambios",
+        "Perfil.css: en móvil el banner aumenta padding-top a 4rem para que el avatar/info no quede debajo del botón Configuración",
+        "Botón Configuración en móvil: se reduce padding (6px 10px) y font-size (0.78rem) para mayor comodidad visual",
+        "Build validado con npm run build"
+      ]
+    },
+    {
+      "id": 10,
+      "date": "2026-05-07",
+      "ai_tool": "Claude Code",
+      "summary": "Empty state de reseñas rediseñado en DetalleLugar con ícono SVG, textos sobrios y botón Escribir reseña.",
+      "files_modified": [
+        "src/pages/DetalleLugar.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Reemplazado emoji ✍️ por ícono SVG de bocadillo de chat dentro de un círculo con gradiente azul claro",
+        "Título 'Aún no hay reseñas' en negro bold sobre el ícono",
+        "Subtexto 'Sé el primero en compartir tu experiencia' en gris claro",
+        "Botón 'Escribir reseña' con estilo pill Spotter (fondo #0EA5E9, bordes redondeados 50px) que abre el modal o el flujo de login",
+        "Soporte bilingüe (idioma en/es) para título, subtexto y botón",
+        "Build validado con npm run build"
+      ]
+    },
+    {
+      "id": 11,
+      "date": "2026-05-07",
+      "ai_tool": "Claude Code",
+      "summary": "Bloque de Overall Rating con corazones y barras de distribución insertado en la sección de reseñas de DetalleLugar.",
+      "files_modified": [
+        "src/pages/DetalleLugar.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Insertar bloque de resumen de rating entre el header de Reseñas y la lista/empty-state",
+        "Solo se renderiza cuando hay al menos una reseña (resenas.length > 0)",
+        "Lado izquierdo: promedio numérico en grande (40px), fila de 5 corazones ♥/♡ con fill parcial en 0.5, contador de reseñas",
+        "Divisor vertical de 1px separando los dos lados",
+        "Lado derecho: barras de distribución del 5 al 1, con colores diferenciados (rosa ≥4, naranja =3, amarillo ≤2)",
+        "Build validado con npm run build"
+      ]
+    },
+    {
+      "id": 12,
+      "date": "2026-05-07",
+      "ai_tool": "Claude Code",
+      "summary": "Campos latitud/longitud agregados en EditLugarForm y payload de actualización en AdminPage.",
+      "files_modified": [
+        "src/components/EditLugarForm.jsx",
+        "src/pages/AdminPage.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "EditLugarForm.jsx: fila de dos inputs (latitud/longitud) con step=any, antes de los botones Cancelar/Guardar",
+        "Nota de ayuda '💡 Obtén las coordenadas desde Google Maps...' debajo de los inputs",
+        "AdminPage.jsx — handleUpdateLugar: payload ahora incluye latitud y longitud (Number o null si vacío)",
+        "Build validado con npm run build"
+      ]
+    },
+    {
+      "id": 13,
+      "date": "2026-05-07",
+      "ai_tool": "Claude Code",
+      "summary": "Bloque de ubicación en DetalleLugar reemplazado por embed de Google Maps con botón Cómo llegar.",
+      "files_modified": [
+        "src/pages/DetalleLugar.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Campo verificado: lugar.direccion (confirmado en lugaresService.js y la query SELECT)",
+        "Reemplazado h3+p de dirección por: título '📍 Ubicación', texto de dirección, iframe embed de Google Maps (220px alto), botón 'Cómo llegar'",
+        "Si lugar.latitud y lugar.longitud existen, el mapa usa coordenadas precisas; si no, usa encodeURIComponent(lugar.direccion)",
+        "Sección de horarios (lugar.horarios) se mantiene intacta debajo del mapa dentro del mismo contenedor",
+        "Soporte bilingüe: 'Ubicación'/'Location' y 'Cómo llegar'/'Get directions'",
+        "Build validado con npm run build"
+      ]
+    },
+    {
+      "id": 14,
+      "date": "2026-05-07",
+      "ai_tool": "Claude Code",
+      "summary": "Features 1–3: empty state reseñas en azul Spotter, overall rating con corazones azules y distribución, y módulo de horarios en admin actualizado.",
+      "files_modified": [
+        "src/pages/DetalleLugar.jsx",
+        "src/pages/AdminPage.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Feature 1 — DetalleLugar: empty state de reseñas cambiado de tema rosa (#E8476A/#FFF0F3) a azul Spotter (#0ea5e9/#e0f2fe): círculo de fondo, trazo del bocadillo, puntos y botón CTA",
+        "Feature 2 — DetalleLugar: bloque de overall rating reemplaza colores rosa por azul Spotter; renderCorazones simplificado sin lógica de medio corazón; barras de distribución usan gradiente azul (#0ea5e9 → #38bdf8 → #bae6fd); campo confirmado como r.estrellas",
+        "Feature 3a — AdminPage: verificado que horarios/latitud/longitud ya existían en setFormData del useEffect de edición; sin cambios necesarios",
+        "Feature 3b — AdminPage: módulo de horarios actualizado con guardia lugarSeleccionado&&, borderTop separador visual, handleHorarioChange refactorizado con spread correcto de prev.horarios, botón 'Guardar horarios' cambiado de negro (#1a1a1a) a azul Spotter (#0ea5e9)",
+        "Build validado con npm run build — sin errores"
+      ]
+    },
+    {
+      "id": 15,
+      "date": "2026-05-07",
+      "ai_tool": "Claude Code",
+      "summary": "Verificación de Features 3c y 4 en DetalleLugar: display de horarios y embed de Google Maps ya implementados en sesiones previas.",
+      "files_modified": [
+        "session-log.json"
+      ],
+      "changes": [
+        "Feature 3c — DetalleLugar: verificado que el display de horarios (7 días, abierto/cerrado, separadores) ya estaba implementado desde sesión 13",
+        "Feature 4 — DetalleLugar: verificado que el embed de Google Maps con iframe (220px), lógica latitud/longitud vs encodeURIComponent, y botón 'Cómo llegar' ya estaban implementados desde sesión 13",
+        "No se requirieron cambios de código; ambas features estaban operativas"
+      ]
+    },
+    {
+      "id": 16,
+      "date": "2026-05-07",
+      "ai_tool": "Codex",
+      "summary": "Ajustes visuales en Perfil, nuevo empty state de reseñas rosa Spotter y soporte de horarios en Admin/DetalleLugar.",
+      "files_modified": [
+        "src/pages/Perfil.css",
+        "src/pages/DetalleLugar.jsx",
+        "src/pages/AdminPage.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Perfil.css: el banner del perfil cambió de gradiente azul a una paleta blanco+dorado alineada con el acento de Spotter, con ajustes de contraste en avatar, textos y botón de configuración",
+        "Supabase: aplicada la ampliación de la tabla lugares para soportar horarios (jsonb), latitud y longitud sin errores",
+        "DetalleLugar.jsx: el empty state de reseñas se reemplazó por una versión con icono SVG y CTA rosa (#E8476A) que respeta el flujo de login o apertura del modal",
+        "AdminPage.jsx: formData de edición ahora hidrata y resetea latitud, longitud y horarios; se agregó un módulo para editar y guardar horarios por día en lugares.horarios",
+        "DetalleLugar.jsx: los horarios ahora se muestran debajo de la dirección en la columna izquierda con estado abierto/cerrado por día"
+      ]
+    },
+    {
+      "id": 18,
+      "date": "2026-05-10",
+      "ai_tool": "Claude Code",
+      "summary": "Animación de entrada agregada a Login.jsx para eliminar el tropiezo visual al cargar la página.",
+      "files_modified": [
+        "src/pages/Login.jsx"
+      ],
+      "changes": [
+        "Agregado estado visible (inicia false, pasa a true tras 30ms via useEffect) para controlar la animación de entrada",
+        "El contenedor raíz hace fade-in con opacity 0→1 en 0.35s ease",
+        "El card blanco hace slide-up (translateY 18px→0) + fade-in con curva cubic-bezier(0.22,1,0.36,1) en 0.4s, igual que las animaciones del resto de la app"
+      ]
+    },
+    {
+      "id": 17,
+      "date": "2026-05-07",
+      "ai_tool": "Claude Code",
+      "summary": "Diagnóstico y fix de horarios en Admin y Overall Rating en DetalleLugar; migración de datos de prueba en Supabase.",
+      "files_modified": [
+        "src/pages/AdminPage.jsx",
+        "src/pages/DetalleLugar.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Supabase: verificado que la columna horarios (jsonb) ya existía en tabla lugares — no se requirió migración",
+        "Supabase: UPDATE de prueba en BINAES con horarios Lun–Vie 08:00–17:00, Sáb 08:00–12:00, Dom cerrado para verificar que el bloque en DetalleLugar funciona",
+        "AdminPage.jsx: eliminada variable intermedia horariosActual; cada iteración del map ahora lee (formData.horarios || {})[key] directamente para garantizar reactividad al hacer check en checkbox Abierto",
+        "DetalleLugar.jsx: Overall Rating — agregado Number() en reduce y filter para manejar estrellas almacenadas como string vs número; campo confirmado como r.estrellas; posición confirmada correcta (líneas 1533–1570)",
+        "Diagnóstico: tarjetas de reseña individual no muestran r.estrellas en el JSX — campo se guarda pero nunca se renderiza por reseña",
+        "Build validado con npm run build — sin errores"
+      ]
+    },
+    {
+      "id": 19,
+      "date": "2026-05-10",
+      "ai_tool": "Codex",
+      "summary": "Login reducido a correo y redirecciÃ³n de favoritos/reseÃ±as hacia /login con retorno a la ruta original.",
+      "files_modified": [
+        "src/pages/Login.jsx",
+        "src/components/LugarCard.jsx",
+        "src/pages/Home.jsx",
+        "src/pages/DetalleLugar.jsx",
+        "src/pages/MisFavoritos.jsx",
+        "src/components/LoginModal.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Login.jsx: eliminada la opciÃ³n de Google OAuth y agregado soporte para volver a la ruta original usando location.state.from despuÃ©s del login por correo",
+        "LugarCard.jsx: el corazÃ³n de favoritos ahora redirige directo a /login cuando no hay sesiÃ³n, preservando pathname, search y hash actuales",
+        "Home.jsx: removido el listener show-login-modal y la dependencia del modal de login para el flujo de favoritos",
+        "DetalleLugar.jsx: acciones protegidas de favoritos, calificaciones, likes, respuestas y publicaciÃ³n de reseÃ±as ahora redirigen a /login en lugar de abrir modal",
+        "MisFavoritos.jsx y LoginModal.jsx: CTAs actualizados para no mencionar Google y mantener el lenguaje de acceso por correo",
+        "Build validado con npm run build"
+      ]
+    },
+    {
+      "id": 20,
+      "date": "2026-05-10",
+      "ai_tool": "Codex",
+      "summary": "Fix de avatar en reseñas y respuestas: el detalle del lugar ahora usa foto_perfil de forma consistente.",
+      "files_modified": [
+        "src/services/usuariosService.js",
+        "src/services/resenasService.js",
+        "src/pages/DetalleLugar.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Diagnóstico del cambio previo en login: quitar Google OAuth no afectaba el render; la foto faltaba porque reseñas/respuestas seguían leyendo usuarios.avatar_url mientras Perfil y Home ya usan usuarios.foto_perfil",
+        "usuariosService.getUsuarioPerfil: select actualizado de avatar_url a foto_perfil para devolver el mismo campo que persiste Perfil.jsx",
+        "resenasService y DetalleLugar.jsx: joins de usuarios en reseñas y respuestas cambiados a foto_perfil",
+        "DetalleLugar.jsx: render de AvatarImg y objetos optimistas de reseñas/respuestas actualizados para consumir usuarios.foto_perfil",
+        "Build validado con npm run build"
+      ]
+    },
+    {
+      "id": 21,
+      "date": "2026-05-10",
+      "ai_tool": "Codex",
+      "summary": "Compatibilidad de avatar para cuentas legacy/admin: la UI ahora acepta foto_perfil o avatar_url.",
+      "files_modified": [
+        "src/services/usuariosService.js",
+        "src/services/resenasService.js",
+        "src/services/notificacionesService.js",
+        "src/pages/DetalleLugar.jsx",
+        "src/pages/Home.jsx",
+        "src/pages/Perfil.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Diagnóstico del caso Test2/admin: algunas cuentas antiguas siguen teniendo la imagen en avatar_url, por eso el fallback de inicial seguía apareciendo aunque Test1 ya funcionara con foto_perfil",
+        "usuariosService, resenasService y notificacionesService: selects ampliados para traer foto_perfil y avatar_url",
+        "DetalleLugar.jsx y Home.jsx: agregado helper getUserAvatar para renderizar foto_perfil || avatar_url en reseñas, respuestas, notificaciones y avatar del navbar",
+        "Perfil.jsx: la vista del perfil ahora también muestra la foto existente aunque venga de avatar_url",
+        "Build validado con npm run build"
+      ]
+    },
+    {
+      "id": 22,
+      "date": "2026-05-10",
+      "ai_tool": "Codex",
+      "summary": "Fallback secuencial de avatar en reseñas: prueba foto_perfil y luego avatar_url para cuentas con cargas parciales o errores de imagen.",
+      "files_modified": [
+        "src/pages/DetalleLugar.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Verificado en Supabase que Test2 sí tiene foto_perfil y avatar_url, y que ambas URLs responden 200, por lo que el problema no estaba en datos ni storage",
+        "AvatarImg en DetalleLugar.jsx: eliminado crossOrigin=anonymous y agregado fallback secuencial src -> fallbackSrc en onError",
+        "Reseñas y respuestas ahora envían foto_perfil como origen principal y avatar_url como respaldo explícito",
+        "Build validado con npm run build"
+      ]
+    },
+    {
+      "id": 23,
+      "date": "2026-05-10",
+      "ai_tool": "Codex",
+      "summary": "Limpieza de transicion del carrusel hero en Home: precarga de slides, crossfade controlado y reinicio correcto del zoom por imagen.",
+      "files_modified": [
+        "src/pages/Home.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "El carrusel hero dejo de renderizar todas las portadas a la vez y ahora hace la transicion solo entre la imagen actual y la siguiente",
+        "Se agrego precarga explicita de la primera imagen y del siguiente slide para evitar que reaparezca el banner anterior durante el cambio",
+        "La rotacion automatica ahora espera a que la siguiente imagen este cargada antes de iniciar el crossfade",
+        "Se agregaron keys separadas para la capa actual y la capa siguiente, reiniciando correctamente la animacion heroSlowZoom en cada portada",
+        "Build validado con npm run build"
+      ]
+    },
+    {
+      "id": 24,
+      "date": "2026-05-10",
+      "ai_tool": "Claude Code",
+      "summary": "Fix de carrusel hero deadlocked y blink inicial en Home.",
+      "files_modified": [
+        "src/pages/Home.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Carrusel: removido heroNextIdx del array de dependencias del efecto auto-rotate — cuando setHeroNextIdx se llamaba dentro del timer, el cleanup del efecto fijaba cancelled=true bloqueando el requestAnimationFrame que llama setHeroIsFading(true), dejando el carrusel en heroNextIdx=1/heroIsFading=false para siempre",
+        "Blink inicial: agregado heroImgRef (useRef) apuntando al img actual del hero; en el efecto de splash, tras preloadHeroImage se llama heroImgRef.current?.decode() antes de setSplashFading para garantizar que el img del DOM haya decodificado la imagen antes de que el splash empiece a desvanecerse",
+        "Eliminado decoding='async' del img actual del hero para no diferir la decodificación en el momento de pintar"
+      ]
+    },
+    {
+      "id": 27,
+      "date": "2026-05-10",
+      "ai_tool": "Claude Code",
+      "summary": "Fix del parpadeo en la transicion 1->2 del carrusel hero en arranque limpio y splash mas visible.",
+      "files_modified": [
+        "src/pages/Home.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Carrusel: el parpadeo aparecia solo en arranque limpio (no en reload) porque preloadHeroImage usa Image() off-DOM, que cachea el archivo pero NO garantiza que el <img> del DOM lo haya decodificado/pintado antes del crossfade. Tras setHeroNextIdx + 2 rAFs, el <img next> recien montado entraba al fade sin textura -> flash",
+        "Agregado heroNextImgRef y pasado al <img next> en el JSX",
+        "Auto-rotate refactorizado: ahora solo precarga y hace setHeroNextIdx, ya no dispara el fade directamente",
+        "Nuevo efecto sobre heroNextIdx: espera load + decode() del DOM <img next> (con addEventListener once:true), luego doble rAF, y recien ahi setHeroIsFading(true). Esto elimina el parpadeo cold-start sin afectar el flujo de hot/reload",
+        "Splash: MIN_SPLASH_MS subido de 900 a 1500ms para que el splash se perciba claramente como pantalla de carga",
+        "Splash: SVG del logo subido de height 52 a 72 y puntos de 8x8px a 11x11px con gap de 10px para mas visibilidad en pantallas grandes"
+      ]
+    },
+    {
+      "id": 26,
+      "date": "2026-05-10",
+      "ai_tool": "Claude Code",
+      "summary": "Fix del blink inicial y de los puntos invisibles del splash en Home tras los cambios para mejorar la transicion del carrusel.",
+      "files_modified": [
+        "src/pages/Home.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Splash effect: reemplazado setTimeout(60ms) por doble requestAnimationFrame para garantizar que el navegador haya pintado al menos un frame con la imagen antes de desvanecer el splash — elimina el blink blanco/azul al cargar",
+        "Splash effect: agregado MIN_SPLASH_MS=900ms medido con performance.now() para asegurar que la animacion splashDot (1.2s por ciclo) alcance a verse al menos un ciclo cuando los lugares y la imagen vienen de cache",
+        "Splash effect: la espera de imgEl ahora usa addEventListener('load'/'error', { once: true }) en vez de asignar imgEl.onload directamente, evitando pisar handlers internos que React/Vite puedan colocar en el elemento",
+        "El check de cancelled se duplica despues de la espera minima del splash para no llamar setSplashFading sobre un efecto ya limpiado"
+      ]
+    },
+    {
+      "id": 25,
+      "date": "2026-05-10",
+      "ai_tool": "Gemini 3.1 Pro (High)",
+      "summary": "Solución al tropiezo del carrusel y corrección del blink de carga inicial en Home.",
+      "files_modified": [
+        "src/index.css",
+        "src/pages/Home.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Se añadió una validación estricta en el splash screen para esperar a que el DOM img dispare onload y decode() completo, en lugar de solo confiar en el preload en memoria",
+        "Se insertó una pausa de 60ms antes de desvanecer el splash screen para darle tiempo al navegador de subir la textura a la GPU (compositing layer) y evitar el destello o blink blanco",
+        "Re-implementada la aceleración por hardware (translateZ, backfaceVisibility y scale 1.001) para asegurar un heroSlowZoom totalmente fluido sin tropiezos ni temblores"
+      ]
+    },
+    {
+      "id": 28,
+      "date": "2026-05-10",
+      "ai_tool": "Claude Code",
+      "summary": "Fix de tamaño de cards, filtro y transición del cat-bar sticky en Home.",
+      "files_modified": [
+        "src/pages/Home.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Cards: eliminado md:col-span-2 del primer card (isFeatured) — ahora todos los cards tienen el mismo ancho en la grilla (1/3 en lg, 1/2 en md), el prop isFeatured se conserva solo para resolución de imagen",
+        "Filtro: padding del estado no-sticky reducido de 16px a 10px en la section y de 0.5rem 1rem a 0.4rem 0.75rem en el inner div para que el cat-bar se vea más compacto sin alterar el comportamiento sticky",
+        "Transición suave: reemplazados transparent/none por rgba(255,255,255,0), rgba(229,231,235,0) y 0 2px 12px rgba(0,0,0,0) — CSS no puede interpolar entre none/transparent y un valor real, lo que causaba saltos de color/sombra; con valores rgba correctos la interpolación es suave",
+        "Transición suave (cont): agregado opacity y transform al transition inline del section para que la animación stickySlideIn no cause snap si se interrumpe antes de completarse (0.3s) al hacer scroll rápido",
+        "Build validado con npm run build — sin errores"
+      ]
+    },
+    {
+      "id": 29,
+      "date": "2026-05-11",
+      "ai_tool": "Claude Code",
+      "summary": "Fix del hero en navegación de regreso a Home, thumbnails de reseñas y lightbox de fotos de reseña con layout split.",
+      "files_modified": [
+        "src/pages/Home.jsx",
+        "src/pages/DetalleLugar.jsx",
+        "src/components/FotoLightbox.jsx",
+        "session-log.json",
+        "CLAUDE.md"
+      ],
+      "changes": [
+        "Home.jsx: agregado _lugaresCache a nivel de módulo (igual que _splashShownOnce) para inicializar el estado lugares con datos cacheados al regresar desde DetalleLugar — elimina el parpadeo de hero azul vacío durante el re-fetch",
+        "DetalleLugar.jsx: thumbnails de fotos de reseña cambiados de height:120px/width:auto a contenedores cuadrados fijos de 110x110px con overflow:hidden y objectFit:cover centrado — evita recortes inesperados en fotos verticales u horizontales; hover hace zoom sutil (scale 1.06)",
+        "DetalleLugar.jsx: al abrir el lightbox de reseña ahora se pasan datos del reviewer (nombre, avatar, rating, contenido) en el campo meta del estado resenaLightbox",
+        "FotoLightbox.jsx: reescrito para usar el mismo layout split del lightbox de lugares — imagen oscura a la izquierda con botón '← Volver' pill y contador, panel blanco a la derecha con avatar+nombre del reviewer, conteo de fotos, corazones de rating y texto de reseña; en móvil el panel aparece debajo de la imagen (layout vertical); transición de cierre con fade-out de 260ms"
+      ]
+    },
+    {
+      "id": 32,
+      "date": "2026-05-12",
+      "ai_tool": "Claude Code (Sonnet 4.6)",
+      "summary": "Feature Guías interactivas de viaje: página /guias con constructor de ruta en timeline horizontal, buscador de lugares con filtro por categoría, y guardado de rutas en Supabase.",
+      "files_modified": [
+        "src/pages/Guias.jsx",
+        "src/services/guiasService.js",
+        "src/App.jsx",
+        "src/pages/Home.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Supabase: creada tabla 'guias' (id, user_id, nombre, descripcion, lugares_ids uuid[], created_at, is_public) con RLS — usuarios solo ven y modifican sus propias guías",
+        "guiasService.js: funciones getGuiasByUser, createGuia, updateGuia, deleteGuia",
+        "Guias.jsx: página completa en /guias con hero crema+amarillo, timeline horizontal scrollable con cards conectadas por flechas SVG, StepperDots animados, buscador con search+filtro de categoría, grid responsive de mini-cards, sección 'Mis rutas guardadas' con editar/eliminar, y CTA de login si no hay sesión",
+        "App.jsx: agregada ruta /guias con import de Guias.jsx",
+        "Home.jsx: ítem 'Guías' en menú hamburguesa, handleFooterNav y footer ahora navegan a /guias en lugar de mostrar toast 'próximamente'; eliminado string guiasProx innecesario",
+        "Build validado con npm run build — sin errores"
+      ]
+    },
+    {
+      "id": 31,
+      "date": "2026-05-11",
+      "ai_tool": "Claude Code (Opus 4.7 1M)",
+      "summary": "FotoLightbox renderizado vía React Portal a document.body para garantizar cobertura completa del viewport y centrado correcto de la imagen de reseña.",
+      "files_modified": [
+        "src/components/FotoLightbox.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Diagnóstico: en escritorio el lightbox aparentaba estar 'cortado' porque el contenido de la página subyacente (mapa, tarjeta de reseña) se veía debajo del modal — síntoma típico de un position:fixed que no cubre todo el viewport (suele ocurrir por stacking context, ancestros con transform/filter o re-render en árbol React anidado).",
+        "FotoLightbox.jsx: agregado import { createPortal } from 'react-dom' y envueltos AMBOS returns (mobile y desktop) en createPortal(..., document.body) para que el modal se monte directamente en el body y siempre ocupe el viewport completo.",
+        "Sin cambios en el layout, posiciones ni estilos del lightbox — solo el destino de montaje del DOM. La foto sigue usando objectFit:contain y se centra como antes, pero ahora ocupa toda la pantalla en lugar de quedar contenida dentro del árbol de DetalleLugar."
+      ]
+    },
+    {
+      "id": 30,
+      "date": "2026-05-11",
+      "ai_tool": "Claude Code",
+      "summary": "Fix FotoLightbox: imagen de reseña cortada en escritorio y móvil — reescritura de layout.",
+      "files_modified": [
+        "src/components/FotoLightbox.jsx"
+      ],
+      "changes": [
+        "Root cause: en móvil, la imagen tenía maxHeight:none + width:100% pero el contenedor outer usaba onClick=handleClose, interceptando todos los toques e impidiendo scroll; además overflow:auto en el backdrop no funcionaba porque el contenido no tenía altura definida.",
+        "Mobile: reescrito como layout fullscreen flex-column. El área de imagen usa flex:1 con overflow:hidden y la img usa maxWidth/maxHeight:100% + objectFit:contain, mostrando la foto completa sin recorte ni necesidad de scroll.",
+        "Mobile: barra superior (Volver + contador) posicionada con absolute + gradient overlay. Panel de meta/reviewer se muestra abajo como strip oscuro con maxHeight:35vh scrollable.",
+        "Mobile: swipe horizontal para navegar entre fotos preservado; eliminado el onClick=handleClose del backdrop que impedía interacción.",
+        "Desktop: contenedor split con maxHeight:90vh + overflow:hidden; imagen usa objectFit:contain con maxHeight/maxWidth definidos; panel de info blanco scrollable a la derecha.",
+        "Ambos: la foto ahora siempre se ve completa (contain) sin recorte ni necesidad de hacer zoom out."
+      ]
+    },
+    {
+      "id": 34,
+      "date": "2026-05-13",
+      "ai_tool": "Claude Code (Sonnet 4.6)",
+      "summary": "Nueva tab 'Mis Guías' en el perfil privado del usuario: muestra las rutas guardadas con opciones de editar.",
+      "files_modified": [
+        "src/pages/Perfil.jsx",
+        "src/pages/Perfil.css",
+        "session-log.json",
+        "CLAUDE.md"
+      ],
+      "changes": [
+        "Perfil.jsx: importado getGuiasByUser desde guiasService",
+        "Perfil.jsx: estado guias[] y carga en loadData vía getGuiasByUser(uid)",
+        "Perfil.jsx: tab '🗺️ Mis Guías' agregado al array de tabs; usa clase perfil-tab-guias para acento amarillo cuando está activa",
+        "Perfil.jsx: componente TabGuias — lista con animación perfilFadeUp escalonada, card con borde izquierdo amarillo (#F5C842), thumb degradado crema+amarillo, botón 'Editar' que navega a /guias, empty state con CTA 'Crear mi primera ruta'",
+        "Perfil.css: estilos .perfil-guia-* y .perfil-guias-* con paleta amarilla; overflow-x:auto en .perfil-tabs para móvil con 4 tabs; animación perfilFadeUp",
+        "Build validado con npm run build — sin errores"
+      ]
+    },
+    {
+      "id": 33,
+      "date": "2026-05-12",
+      "ai_tool": "Codex",
+      "summary": "Refinamiento de SugerirLugar: menos texto, mas enfasis en el valor de la sugerencia del usuario y paleta blanco hueso con amarillo.",
+      "files_modified": [
+        "src/pages/SugerirLugar.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Rehecho el layout de SugerirLugar sin cambiar el flujo de login ni el insert en Supabase",
+        "Reducido el bloque informativo para que el formulario tenga mas protagonismo y sea mas facil de leer",
+        "Eliminado el panel lateral que competia visualmente con los campos y reemplazado por dos mensajes cortos de apoyo",
+        "Actualizada la paleta visual a blanco hueso y amarillo, con fondos mas limpios y acentos calidos",
+        "Mantenido el enfoque en que la sugerencia del usuario importa, reforzando ese mensaje en el encabezado",
+        "Validado con npm run build despues del ajuste"
+      ]
+    },
+    {
+      "id": 35,
+      "date": "2026-05-13",
+      "ai_tool": "Codex",
+      "summary": "Moderacion de sugerencias en Admin con aprobacion/rechazo, creacion de borradores y notificaciones al usuario.",
+      "files_modified": [
+        "src/pages/AdminPage.jsx",
+        "src/pages/Home.jsx",
+        "src/pages/SugerirLugar.jsx",
+        "src/services/lugaresService.js",
+        "session-log.json"
+      ],
+      "changes": [
+        "AdminPage.jsx: agregada seccion Sugerencias al sidebar con contador de pendientes y listado moderable con estado, descripcion, motivo y datos de contacto",
+        "AdminPage.jsx: aprobar una sugerencia ahora cambia su estado a aprobada, crea un borrador en lugares con aprobado=false, registra admin_logs y envia una notificacion al usuario",
+        "AdminPage.jsx: rechazar una sugerencia cambia el estado a denegada, registra admin_logs y notifica al usuario sin crear un lugar",
+        "lugaresService.js: getLugaresHome y getLugarById ahora filtran aprobado=true para ocultar borradores y lugares no publicos fuera del admin",
+        "SugerirLugar.jsx: el insert de sugerencias fuerza estado='pendiente' para mantener el flujo de moderacion consistente",
+        "Home.jsx: extendido el panel de notificaciones para soportar sugerencia_aprobada y sugerencia_rechazada con navegacion a /perfil y estilos diferenciados",
+        "Validado con npm run build; solo permanece el warning preexistente de chunk grande en Vite"
+      ]
+    },
+    {
+      "id": 36,
+      "date": "2026-05-11",
+      "ai_tool": "Claude Code Sonnet 4.6",
+      "summary": "Fix estado sugerencias: política RLS faltante en tabla sugerencias + redirect automático a /login en SugerirLugar.",
+      "files_modified": [
+        "src/pages/SugerirLugar.jsx"
+      ],
+      "changes": [
+        "Supabase: agregada política RLS UPDATE \"Admin puede actualizar sugerencias\" — era la causa del bug donde aprobar/rechazar revertía a pendiente tras recarga",
+        "SugerirLugar.jsx: reemplazada la card de acceso protegido por redirect automático a /login con replace:true cuando no hay sesión",
+        "SugerirLugar.jsx: eliminado componente SpotterWordmark que ya no se usaba"
+      ]
+    },
+    {
+      "id": 37,
+      "date": "2026-05-12",
+      "ai_tool": "Codex",
+      "summary": "Registro ampliado con nombre privado y nombre de usuario publico, manteniendo intactas las validaciones existentes de correo y contrasena.",
+      "files_modified": [
+        "src/lib/authValidation.js",
+        "src/pages/Login.jsx",
+        "src/pages/Perfil.jsx",
+        "src/pages/Perfil.css",
+        "src/pages/PerfilPublico.jsx",
+        "src/pages/Home.jsx",
+        "src/pages/DetalleLugar.jsx",
+        "src/services/usuariosService.js",
+        "src/services/resenasService.js",
+        "src/services/notificacionesService.js",
+        "supabase/registration-profile.sql",
+        "session-log.json"
+      ],
+      "changes": [
+        "Login.jsx: el modo registro ahora solicita nombre, nombre de usuario, correo y contrasena; el correo y la contrasena siguen usando las validaciones existentes",
+        "authValidation.js: agregadas validaciones acotadas para nombre privado y username publico, con normalizacion del username a minusculas",
+        "usuariosService.js y Perfil.jsx: el perfil privado muestra y permite editar nombre, username y bio; cuentas existentes sin username no son forzadas a crear uno al editar nombre/bio",
+        "PerfilPublico.jsx, DetalleLugar.jsx, Home.jsx, resenasService.js y notificacionesService.js: las superficies publicas cambian de usuarios.nombre a usuarios.username para no exponer el nombre privado",
+        "Perfil.css: agregado estilo para mostrar @username bajo el nombre en el perfil privado",
+        "supabase/registration-profile.sql: agregado SQL para crear usuarios.username, constraint de formato, indice unico parcial y trigger handle_new_user que guarda nombre y username desde raw_user_meta_data en registros nuevos",
+        "No se backfillean ni modifican usuarios existentes",
+        "Validado con npm run build; solo permanece el warning preexistente de chunk grande en Vite"
+      ]
+    },
+    {
+      "id": 39,
+      "date": "2026-05-12",
+      "ai_tool": "Claude Code (Sonnet 4.6)",
+      "summary": "Viewer de guías con mapa de ruta: vista split panel oscuro + Google Maps embed al tocar una guía desde Mis Guías en el Perfil.",
+      "files_modified": [
+        "src/services/lugaresService.js",
+        "src/pages/Guias.jsx",
+        "src/pages/Perfil.jsx",
+        "src/pages/Perfil.css",
+        "session-log.json"
+      ],
+      "changes": [
+        "lugaresService.js: agregada función getLugaresByIds(ids) que obtiene nombre, latitud, longitud, dirección, imagen_principal, categorías y departamentos de un array de IDs",
+        "Guias.jsx: importados useSearchParams y getLugaresByIds; agregados estados guiaViewer, viewerLugares, viewerLoading; effects para leer ?ver= (carga viewer) y ?editar= (pre-carga editor)",
+        "Guias.jsx: función buildRouteMapUrl que construye URL de Google Maps /dir/ con múltiples waypoints (lat/lng o nombre encodeado)",
+        "Guias.jsx: componente ViewerStop — ítem numerado con badge amarillo, línea conectora y info de lugar (nombre, departamento, categoría)",
+        "Guias.jsx: componente GuiaViewer — layout split oscuro, panel izq (#1a1a2e) con lista numerada, panel der con iframe Google Maps ruta; responsive (columna en móvil, fila en desktop ≥768px)",
+        "Guias.jsx: render guard al inicio del return — si guiaViewer no es null muestra GuiaViewer en vez de la página normal",
+        "Perfil.jsx: TabGuias reemplaza botón 'Editar' único por dos botones: 'Ver ruta' (/guias?ver=id) y 'Editar' (/guias?editar=id)",
+        "Perfil.css: agregadas clases .perfil-guia-btn--ver (outlined amarillo) y su hover",
+        "Build validado con npm run build — sin errores nuevos"
+      ]
+    },
+    {
+      "id": 38,
+      "date": "2026-05-12",
+      "ai_tool": "Claude Code (Sonnet 4.6)",
+      "summary": "Fix del flujo post-registro en Login: tras crear cuenta exitosamente el form vuelve al modo login con el correo prellenado, y se eliminó el mensaje falso de notificación por correo.",
+      "files_modified": [
+        "src/pages/Login.jsx"
+      ],
+      "changes": [
+        "Login.jsx: tras signUp exitoso se llama setIsSignUp(false) para volver al formulario de login",
+        "Login.jsx: se limpian nombre, username y password tras el registro; el correo queda prellenado para que el usuario no tenga que reescribirlo",
+        "Login.jsx: el mensaje de éxito cambia de '¡Cuenta creada! Revisá tu correo para confirmar.' a '¡Cuenta creada! Ingresá con tus datos.' — eliminando la mención al correo de confirmación que no se envía"
+      ]
+    },
+    {
+      "id": 40,
+      "date": "2026-05-12",
+      "ai_tool": "Codex",
+      "summary": "Mejora de UX en autenticaciÃ³n: login y registro ahora permiten previsualizar la contraseÃ±a antes de enviar el formulario.",
+      "files_modified": [
+        "src/pages/Login.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "Login.jsx: agregado estado showPassword para alternar entre input type password y text",
+        "Login.jsx: agregado botÃ³n con icono de ojo dentro del campo para mostrar u ocultar la contraseÃ±a en login y registro",
+        "Login.jsx: al cambiar entre modos login/registro o tras crear cuenta se resetea la visibilidad de la contraseÃ±a para evitar estados visuales persistentes",
+        "Validado con npm run build; compilÃ³ correctamente y solo permanece el warning preexistente de chunk grande en Vite"
+      ]
+    },
+    {
+      "id": 41,
+      "date": "2026-05-12",
+      "ai_tool": "Claude Code (Sonnet 4.6)",
+      "summary": "Validación de unicidad de username case-insensitive: migración en Supabase + chequeo de email duplicado en registro + username acepta mayúsculas en el input.",
+      "files_modified": [
+        "src/lib/authValidation.js",
+        "src/pages/Login.jsx",
+        "supabase/registration-profile.sql",
+        "session-log.json"
+      ],
+      "changes": [
+        "Supabase: eliminado índice único case-sensitive (usuarios_username_unique_idx) y reemplazado por índice sobre LOWER(username) — evita que 'Juan123' y 'juan123' coexistan",
+        "Supabase: actualizado check constraint usuarios_username_format para aceptar mayúsculas: ^[A-Za-z0-9_]{3,30}$",
+        "Supabase: trigger handle_new_user actualizado para guardar siempre LOWER(username) al crear el registro",
+        "authValidation.js: validateUsername cambia regex a ^[A-Za-z0-9_]+$ y mensaje de error actualizado",
+        "Login.jsx: input de username en registro ya no llama normalizeUsername en onChange — el usuario puede escribir mayúsculas; la normalización sigue ocurriendo antes del chequeo de duplicados y del signUp",
+        "Login.jsx: agregado chequeo previo al signUp consultando tabla usuarios por email normalizado — detecta correos duplicados antes de llamar a Supabase Auth",
+        "supabase/registration-profile.sql: sincronizado con los cambios de migración aplicados"
+      ]
+    },
+    {
+      "id": 42,
+      "date": "2026-05-12",
+      "ai_tool": "Gemini 3.1 Pro (High)",
+      "summary": "Fix y traducción: traducción de error de registro a español en Login.jsx y solución al bug de renderizado de Rutas Creadas en Perfil.jsx mostrando los nombres de las paradas.",
+      "files_modified": [
+        "src/pages/Login.jsx",
+        "src/pages/Perfil.jsx"
+      ],
+      "changes": [
+        "Login.jsx: se añadió validación de la respuesta de signUpErr.message para interceptar 'User already registered' y traducirlo como 'El usuario ya está registrado.'",
+        "Perfil.jsx: se actualizó loadData para buscar los nombres de los lugares (lugares_ids) usando la tabla lugares y mapearlos a nombres_lugares.",
+        "Perfil.jsx: TabGuias fue modificado para mostrar la ruta uniendo nombres_lugares con flechas ' → '.",
+        "Perfil.jsx: se corrigió getGuiasByUser que recibía erroneamente uid (internal db id) en lugar de sess.user.id (Supabase Auth ID) permitiendo cargar las guías en el perfil privado."
+      ]
+    }
+  ]
 }

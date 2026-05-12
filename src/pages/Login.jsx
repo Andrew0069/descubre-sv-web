@@ -2,7 +2,14 @@ import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getUsuarioBloqueado } from '../services/usuariosService'
-import { normalizeEmail, validateSignupEmail, validateStrongPassword } from '../lib/authValidation'
+import {
+  normalizeEmail,
+  normalizeUsername,
+  validateProfileName,
+  validateSignupEmail,
+  validateStrongPassword,
+  validateUsername,
+} from '../lib/authValidation'
 
 const MSG_BLOQUEO =
   "Tu cuenta ha sido bloqueada por seguridad. Usa '¿Olvidaste tu contraseña?' para desbloquearla."
@@ -29,11 +36,34 @@ function esCredencialesInvalidasAuth(error) {
   return msg.includes('invalid login credentials')
 }
 
+function EyeIcon({ crossed = false }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="20"
+      height="20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z" />
+      <circle cx="12" cy="12" r="3" />
+      {crossed ? <path d="M4 4l16 16" /> : null}
+    </svg>
+  )
+}
+
 export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [nombre, setNombre] = useState('')
+  const [username, setUsername] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -50,12 +80,16 @@ export default function Login() {
       setCardVisible(true)
     }, 550)
     const t2 = setTimeout(() => setSplashVisible(false), 1100)
-    return () => { clearTimeout(t1); clearTimeout(t2) }
+    return () => {
+      clearTimeout(t1)
+      clearTimeout(t2)
+    }
   }, [])
 
-  const returnTo = typeof location.state?.from === 'string' && location.state.from.startsWith('/')
-    ? location.state.from
-    : '/'
+  const returnTo =
+    typeof location.state?.from === 'string' && location.state.from.startsWith('/')
+      ? location.state.from
+      : '/'
 
   useEffect(() => {
     const normalized = normalizeEmail(email)
@@ -85,7 +119,7 @@ export default function Login() {
     setError('')
     setSuccess('')
 
-    if (!email || !password) {
+    if (!email || !password || (isSignUp && (!nombre || !username))) {
       setError('Completá todos los campos.')
       setLoading(false)
       return
@@ -98,6 +132,20 @@ export default function Login() {
     }
 
     if (isSignUp) {
+      const nombreError = validateProfileName(nombre)
+      if (nombreError) {
+        setError(nombreError)
+        setLoading(false)
+        return
+      }
+
+      const usernameError = validateUsername(username)
+      if (usernameError) {
+        setError(usernameError)
+        setLoading(false)
+        return
+      }
+
       const emailError = validateSignupEmail(email)
       if (emailError) {
         setError(emailError)
@@ -112,14 +160,77 @@ export default function Login() {
         return
       }
 
-      const { error: signUpErr } = await supabase.auth.signUp({ email: normalizeEmail(email), password })
-      if (signUpErr) setError(signUpErr.message)
-      else setSuccess('¡Cuenta creada! Revisá tu correo para confirmar.')
+      const normalizedUsername = normalizeUsername(username)
+
+      const { data: existingEmail, error: emailCheckErr } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('email', normalizeEmail(email))
+        .maybeSingle()
+
+      if (emailCheckErr) {
+        setError('No pudimos validar el correo. Intentá de nuevo.')
+        setLoading(false)
+        return
+      }
+
+      if (existingEmail) {
+        setError('Ya existe una cuenta con ese correo electrónico.')
+        setLoading(false)
+        return
+      }
+
+      const { data: existingUsername, error: usernameCheckErr } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('username', normalizedUsername)
+        .maybeSingle()
+
+      if (usernameCheckErr) {
+        setError('No pudimos validar el nombre de usuario. Intentá de nuevo.')
+        setLoading(false)
+        return
+      }
+
+      if (existingUsername) {
+        setError('Ese nombre de usuario ya está en uso.')
+        setLoading(false)
+        return
+      }
+
+      const { error: signUpErr } = await supabase.auth.signUp({
+        email: normalizeEmail(email),
+        password,
+        options: {
+          data: {
+            nombre: nombre.trim(),
+            username: normalizedUsername,
+          },
+        },
+      })
+      if (signUpErr) {
+        if (signUpErr.message.toLowerCase().includes('user already registered')) {
+          setError('El usuario ya está registrado.')
+        } else {
+          setError(signUpErr.message)
+        }
+        setLoading(false)
+        return
+      }
+      setNombre('')
+      setUsername('')
+      setPassword('')
+      setShowPassword(false)
+      setIsSignUp(false)
+      setSuccess('¡Cuenta creada! Ingresá con tus datos.')
       setLoading(false)
       return
     }
 
-    const { data: authData, error: signInErr } = await supabase.auth.signInWithPassword({ email, password })
+    const { data: authData, error: signInErr } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
     if (signInErr) {
       if (esCredencialesInvalidasAuth(signInErr)) {
         const { data: rpcData, error: rpcErr } = await supabase.rpc('registrar_intento_fallido', {
@@ -193,37 +304,95 @@ export default function Login() {
     fontFamily: 'inherit',
   }
 
+  const passwordWrapperStyle = {
+    position: 'relative',
+    marginBottom: '0.75rem',
+  }
+
+  const passwordInputStyle = {
+    ...inputStyle,
+    marginBottom: 0,
+    paddingRight: '3rem',
+  }
+
+  const passwordToggleStyle = {
+    position: 'absolute',
+    top: '50%',
+    right: '0.75rem',
+    transform: 'translateY(-50%)',
+    border: 'none',
+    background: 'transparent',
+    padding: 0,
+    width: '1.75rem',
+    height: '1.75rem',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    color: '#6b7280',
+  }
+
   const mensajeBloqueoVisible = !isSignUp && cuentaBloqueada
   const textoError = mensajeBloqueoVisible ? MSG_BLOQUEO : error
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: '#f9fafb',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }}>
-      <div style={{
-        backgroundColor: '#ffffff',
-        borderRadius: '16px',
-        padding: '3rem 2.5rem',
-        maxWidth: '400px',
-        width: '100%',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-        textAlign: 'center',
-        opacity: cardVisible ? 1 : 0,
-        transform: cardVisible ? 'translateY(0)' : 'translateY(20px)',
-        transition: 'opacity 0.5s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
-      }}>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#111827', marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        backgroundColor: '#f9fafb',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: '#ffffff',
+          borderRadius: '16px',
+          padding: '3rem 2.5rem',
+          maxWidth: '400px',
+          width: '100%',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+          textAlign: 'center',
+          opacity: cardVisible ? 1 : 0,
+          transform: cardVisible ? 'translateY(0)' : 'translateY(20px)',
+          transition: 'opacity 0.5s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
+      >
+        <h1
+          style={{
+            fontSize: '1.5rem',
+            fontWeight: '800',
+            color: '#111827',
+            marginBottom: '0.5rem',
+            letterSpacing: '-0.02em',
+          }}
+        >
           <span style={{ color: '#F5A623' }}>S</span>potter
         </h1>
         <p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '2rem' }}>
           {isSignUp ? 'Creá tu cuenta gratis' : 'Accedé para guardar favoritos y escribir reseñas'}
         </p>
 
-        {/* Email + Password */}
+        {isSignUp && (
+          <>
+            <input
+              type="text"
+              placeholder="Nombre"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value.slice(0, 60))}
+              style={inputStyle}
+            />
+            <input
+              type="text"
+              placeholder="Nombre de usuario"
+              value={username}
+              onChange={(e) => setUsername(e.target.value.slice(0, 30))}
+              style={inputStyle}
+            />
+          </>
+        )}
+
         <input
           type="email"
           placeholder="Correo electrónico"
@@ -231,14 +400,25 @@ export default function Login() {
           onChange={(e) => setEmail(e.target.value)}
           style={inputStyle}
         />
-        <input
-          type="password"
-          placeholder="Contraseña"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleEmailAuth()}
-          style={inputStyle}
-        />
+        <div style={passwordWrapperStyle}>
+          <input
+            type={showPassword ? 'text' : 'password'}
+            placeholder="Contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleEmailAuth()}
+            style={passwordInputStyle}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            aria-pressed={showPassword}
+            style={passwordToggleStyle}
+          >
+            <EyeIcon crossed={showPassword} />
+          </button>
+        </div>
 
         {!isSignUp && (
           <div style={{ textAlign: 'right', marginBottom: '0.75rem', marginTop: '-0.5rem' }}>
@@ -252,10 +432,14 @@ export default function Login() {
         )}
 
         {textoError && (
-          <p style={{ color: '#EF4444', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{textoError}</p>
+          <p style={{ color: '#EF4444', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+            {textoError}
+          </p>
         )}
         {success && (
-          <p style={{ color: '#10B981', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{success}</p>
+          <p style={{ color: '#10B981', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+            {success}
+          </p>
         )}
 
         <button
@@ -286,6 +470,8 @@ export default function Login() {
               setIsSignUp(!isSignUp)
               setError('')
               setSuccess('')
+              setShowPassword(false)
+              setForgotMode(false)
             }}
             style={{ color: '#0EA5E9', cursor: 'pointer', fontWeight: '600' }}
           >
@@ -310,39 +496,69 @@ export default function Login() {
       </div>
 
       {splashVisible && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 9999,
-          backgroundColor: '#ffffff',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '1.5rem',
-          opacity: splashFading ? 0 : 1,
-          transition: 'opacity 0.55s ease',
-          pointerEvents: splashFading ? 'none' : 'all',
-        }}>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            backgroundColor: '#ffffff',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '1.5rem',
+            opacity: splashFading ? 0 : 1,
+            transition: 'opacity 0.55s ease',
+            pointerEvents: splashFading ? 'none' : 'all',
+          }}
+        >
           <svg viewBox="0 0 200 48" height="52" xmlns="http://www.w3.org/2000/svg">
-            <path d="M22 2 C13 2, 5 10, 5 20 C5 33, 22 48, 22 48 C22 48, 39 33, 39 20 C39 10 31 2, 22 2 Z" fill="#F5A623" />
+            <path
+              d="M22 2 C13 2, 5 10, 5 20 C5 33, 22 48, 22 48 C22 48, 39 33, 39 20 C39 10 31 2, 22 2 Z"
+              fill="#F5A623"
+            />
             <circle cx="22" cy="19" r="10" fill="#1a1a2e" />
-            <path d="M10 19 C13 14, 18 14, 22 19 C26 24, 31 24, 34 19" fill="none" stroke="#F5A623" strokeWidth="2" strokeLinecap="round" />
-            <path d="M11 24 C14 20, 18 20, 22 24 C26 28, 30 28, 33 24" fill="none" stroke="#F5A623" strokeWidth="1.2" strokeLinecap="round" opacity="0.45" />
+            <path
+              d="M10 19 C13 14, 18 14, 22 19 C26 24, 31 24, 34 19"
+              fill="none"
+              stroke="#F5A623"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+            <path
+              d="M11 24 C14 20, 18 20, 22 24 C26 28, 30 28, 33 24"
+              fill="none"
+              stroke="#F5A623"
+              strokeWidth="1.2"
+              strokeLinecap="round"
+              opacity="0.45"
+            />
             <circle cx="33" cy="8" r="2.5" fill="#F5A623" opacity="0.4" />
-            <text x="46" y="30" fontFamily="Georgia, serif" fontSize="26" fontWeight="700" letterSpacing="-1" fill="#1a1a2e">
-              <tspan fill="#F5A623">S</tspan><tspan fill="#1a1a2e">potter</tspan>
+            <text
+              x="46"
+              y="30"
+              fontFamily="Georgia, serif"
+              fontSize="26"
+              fontWeight="700"
+              letterSpacing="-1"
+              fill="#1a1a2e"
+            >
+              <tspan fill="#F5A623">S</tspan>
+              <tspan fill="#1a1a2e">potter</tspan>
             </text>
           </svg>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             {[0, 1, 2].map((i) => (
-              <div key={i} style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                backgroundColor: '#F5A623',
-                animation: `splashDot 1.2s ease-in-out ${i * 0.2}s infinite`,
-              }} />
+              <div
+                key={i}
+                style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: '#F5A623',
+                  animation: `splashDot 1.2s ease-in-out ${i * 0.2}s infinite`,
+                }}
+              />
             ))}
           </div>
           <style>{`
