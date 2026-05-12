@@ -15,6 +15,7 @@ import { getAllFavoritosConteo } from '../services/favoritosService'
 import { getAllRatingsLugares } from '../services/likesService'
 import CatButton from '../components/CatButton'
 import { formatRelativeShort } from '../lib/dateUtils'
+import PageLoader from '../components/PageLoader'
 
 
 
@@ -570,6 +571,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen pb-16" style={{ background: 'var(--bg)' }}>
+      <PageLoader show={loading} />
       <header style={{
         backgroundColor: '#ffffff',
         borderBottom: '1px solid #e5e7eb',

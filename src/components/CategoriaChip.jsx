@@ -151,6 +151,27 @@ function IconAlojamiento({ stroke, size = 22 }) {
   )
 }
 
+function IconCompras({ stroke, size = 22 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M4 8h16v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z"
+        stroke={stroke}
+        strokeWidth={1.5}
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9 8V7a3 3 0 0 1 6 0v1"
+        stroke={stroke}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M9 12h6" stroke={stroke} strokeWidth={1.5} strokeLinecap="round" />
+    </svg>
+  )
+}
+
 function IconOtros({ stroke, size = 22 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -171,6 +192,7 @@ const ICON_BY_NAME = {
   'Vida Nocturna': IconVidaNocturna,
   Restaurantes: IconRestaurantes,
   Alojamiento: IconAlojamiento,
+  Compras: IconCompras,
 }
 
 const EN_TO_ES = {
@@ -185,6 +207,7 @@ const EN_TO_ES = {
   'Night Life': 'Vida Nocturna',
   'Restaurants': 'Restaurantes',
   'Accommodation': 'Alojamiento',
+  'Shopping': 'Compras',
 }
 
 export function CategoriaIconSvg({ nombre, active, size = 22, onDark = false }) {
