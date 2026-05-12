@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getUsuarioCompleto, updateUsuarioPerfil, updateUsuarioFoto } from '../services/usuariosService'
+import { getGuiasByUser } from '../services/guiasService'
 import { resolveImageUrl } from '../lib/imageUrl'
 import Loader from '../components/Loader'
 import PhotoPickerSheet from '../components/PhotoPickerSheet'
@@ -18,6 +19,13 @@ function timeAgo(d) {
   if (h < 24) return `hace ${h}h`
   const dy = Math.round(h / 24)
   return `hace ${dy}d`
+}
+
+function normalizeSuggestionState(state) {
+  const normalized = String(state || '').trim().toLowerCase()
+  if (normalized === 'aprobada' || normalized === 'aprobado') return 'aprobada'
+  if (normalized === 'denegada' || normalized === 'rechazada' || normalized === 'rechazado') return 'denegada'
+  return 'pendiente'
 }
 
 function SpotterLogo() {
@@ -46,6 +54,7 @@ export default function Perfil() {
   const [favoritos, setFavoritos] = useState([])
   const [historial, setHistorial] = useState([])
   const [solicitudes, setSolicitudes] = useState([])
+  const [guias, setGuias] = useState([])
 
   // ui
   const [tab, setTab] = useState('favoritos')
@@ -103,12 +112,28 @@ export default function Perfil() {
     setHistorial(hist ?? [])
 
     // solicitudes
-    const { data: sols } = await supabase
-      .from('sugerencias')
-      .select('id,nombre,ubicacion,estado,created_at')
-      .eq('usuario_id', uid)
-      .order('created_at', { ascending: false })
-    setSolicitudes(sols ?? [])
+    try {
+      const nowIso = new Date().toISOString()
+      const { data: sols, error: solsError } = await supabase
+        .from('sugerencias')
+        .select('id,nombre,ubicacion,estado,created_at')
+        .eq('usuario_id', uid)
+        .lte('created_at', nowIso)
+        .order('created_at', { ascending: false })
+
+      if (solsError) throw solsError
+      setSolicitudes((sols ?? []).map((item) => ({
+        ...item,
+        estado: normalizeSuggestionState(item.estado),
+      })))
+    } catch (error) {
+      console.error('[Perfil] sugerencias fetch error:', error)
+      setSolicitudes([])
+    }
+
+    // guias
+    const { data: guiasData } = await getGuiasByUser(uid)
+    setGuias(guiasData ?? [])
 
     setLoading(false)
   }, [])
@@ -223,9 +248,9 @@ export default function Perfil() {
 
       {/* tabs */}
       <div className="perfil-tabs">
-        {['favoritos', 'historial', 'solicitudes'].map(t => (
-          <button key={t} className={`perfil-tab${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>
-            {t === 'favoritos' ? '❤️ Favoritos' : t === 'historial' ? '🕒 Historial' : '📩 Solicitudes'}
+        {['favoritos', 'historial', 'solicitudes', 'guias'].map(t => (
+          <button key={t} className={`perfil-tab${tab === t ? ' active' : ''}${t === 'guias' ? ' perfil-tab-guias' : ''}`} onClick={() => setTab(t)}>
+            {t === 'favoritos' ? '❤️ Favoritos' : t === 'historial' ? '🕒 Historial' : t === 'solicitudes' ? '📩 Solicitudes' : '🗺️ Mis Guías'}
           </button>
         ))}
       </div>
@@ -235,6 +260,7 @@ export default function Perfil() {
         {tab === 'favoritos' && <TabFavoritos favoritos={favoritos} />}
         {tab === 'historial' && <TabHistorial historial={historial} />}
         {tab === 'solicitudes' && <TabSolicitudes solicitudes={solicitudes} />}
+        {tab === 'guias' && <TabGuias guias={guias} />}
       </div>
 
       {/* modals */}
@@ -419,6 +445,51 @@ function TabHistorial({ historial }) {
   )
 }
 
+/* ── Tab: Guías ── */
+function TabGuias({ guias }) {
+  const navigate = useNavigate()
+
+  if (!guias.length) return (
+    <div className="perfil-empty">
+      <div className="icon" style={{ background: 'linear-gradient(135deg,#fef9c3,#fde68a)' }}>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polygon points="3 11 22 2 13 21 11 13 3 11" />
+        </svg>
+      </div>
+      <p>Aún no tenés rutas guardadas.<br />Creá tu primera guía de viaje.</p>
+      <button className="perfil-guias-cta" style={{ marginTop: '1rem' }} onClick={() => navigate('/guias')}>
+        🗺️ Crear mi primera ruta
+      </button>
+    </div>
+  )
+
+  return (
+    <div className="perfil-guias-list">
+      {guias.map((g, i) => {
+        const paradas = g.lugares_ids?.length ?? 0
+        const fecha = g.created_at
+          ? new Date(g.created_at).toLocaleDateString('es-SV', { day: '2-digit', month: 'short', year: 'numeric' })
+          : ''
+        return (
+          <div key={g.id} className="perfil-guia-item" style={{ animationDelay: `${i * 0.06}s` }}>
+            <div className="perfil-guia-thumb">🗺️</div>
+            <div className="perfil-guia-info">
+              <h3>{g.nombre}</h3>
+              <p>{paradas} parada{paradas !== 1 ? 's' : ''}{fecha ? ` · ${fecha}` : ''}</p>
+            </div>
+            <button className="perfil-guia-btn" onClick={() => navigate('/guias')}>
+              Editar
+            </button>
+          </div>
+        )
+      })}
+      <div className="perfil-guias-footer">
+        <button className="perfil-guias-cta" onClick={() => navigate('/guias')}>+ Nueva ruta</button>
+      </div>
+    </div>
+  )
+}
+
 /* ── Tab: Solicitudes ── */
 function TabSolicitudes({ solicitudes }) {
   if (!solicitudes.length) return (
@@ -435,8 +506,8 @@ function TabSolicitudes({ solicitudes }) {
             <h3>{s.nombre}</h3>
             <p>{s.ubicacion ? `📍 ${s.ubicacion} · ` : ''}{timeAgo(s.created_at)}</p>
           </div>
-          <span className={`perfil-sol-badge ${s.estado || 'pendiente'}`}>
-            {s.estado === 'aprobada' ? '✓ Aprobada' : s.estado === 'denegada' ? '✗ Denegada' : '⏳ Pendiente'}
+          <span className={`perfil-sol-badge ${normalizeSuggestionState(s.estado)}`}>
+            {normalizeSuggestionState(s.estado) === 'aprobada' ? '✓ Aprobada' : normalizeSuggestionState(s.estado) === 'denegada' ? '✗ Denegada' : '⏳ Pendiente'}
           </span>
         </div>
       ))}

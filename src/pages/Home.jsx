@@ -24,6 +24,36 @@ function getUserAvatar(usuario) {
   return usuario?.foto_perfil || usuario?.avatar_url || null
 }
 
+function getNotificationMeta(notification) {
+  switch (notification?.tipo) {
+    case 'respuesta':
+      return {
+        iconBg: '#0EA5E9',
+        text: `${notification.actor?.nombre ?? 'Alguien'} comentó tu reseña.`,
+      }
+    case 'like':
+      return {
+        iconBg: '#EF4444',
+        text: `${notification.actor?.nombre ?? 'Alguien'} reaccionó a tu reseña.`,
+      }
+    case 'sugerencia_aprobada':
+      return {
+        iconBg: '#10B981',
+        text: 'Tu sugerencia de lugar fue aprobada y ya tiene un borrador en revisión.',
+      }
+    case 'sugerencia_rechazada':
+      return {
+        iconBg: '#F59E0B',
+        text: 'Tu sugerencia de lugar fue revisada y no fue aprobada esta vez.',
+      }
+    default:
+      return {
+        iconBg: '#6B7280',
+        text: 'Tienes una nueva notificación.',
+      }
+  }
+}
+
 let _splashShownOnce = false
 let _lugaresCache = []
 
@@ -86,7 +116,6 @@ export default function Home() {
     otros: idioma === 'en' ? 'Other' : 'Otros',
     cargando: idioma === 'en' ? 'Loading places...' : 'Cargando lugares…',
     sesionCerrada: idioma === 'en' ? 'Signed out' : 'Sesión cerrada',
-    guiasProx: idioma === 'en' ? 'Guides — coming soon' : 'Guías — próximamente',
     privacidadProx: idioma === 'en' ? 'Privacy policy — coming soon' : 'Política de privacidad — próximamente',
     terminosProx: idioma === 'en' ? 'Terms of use — coming soon' : 'Términos de uso — próximamente',
     contactoProx: idioma === 'en' ? 'Contact — coming soon' : 'Contacto — próximamente',
@@ -313,7 +342,7 @@ export default function Home() {
           scrollToLugares()
           break
         case 'Guías':
-          showToast(t.guiasProx)
+          navigate('/guias')
           break
         case 'Sugerir lugar':
           navigate('/sugerir-lugar')
@@ -328,7 +357,7 @@ export default function Home() {
           break
       }
     },
-    [scrollToLugares, showToast, navigate, t.guiasProx, t.privacidadProx, t.terminosProx, t.contactoProx],
+    [scrollToLugares, showToast, navigate, t.privacidadProx, t.terminosProx, t.contactoProx],
   )
 
   const sugerencias = useMemo(() => {
@@ -700,49 +729,59 @@ export default function Home() {
                       </div>
                     ) : (
                       <ul style={{ listStyle: 'none', margin: 0, padding: '0 8px 8px', maxHeight: '400px', overflowY: 'auto' }}>
-                        {notificacionesVisibles.map((n) => (
+                        {notificacionesVisibles.map((n) => {
+                          const meta = getNotificationMeta(n)
+                          const targetPath = n.resena?.lugar_id
+                            ? `/lugar/${n.resena.lugar_id}`
+                            : (n.tipo === 'sugerencia_aprobada' || n.tipo === 'sugerencia_rechazada')
+                                ? '/perfil'
+                                : null
+                          return (
                           <li
                             key={n.id}
                             onClick={() => {
-                              if (n.resena?.lugar_id) {
-                                setCampanaOpen(false)
-                                descartarNotificacion(n.id)
-                                navigate(`/lugar/${n.resena.lugar_id}`)
-                              }
+                              if (!targetPath) return
+                              setCampanaOpen(false)
+                              descartarNotificacion(n.id)
+                              navigate(targetPath)
                             }}
                             style={{
                               display: 'flex',
                               gap: '12px',
                               padding: '8px',
                               backgroundColor: n.leida ? 'transparent' : 'rgba(14,165,233,0.05)',
-                              cursor: n.resena?.lugar_id ? 'pointer' : 'default',
+                              cursor: targetPath ? 'pointer' : 'default',
                               alignItems: 'center',
                               borderRadius: '8px',
                               marginBottom: '4px',
                               transition: 'background-color 0.15s ease'
                             }}
-                            onMouseEnter={(e) => { if (n.resena?.lugar_id) e.currentTarget.style.backgroundColor = n.leida ? '#f3f4f6' : 'rgba(14,165,233,0.1)' }}
+                            onMouseEnter={(e) => { if (targetPath) e.currentTarget.style.backgroundColor = n.leida ? '#f3f4f6' : 'rgba(14,165,233,0.1)' }}
                             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = n.leida ? 'transparent' : 'rgba(14,165,233,0.05)' }}
                           >
                             <div style={{ position: 'relative', flexShrink: 0 }}>
                               {getUserAvatar(n.actor) ? (
                                 <img src={getUserAvatar(n.actor)} alt={n.actor.nombre} style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover' }} />
                               ) : (
-                                <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#0EA5E9', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.2rem' }}>
-                                  {(n.actor?.nombre || 'U').charAt(0).toUpperCase()}
+                                <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: n.tipo === 'sugerencia_aprobada' ? '#ECFDF5' : n.tipo === 'sugerencia_rechazada' ? '#FFFBEB' : '#0EA5E9', color: n.tipo === 'sugerencia_aprobada' ? '#059669' : n.tipo === 'sugerencia_rechazada' ? '#d97706' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.2rem' }}>
+                                  {n.tipo === 'sugerencia_aprobada' ? '✓' : n.tipo === 'sugerencia_rechazada' ? '!' : (n.actor?.nombre || 'U').charAt(0).toUpperCase()}
                                 </div>
                               )}
-                              <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', backgroundColor: n.tipo === 'respuesta' ? '#0EA5E9' : '#EF4444', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid #fff' }}>
+                              <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', backgroundColor: meta.iconBg, borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid #fff' }}>
                                 {n.tipo === 'respuesta' ? (
                                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" color="#fff"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"></path></svg>
-                                ) : (
+                                ) : n.tipo === 'like' ? (
                                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" color="#fff"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
+                                ) : n.tipo === 'sugerencia_aprobada' ? (
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                                ) : (
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 9v4" /><path d="M12 17h.01" /><path d="M10.29 3.86l-8.3 14.39A2 2 0 003.71 21h16.58a2 2 0 001.72-2.75l-8.3-14.39a2 2 0 00-3.42 0z" /></svg>
                                 )}
                               </div>
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: '0.85rem', color: '#111827', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', wordBreak: 'break-word', lineHeight: 1.4 }}>
-                                <span style={{ fontWeight: 600 }}>{n.actor?.nombre ?? 'Alguien'}</span>
+                              <div style={{ fontSize: 0, color: '#111827', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', wordBreak: 'break-word', lineHeight: 1.4 }}>
+                                <span style={{ fontSize: '0.85rem' }}>{meta.text}</span><span style={{ fontWeight: 600 }}>{n.actor?.nombre ?? 'Alguien'}</span>
                                 {n.tipo === 'respuesta' ? ' comentó tu reseña.' : ' reaccionó a tu reseña.'}
                               </div>
                               <div style={{ fontSize: '0.8rem', color: '#0EA5E9', marginTop: '4px', fontWeight: n.leida ? 400 : 600 }}>
@@ -753,7 +792,8 @@ export default function Home() {
                               <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#0EA5E9', flexShrink: 0 }}></div>
                             )}
                           </li>
-                        ))}
+                          )
+                        })}
                       </ul>
                     )}
                   </div>
@@ -808,7 +848,7 @@ export default function Home() {
             }}>
               {[
                 { label: t.menuExplorar, onClick: () => { setMenuOpen(false); scrollToLugares() } },
-                { label: t.menuGuias, onClick: () => { setMenuOpen(false); showToast(t.guiasProx) } },
+                { label: t.menuGuias, onClick: () => { setMenuOpen(false); navigate('/guias') } },
                 { label: t.menuResenas, onClick: () => { setMenuOpen(false); scrollToLugares() } },
                 { label: t.menuAgregar, onClick: () => { setMenuOpen(false); navigate('/sugerir-lugar') } },
               ].map(({ label, onClick }) => (

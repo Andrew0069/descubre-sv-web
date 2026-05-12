@@ -4,6 +4,7 @@ export async function getLugaresHome() {
   const { data, error } = await supabase
     .from('lugares')
     .select('id, nombre, categoria_id, subtipo, destacado, imagen_principal, precio_entrada, horarios, updated_at, categorias(nombre, color), departamentos(nombre), imagenes_lugar(ruta_imagen, orden)')
+    .eq('aprobado', true)
     .order('destacado', { ascending: false, nullsFirst: false })
     .order('updated_at', { ascending: false })
   return { data: data ?? [], error }
@@ -14,6 +15,7 @@ export async function getLugarById(id) {
     .from('lugares')
     .select('*, categorias(*), departamentos(*)')
     .eq('id', id)
+    .eq('aprobado', true)
     .maybeSingle()
   return { data: data ?? null, error }
 }

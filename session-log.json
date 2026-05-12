@@ -1,6 +1,6 @@
 {
     "project": "Destino SV App",
-    "last_updated": "2026-05-11",
+    "last_updated": "2026-05-13",
     "sessions": [
         {
             "id": 1,
@@ -531,6 +531,27 @@
             ]
         },
         {
+            "id": 32,
+            "date": "2026-05-12",
+            "ai_tool": "Claude Code (Sonnet 4.6)",
+            "summary": "Feature Guías interactivas de viaje: página /guias con constructor de ruta en timeline horizontal, buscador de lugares con filtro por categoría, y guardado de rutas en Supabase.",
+            "files_modified": [
+                "src/pages/Guias.jsx",
+                "src/services/guiasService.js",
+                "src/App.jsx",
+                "src/pages/Home.jsx",
+                "session-log.json"
+            ],
+            "changes": [
+                "Supabase: creada tabla 'guias' (id, user_id, nombre, descripcion, lugares_ids uuid[], created_at, is_public) con RLS — usuarios solo ven y modifican sus propias guías",
+                "guiasService.js: funciones getGuiasByUser, createGuia, updateGuia, deleteGuia",
+                "Guias.jsx: página completa en /guias con hero crema+amarillo, timeline horizontal scrollable con cards conectadas por flechas SVG, StepperDots animados, buscador con search+filtro de categoría, grid responsive de mini-cards, sección 'Mis rutas guardadas' con editar/eliminar, y CTA de login si no hay sesión",
+                "App.jsx: agregada ruta /guias con import de Guias.jsx",
+                "Home.jsx: ítem 'Guías' en menú hamburguesa, handleFooterNav y footer ahora navegan a /guias en lugar de mostrar toast 'próximamente'; eliminado string guiasProx innecesario",
+                "Build validado con npm run build — sin errores"
+            ]
+        },
+        {
             "id": 31,
             "date": "2026-05-11",
             "ai_tool": "Claude Code (Opus 4.7 1M)",
@@ -560,6 +581,67 @@
                 "Mobile: swipe horizontal para navegar entre fotos preservado; eliminado el onClick=handleClose del backdrop que impedía interacción.",
                 "Desktop: contenedor split con maxHeight:90vh + overflow:hidden; imagen usa objectFit:contain con maxHeight/maxWidth definidos; panel de info blanco scrollable a la derecha.",
                 "Ambos: la foto ahora siempre se ve completa (contain) sin recorte ni necesidad de hacer zoom out."
+            ]
+        }
+        ,
+        {
+            "id": 34,
+            "date": "2026-05-13",
+            "ai_tool": "Claude Code (Sonnet 4.6)",
+            "summary": "Nueva tab 'Mis Guías' en el perfil privado del usuario: muestra las rutas guardadas con opciones de editar.",
+            "files_modified": [
+                "src/pages/Perfil.jsx",
+                "src/pages/Perfil.css",
+                "session-log.json",
+                "CLAUDE.md"
+            ],
+            "changes": [
+                "Perfil.jsx: importado getGuiasByUser desde guiasService",
+                "Perfil.jsx: estado guias[] y carga en loadData vía getGuiasByUser(uid)",
+                "Perfil.jsx: tab '🗺️ Mis Guías' agregado al array de tabs; usa clase perfil-tab-guias para acento amarillo cuando está activa",
+                "Perfil.jsx: componente TabGuias — lista con animación perfilFadeUp escalonada, card con borde izquierdo amarillo (#F5C842), thumb degradado crema+amarillo, botón 'Editar' que navega a /guias, empty state con CTA 'Crear mi primera ruta'",
+                "Perfil.css: estilos .perfil-guia-* y .perfil-guias-* con paleta amarilla; overflow-x:auto en .perfil-tabs para móvil con 4 tabs; animación perfilFadeUp",
+                "Build validado con npm run build — sin errores"
+            ]
+        },
+        {
+            "id": 33,
+            "date": "2026-05-12",
+            "ai_tool": "Codex",
+            "summary": "Refinamiento de SugerirLugar: menos texto, mas enfasis en el valor de la sugerencia del usuario y paleta blanco hueso con amarillo.",
+            "files_modified": [
+                "src/pages/SugerirLugar.jsx",
+                "session-log.json"
+            ],
+            "changes": [
+                "Rehecho el layout de SugerirLugar sin cambiar el flujo de login ni el insert en Supabase",
+                "Reducido el bloque informativo para que el formulario tenga mas protagonismo y sea mas facil de leer",
+                "Eliminado el panel lateral que competia visualmente con los campos y reemplazado por dos mensajes cortos de apoyo",
+                "Actualizada la paleta visual a blanco hueso y amarillo, con fondos mas limpios y acentos calidos",
+                "Mantenido el enfoque en que la sugerencia del usuario importa, reforzando ese mensaje en el encabezado",
+                "Validado con npm run build despues del ajuste"
+            ]
+        },
+        {
+            "id": 35,
+            "date": "2026-05-13",
+            "ai_tool": "Codex",
+            "summary": "Moderacion de sugerencias en Admin con aprobacion/rechazo, creacion de borradores y notificaciones al usuario.",
+            "files_modified": [
+                "src/pages/AdminPage.jsx",
+                "src/pages/Home.jsx",
+                "src/pages/SugerirLugar.jsx",
+                "src/services/lugaresService.js",
+                "session-log.json"
+            ],
+            "changes": [
+                "AdminPage.jsx: agregada seccion Sugerencias al sidebar con contador de pendientes y listado moderable con estado, descripcion, motivo y datos de contacto",
+                "AdminPage.jsx: aprobar una sugerencia ahora cambia su estado a aprobada, crea un borrador en lugares con aprobado=false, registra admin_logs y envia una notificacion al usuario",
+                "AdminPage.jsx: rechazar una sugerencia cambia el estado a denegada, registra admin_logs y notifica al usuario sin crear un lugar",
+                "lugaresService.js: getLugaresHome y getLugarById ahora filtran aprobado=true para ocultar borradores y lugares no publicos fuera del admin",
+                "SugerirLugar.jsx: el insert de sugerencias fuerza estado='pendiente' para mantener el flujo de moderacion consistente",
+                "Home.jsx: extendido el panel de notificaciones para soportar sugerencia_aprobada y sugerencia_rechazada con navegacion a /perfil y estilos diferenciados",
+                "Validado con npm run build; solo permanece el warning preexistente de chunk grande en Vite"
             ]
         }
     ]

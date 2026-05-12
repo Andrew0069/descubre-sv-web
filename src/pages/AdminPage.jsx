@@ -5,6 +5,7 @@ import { getUsuarioAdmin, getUsuarioId } from '../services/usuariosService'
 import { getLugaresAdmin, createLugar, updateLugar, deleteLugar, updateImagenPrincipal } from '../services/lugaresService'
 import { getResenasAdmin, deleteResena } from '../services/resenasService'
 import { getImagenesByLugar, createImagenLugar, deleteImagen, swapImagenOrden, reorderImagenes } from '../services/imagenesService'
+import { createNotificacion } from '../services/notificacionesService'
 import { resolveImageUrl } from '../lib/imageUrl'
 import EditLugarForm from '../components/EditLugarForm'
 import NewLugarForm, { DEPARTAMENTOS } from '../components/NewLugarForm'
@@ -72,6 +73,33 @@ function actionBadgeStyle(action) {
   }
 }
 
+function suggestionBadgeStyle(state) {
+  const colors = {
+    aprobada: { backgroundColor: 'rgba(16,185,129,0.12)', color: '#059669' },
+    denegada: { backgroundColor: 'rgba(239,68,68,0.12)', color: '#dc2626' },
+    pendiente: { backgroundColor: 'rgba(245,158,11,0.12)', color: '#d97706' },
+  }
+  return {
+    ...(colors[state] ?? colors.pendiente),
+    borderRadius: '999px',
+    padding: '5px 10px',
+    fontSize: '0.74rem',
+    fontWeight: 800,
+    display: 'inline-flex',
+  }
+}
+
+function normalizeSuggestionState(state) {
+  const normalized = String(state || '').trim().toLowerCase()
+  if (normalized === 'aprobada' || normalized === 'aprobado') return 'aprobada'
+  if (normalized === 'denegada' || normalized === 'rechazada' || normalized === 'rechazado') return 'denegada'
+  return 'pendiente'
+}
+
+function getPersistedSuggestionState(state) {
+  return normalizeSuggestionState(state) === 'denegada' ? 'rechazada' : normalizeSuggestionState(state)
+}
+
 
 export default function AdminPage() {
   const navigate = useNavigate()
@@ -101,8 +129,11 @@ export default function AdminPage() {
   const [imagenes, setImagenes] = useState([])
   const [resenas, setResenas] = useState([])
   const [respuestas, setRespuestas] = useState({})
+  const [sugerencias, setSugerencias] = useState([])
   const [logs, setLogs] = useState([])
   const [loadingResenas, setLoadingResenas] = useState(false)
+  const [loadingSugerencias, setLoadingSugerencias] = useState(false)
+  const [moderatingSuggestionId, setModeratingSuggestionId] = useState(null)
   const [loadingLogs, setLoadingLogs] = useState(false)
   const [securityLogs, setSecurityLogs] = useState([])
   const [loadingSecurityLogs, setLoadingSecurityLogs] = useState(false)
@@ -210,6 +241,30 @@ export default function AdminPage() {
     setLoadingResenas(false)
   }, [showToast])
 
+  const cargarSugerencias = useCallback(async () => {
+    setLoadingSugerencias(true)
+    try {
+      const nowIso = new Date().toISOString()
+      const { data, error } = await supabase
+        .from('sugerencias')
+        .select('id, nombre, ubicacion, descripcion, motivo_recomendacion, nombre_contacto, email, estado, created_at, usuario_id')
+        .lte('created_at', nowIso)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setSugerencias((data ?? []).map((item) => ({
+        ...item,
+        estado: normalizeSuggestionState(item.estado),
+      })))
+    } catch (error) {
+      console.error(error)
+      showToast('Error al cargar sugerencias')
+      setSugerencias([])
+    }
+
+    setLoadingSugerencias(false)
+  }, [showToast])
+
   // Guard: verificar is_admin
   useEffect(() => {
     const check = async () => {
@@ -243,7 +298,8 @@ export default function AdminPage() {
     if (checking) return
     cargarLugares()
     cargarCategorias()
-  }, [cargarCategorias, cargarLugares, checking])
+    cargarSugerencias()
+  }, [cargarCategorias, cargarLugares, cargarSugerencias, checking])
 
   useEffect(() => {
     if (newLugarForm.categoria_id || categorias.length === 0) return
@@ -258,6 +314,11 @@ export default function AdminPage() {
     if (checking || activeSection !== 'resenas') return
     cargarResenas()
   }, [activeSection, cargarResenas, checking])
+
+  useEffect(() => {
+    if (checking || activeSection !== 'sugerencias') return
+    cargarSugerencias()
+  }, [activeSection, cargarSugerencias, checking])
 
   useEffect(() => {
     if (checking || activeSection !== 'bitacora') return
@@ -868,6 +929,113 @@ export default function AdminPage() {
     showToast('Foto de portada actualizada')
   }
 
+  const handleModerateSuggestion = useCallback(async (suggestion, nextState) => {
+    if (!suggestion?.id || !adminId || moderatingSuggestionId) return
+
+    setModeratingSuggestionId(suggestion.id)
+
+    const persistedNextState = getPersistedSuggestionState(nextState)
+    let draftLugar = null
+
+    if (persistedNextState === 'aprobada') {
+      const payload = {
+        nombre: suggestion.nombre?.trim() || 'Lugar sin nombre',
+        direccion: suggestion.ubicacion?.trim() || null,
+        descripcion: suggestion.descripcion?.trim() || suggestion.motivo_recomendacion?.trim() || '',
+        usuario_id: suggestion.usuario_id ?? null,
+        aprobado: false,
+        destacado: false,
+        categoria_id: null,
+        departamento_id: null,
+        precio_entrada: null,
+        subtipo: null,
+        latitud: null,
+        longitud: null,
+        promedio_estrellas: 0,
+        total_resenas: 0,
+      }
+
+      const { data: createdLugar, error: createError } = await createLugar(payload)
+      if (createError || !createdLugar) {
+        console.error(createError)
+        showToast('Error al crear el borrador del lugar')
+        setModeratingSuggestionId(null)
+        return
+      }
+
+      draftLugar = createdLugar
+    }
+
+    let appliedState = persistedNextState
+    let { error: updateError } = await supabase
+      .from('sugerencias')
+      .update({ estado: appliedState })
+      .eq('id', suggestion.id)
+
+    if (updateError && persistedNextState === 'rechazada') {
+      appliedState = 'denegada'
+      const fallback = await supabase
+        .from('sugerencias')
+        .update({ estado: appliedState })
+        .eq('id', suggestion.id)
+      updateError = fallback.error
+    }
+
+    if (updateError) {
+      console.error(updateError)
+      showToast(`Error al ${persistedNextState === 'aprobada' ? 'aprobar' : 'rechazar'} la sugerencia`)
+      setModeratingSuggestionId(null)
+      return
+    }
+
+    const persistedState = normalizeSuggestionState(appliedState)
+
+    await insertAdminLog({
+      accion: 'UPDATE',
+      tabla: 'sugerencias',
+      registro_id: suggestion.id,
+      detalle: {
+        nombre: suggestion.nombre,
+        estado: persistedState,
+        borrador_lugar_id: draftLugar?.id ?? null,
+      },
+    })
+
+    if (draftLugar) {
+      await insertAdminLog({
+        accion: 'CREATE',
+        tabla: 'lugares',
+        registro_id: draftLugar.id,
+        detalle: {
+          origen: 'sugerencia_aprobada',
+          sugerencia_id: suggestion.id,
+          nombre: draftLugar.nombre,
+        },
+      })
+    }
+
+    if (suggestion.usuario_id) {
+      const { error: notifError } = await createNotificacion({
+        usuario_id: suggestion.usuario_id,
+        tipo: persistedNextState === 'aprobada' ? 'sugerencia_aprobada' : 'sugerencia_rechazada',
+      })
+      if (notifError) {
+        console.error('[sugerencias] notif error:', notifError)
+      }
+    }
+
+    setSugerencias((prev) => prev.map((item) => (
+      item.id === suggestion.id ? { ...item, estado: persistedState } : item
+    )))
+
+    if (draftLugar) {
+      setLugares((prev) => [...prev, draftLugar].sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '')))
+    }
+
+    showToast(persistedNextState === 'aprobada' ? 'Sugerencia aprobada y borrador creado' : 'Sugerencia rechazada')
+    setModeratingSuggestionId(null)
+  }, [adminId, insertAdminLog, moderatingSuggestionId, showToast])
+
   const handleEliminarResena = async (resena) => {
     const ok = window.confirm('¿Seguro que quieres eliminar esta reseña? Esta acción no se puede deshacer.')
     if (!ok) return
@@ -948,6 +1116,7 @@ export default function AdminPage() {
 
   const sidebarItems = [
     { id: 'lugares', label: `Lugares (${lugares.length})` },
+    { id: 'sugerencias', label: `Sugerencias (${sugerencias.filter((s) => (s.estado || 'pendiente') === 'pendiente').length})` },
     { id: 'resenas', label: 'Reseñas' },
     { id: 'bitacora', label: 'Bitácora' },
     { id: 'seguridad', label: 'Seguridad' },
@@ -982,7 +1151,7 @@ export default function AdminPage() {
                 </text>
               </svg>
             </h1>
-            <p style={{ fontSize: '0.85rem', color: '#9ca3af', marginTop: '4px' }}>Gestión de lugares, reseñas y bitácora</p>
+            <p style={{ fontSize: '0.85rem', color: '#9ca3af', marginTop: '4px' }}>Gestión de lugares, sugerencias, reseñas y bitácora</p>
           </div>
           <button
             type="button"
@@ -1479,6 +1648,125 @@ export default function AdminPage() {
                                     </button>
                                   </div>
                                 ))}
+                              </div>
+                            )}
+                          </div>
+                        </article>
+                      )
+                    })}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {activeSection === 'sugerencias' && (
+              <section style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', gap: '1rem', flexWrap: 'wrap' }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#111827', margin: 0 }}>Moderación de Sugerencias</h2>
+                    <p style={{ fontSize: '0.85rem', color: '#6b7280', margin: '4px 0 0' }}>
+                      {sugerencias.filter((s) => (s.estado || 'pendiente') === 'pendiente').length} pendiente{sugerencias.filter((s) => (s.estado || 'pendiente') === 'pendiente').length !== 1 ? 's' : ''} de {sugerencias.length}
+                    </p>
+                  </div>
+                  <button type="button" onClick={cargarSugerencias} style={{ ...buttonBase, backgroundColor: '#f3f4f6', color: '#374151' }}>
+                    Actualizar
+                  </button>
+                </div>
+
+                {loadingSugerencias ? (
+                  <p style={{ color: '#6b7280' }}>Cargando sugerencias...</p>
+                ) : sugerencias.length === 0 ? (
+                  <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#9ca3af', border: '1px dashed #e5e7eb', borderRadius: '12px' }}>
+                    No hay sugerencias por revisar.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {sugerencias.map((suggestion) => {
+                      const state = suggestion.estado || 'pendiente'
+                      const isPending = state === 'pendiente'
+                      const isWorking = moderatingSuggestionId === suggestion.id
+
+                      return (
+                        <article
+                          key={suggestion.id}
+                          style={{
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '14px',
+                            padding: '1rem 1rem 1.1rem',
+                            backgroundColor: '#fff',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap', marginBottom: '0.45rem' }}>
+                                <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#111827' }}>{suggestion.nombre || 'Lugar sin nombre'}</h3>
+                                <span style={suggestionBadgeStyle(state)}>
+                                  {state === 'aprobada' ? 'Aprobada' : state === 'denegada' ? 'Denegada' : 'Pendiente'}
+                                </span>
+                              </div>
+                              <p style={{ margin: 0, color: '#6b7280', fontSize: '0.84rem' }}>
+                                {suggestion.ubicacion ? `${suggestion.ubicacion} · ` : ''}{formatDateTime(suggestion.created_at)}
+                              </p>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+                              <button
+                                type="button"
+                                disabled={!isPending || isWorking}
+                                onClick={() => handleModerateSuggestion(suggestion, 'aprobada')}
+                                style={{
+                                  ...buttonBase,
+                                  backgroundColor: isPending ? '#0EA5E9' : '#e5e7eb',
+                                  color: isPending ? '#fff' : '#9ca3af',
+                                  opacity: isWorking ? 0.7 : 1,
+                                }}
+                              >
+                                {isWorking && isPending ? 'Procesando...' : 'Aprobar'}
+                              </button>
+                              <button
+                                type="button"
+                                disabled={!isPending || isWorking}
+                                onClick={() => handleModerateSuggestion(suggestion, 'rechazada')}
+                                style={{
+                                  ...buttonBase,
+                                  backgroundColor: isPending ? 'rgba(239,68,68,0.12)' : '#f3f4f6',
+                                  color: isPending ? '#dc2626' : '#9ca3af',
+                                  opacity: isWorking ? 0.7 : 1,
+                                }}
+                              >
+                                Rechazar
+                              </button>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'grid', gap: '0.9rem', marginTop: '1rem' }}>
+                            {suggestion.descripcion && (
+                              <div style={{ padding: '0.9rem 1rem', borderRadius: '12px', backgroundColor: '#f9fafb', border: '1px solid #f3f4f6' }}>
+                                <p style={{ margin: '0 0 0.35rem', color: '#111827', fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Descripción</p>
+                                <p style={{ margin: 0, color: '#374151', lineHeight: 1.6, whiteSpace: 'pre-line' }}>{suggestion.descripcion}</p>
+                              </div>
+                            )}
+
+                            {suggestion.motivo_recomendacion && (
+                              <div style={{ padding: '0.9rem 1rem', borderRadius: '12px', backgroundColor: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.1)' }}>
+                                <p style={{ margin: '0 0 0.35rem', color: '#0EA5E9', fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Por qué lo recomienda</p>
+                                <p style={{ margin: 0, color: '#374151', lineHeight: 1.6, whiteSpace: 'pre-line' }}>{suggestion.motivo_recomendacion}</p>
+                              </div>
+                            )}
+
+                            {(suggestion.nombre_contacto || suggestion.email) && (
+                              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                                {suggestion.nombre_contacto && (
+                                  <span style={{ padding: '0.5rem 0.8rem', borderRadius: '999px', backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', color: '#374151', fontSize: '0.84rem', fontWeight: 600 }}>
+                                    Contacto: {suggestion.nombre_contacto}
+                                  </span>
+                                )}
+                                {suggestion.email && (
+                                  <span style={{ padding: '0.5rem 0.8rem', borderRadius: '999px', backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', color: '#374151', fontSize: '0.84rem', fontWeight: 600 }}>
+                                    Email: {suggestion.email}
+                                  </span>
+                                )}
                               </div>
                             )}
                           </div>

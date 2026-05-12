@@ -15,6 +15,7 @@ import CookieConsent from './components/CookieConsent'
 
 import PrivacyPage from './pages/PrivacyPage'
 import TermsPage from './pages/TermsPage'
+import Guias from './pages/Guias'
 
 function AnimatedRoutes() {
   const location = useLocation()
@@ -71,6 +72,7 @@ function AnimatedRoutes() {
           <Route path="/usuario/:id" element={<PerfilPublico />} />
           <Route path="/sugerir-lugar" element={<SugerirLugar />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/guias" element={<Guias />} />
 
           <Route path="/privacidad" element={<PrivacyPage />} />
           <Route path="/terminos" element={<TermsPage />} />
