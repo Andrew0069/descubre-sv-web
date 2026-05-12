@@ -6,6 +6,7 @@ import { useIdioma } from '../lib/idiomaContext'
 import { CategoriaIconSvg } from '../components/CategoriaChip'
 import LugarCard, { LugarCardSkeleton } from '../components/LugarCard'
 import Loader from '../components/Loader'
+import Toast from '../components/Toast'
 import { useNotificaciones } from '../lib/useNotificaciones'
 import { resolveImageUrl } from '../lib/imageUrl'
 import { getUsuarioNavbar } from '../services/usuariosService'
@@ -725,7 +726,7 @@ export default function Home() {
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 16px' }}>
                       <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#111827' }}>Anteriores</div>
-                      <button type="button" onClick={handleVerTodasNotificaciones} style={{ background: 'none', border: 'none', color: '#0EA5E9', fontSize: '0.85rem', cursor: 'pointer', padding: 0 }}>Ver todo</button>
+                      <button type="button" onClick={() => { setCampanaOpen(false); navigate('/notificaciones') }} style={{ background: 'none', border: 'none', color: '#F5A623', fontSize: '0.85rem', cursor: 'pointer', padding: 0, fontWeight: 600 }}>Ver todo</button>
                     </div>
 
                     {notificacionesVisibles.length === 0 ? (
@@ -1484,28 +1485,7 @@ export default function Home() {
         </footer>
       </div>
 
-      {toast && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '2rem',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            backgroundColor: '#111827',
-            color: '#ffffff',
-            padding: '0.75rem 1.5rem',
-            borderRadius: '50px',
-            fontSize: '0.85rem',
-            fontWeight: '500',
-            zIndex: 999,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-            animation: 'fadeInUpToast 0.25s ease',
-          }}
-          role="status"
-        >
-          {toast}
-        </div>
-      )}
+      <Toast msg={toast} />
       {/*
           mensaje="Guardá tus lugares favoritos y llevá El Salvador en el bolsillo."
 

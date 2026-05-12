@@ -777,6 +777,57 @@
         "Perfil.jsx: TabGuias fue modificado para mostrar la ruta uniendo nombres_lugares con flechas ' → '.",
         "Perfil.jsx: se corrigió getGuiasByUser que recibía erroneamente uid (internal db id) en lugar de sess.user.id (Supabase Auth ID) permitiendo cargar las guías en el perfil privado."
       ]
+    },
+    {
+      "id": 43,
+      "date": "2026-05-12",
+      "ai_tool": "Claude Code Sonnet 4.6",
+      "summary": "Fix mapa en viewer de guías: reemplazado iframe de Google Maps (bloqueado) por botón que abre la ruta en Google Maps en nueva pestaña.",
+      "files_modified": [
+        "src/pages/Guias.jsx"
+      ],
+      "changes": [
+        "buildRouteMapUrl renombrado a buildRouteOpenUrl y URL cambiada a enlace directo (no embed)",
+        "Panel mapa reemplazado: eliminado iframe, ahora muestra emoji + descripción + botón Abrir ruta en Google Maps (target=_blank)"
+      ]
+    },
+    {
+      "id": 44,
+      "date": "2026-05-12",
+      "ai_tool": "Claude Code Sonnet 4.6",
+      "summary": "Fix visual GuiaViewer: esquema de colores cambiado a crema/blanco+amarillo de la app; botón Volver estándar agregado en barra superior.",
+      "files_modified": [
+        "src/pages/Guias.jsx"
+      ],
+      "changes": [
+        "GuiaViewer: fondo cambiado de oscuro (#0d0d1a) a crema (#fffbeb / gradiente #fef3c7)",
+        "Barra superior: fondo blanco con sombra sutil, texto oscuro",
+        "Botón Volver: estilo estándar de la app (bg #f3f4f6, color #374151, hover #e5e7eb)",
+        "Panel lista: fondo blanco, textos en grises oscuros legibles",
+        "ViewerStop: nombre en #111827, departamento en #6b7280, conector en #fde68a",
+        "Panel mapa: gradiente crema/amarillo claro, textos en grises"
+      ]
+    },
+    {
+      "id": 45,
+      "date": "2026-05-12",
+      "ai_tool": "Claude Code Sonnet 4.6",
+      "summary": "Mejora de notificaciones del sistema: nuevo componente Toast compartido con colores de la app, posición top-center y animación spring.",
+      "files_modified": [
+        "src/components/Toast.jsx",
+        "src/App.jsx",
+        "src/pages/Home.jsx",
+        "src/pages/DetalleLugar.jsx",
+        "src/pages/AdminPage.jsx",
+        "src/pages/Guias.jsx"
+      ],
+      "changes": [
+        "Creado src/components/Toast.jsx: top-center, fondo crema/blanco, borde izquierdo amarillo, icono, animación toastSlideDown (spring) + toastSlideUp al salir",
+        "Detección automática de tipo por contenido: error (rojo), success (amarillo), warning (ámbar), info (amarillo)",
+        "App.jsx: keyframes toastSlideDown y toastSlideUp agregados globalmente",
+        "Home.jsx, DetalleLugar.jsx, AdminPage.jsx: reemplazados renders inline oscuros con <Toast msg={toast} />",
+        "Guias.jsx: eliminado componente Toast local y keyframes duplicados, ahora usa el componente compartido"
+      ]
     }
   ]
 }

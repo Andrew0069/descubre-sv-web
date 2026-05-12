@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { getLugaresHome, getLugaresByIds } from '../services/lugaresService'
 import { getGuiasByUser, createGuia, updateGuia, deleteGuia } from '../services/guiasService'
 import { resolveImageUrl } from '../lib/imageUrl'
+import Toast from '../components/Toast'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -29,33 +30,6 @@ function formatDate(iso) {
 }
 
 // ─── sub-components ─────────────────────────────────────────────────────────
-
-function Toast({ msg }) {
-  if (!msg) return null
-  return (
-    <div
-      role="status"
-      style={{
-        position: 'fixed',
-        bottom: '2rem',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        backgroundColor: '#111827',
-        color: '#fff',
-        padding: '0.75rem 1.5rem',
-        borderRadius: '50px',
-        fontSize: '0.85rem',
-        fontWeight: 500,
-        zIndex: 9999,
-        boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-        animation: 'fadeInUpToast 0.25s ease',
-        whiteSpace: 'nowrap',
-      }}
-    >
-      {msg}
-    </div>
-  )
-}
 
 // Dot stepper below the timeline
 function StepperDots({ count, max = 8 }) {
@@ -393,15 +367,15 @@ function GuiaItem({ guia, lugares, onCargar, onEliminar }) {
 
 // ─── guia viewer helpers ─────────────────────────────────────────────────────
 
-function buildRouteMapUrl(lugaresList) {
+function buildRouteOpenUrl(lugaresList) {
   if (!lugaresList || lugaresList.length === 0) return null
   const wps = lugaresList.map((l) =>
     l.latitud && l.longitud
       ? `${l.latitud},${l.longitud}`
       : encodeURIComponent(`${l.nombre}, El Salvador`)
   )
-  if (wps.length === 1) return `https://www.google.com/maps?q=${wps[0]}&output=embed`
-  return `https://www.google.com/maps/dir/${wps.join('/')}/?output=embed`
+  if (wps.length === 1) return `https://www.google.com/maps/search/?api=1&query=${wps[0]}`
+  return `https://www.google.com/maps/dir/${wps.join('/')}/`
 }
 
 function ViewerStop({ lugar, index, isLast }) {
@@ -415,15 +389,15 @@ function ViewerStop({ lugar, index, isLast }) {
           fontSize: '0.78rem', fontWeight: 800, flexShrink: 0,
         }}>{index + 1}</div>
         {!isLast && (
-          <div style={{ width: 2, flex: 1, minHeight: 20, background: 'rgba(245,200,66,0.25)', margin: '4px 0' }} />
+          <div style={{ width: 2, flex: 1, minHeight: 20, background: '#fde68a', margin: '4px 0' }} />
         )}
       </div>
       <div style={{ paddingTop: 4, minWidth: 0 }}>
-        <p style={{ fontSize: '0.88rem', fontWeight: 700, color: '#fff', margin: '0 0 2px', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <p style={{ fontSize: '0.88rem', fontWeight: 700, color: '#111827', margin: '0 0 2px', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {lugar.nombre}
         </p>
         {lugar.departamentos?.nombre && (
-          <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+          <p style={{ fontSize: '0.72rem', color: '#6b7280', margin: 0 }}>
             📍 {lugar.departamentos.nombre}
           </p>
         )}
@@ -431,8 +405,8 @@ function ViewerStop({ lugar, index, isLast }) {
           <span style={{
             display: 'inline-block', marginTop: 4,
             fontSize: '0.65rem', fontWeight: 600,
-            background: `${lugar.categorias.color || '#0EA5E9'}25`,
-            color: lugar.categorias.color || '#93c5fd',
+            background: `${lugar.categorias.color || '#0EA5E9'}20`,
+            color: lugar.categorias.color || '#0EA5E9',
             borderRadius: 20, padding: '2px 7px',
           }}>
             {lugar.categorias.nombre}
@@ -444,32 +418,42 @@ function ViewerStop({ lugar, index, isLast }) {
 }
 
 function GuiaViewer({ guia, lugares, loading, navigate }) {
-  const mapSrc = buildRouteMapUrl(lugares)
+  const mapUrl = buildRouteOpenUrl(lugares)
   return (
-    <div style={{ minHeight: '100vh', background: '#0d0d1a' }}>
+    <div style={{ minHeight: '100vh', background: '#fffbeb' }}>
       <style>{`
         .gv-layout { display:flex; flex-direction:column; }
         .gv-panel  { min-height:240px; overflow-y:auto; }
-        .gv-map    { min-height:280px; height:280px; }
+        .gv-map    { min-height:320px; height:320px; }
         @media (min-width:768px) {
-          .gv-layout { flex-direction:row; height:calc(100vh - 56px); }
-          .gv-panel  { width:320px; height:100%; overflow-y:auto; }
+          .gv-layout { flex-direction:row; height:calc(100vh - 60px); }
+          .gv-panel  { width:300px; height:100%; overflow-y:auto; }
           .gv-map    { flex:1; height:100% !important; }
         }
       `}</style>
 
       {/* Barra superior */}
       <div style={{
-        background: '#1a1a2e', padding: '12px 20px',
+        background: '#fff',
+        padding: '12px 20px',
         display: 'flex', alignItems: 'center', gap: 12,
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        borderBottom: '1px solid #f3f4f6',
         position: 'sticky', top: 0, zIndex: 10,
+        boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
       }}>
         <button
           onClick={() => navigate('/guias')}
-          style={{ background: 'none', border: 'none', color: '#F5C842', cursor: 'pointer', fontSize: '1.3rem', lineHeight: 1, padding: 0 }}
-        >←</button>
-        <h2 style={{ color: '#fff', fontSize: '1rem', fontWeight: 700, margin: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: '#f3f4f6', border: 'none', borderRadius: 8,
+            padding: '6px 14px', fontSize: '0.85rem', fontWeight: 500,
+            color: '#374151', cursor: 'pointer', flexShrink: 0,
+            transition: 'background-color 0.2s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.backgroundColor = '#e5e7eb'}
+          onMouseLeave={e => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+        >← Volver</button>
+        <h2 style={{ color: '#111827', fontSize: '1rem', fontWeight: 700, margin: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {guia.nombre}
         </h2>
         <button
@@ -482,15 +466,15 @@ function GuiaViewer({ guia, lugares, loading, navigate }) {
 
       {/* Cuerpo dos paneles */}
       <div className="gv-layout">
-        {/* Panel lista oscuro */}
-        <div className="gv-panel" style={{ background: '#1a1a2e', padding: '20px 16px' }}>
-          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 16 }}>
+        {/* Panel lista */}
+        <div className="gv-panel" style={{ background: '#fff', padding: '20px 16px', borderRight: '1px solid #f3f4f6' }}>
+          <p style={{ color: '#9ca3af', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 16 }}>
             Puntos de la ruta
           </p>
           {loading ? (
-            <p style={{ color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 40 }}>Cargando paradas…</p>
+            <p style={{ color: '#9ca3af', textAlign: 'center', marginTop: 40, fontSize: '0.85rem' }}>Cargando paradas…</p>
           ) : lugares.length === 0 ? (
-            <p style={{ color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 40 }}>Esta guía no tiene lugares.</p>
+            <p style={{ color: '#9ca3af', textAlign: 'center', marginTop: 40, fontSize: '0.85rem' }}>Esta guía no tiene lugares.</p>
           ) : (
             <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
               {lugares.map((l, i) => (
@@ -499,29 +483,58 @@ function GuiaViewer({ guia, lugares, loading, navigate }) {
             </ol>
           )}
           {guia.descripcion && (
-            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.8rem', marginTop: 24, lineHeight: 1.5 }}>
+            <p style={{ color: '#6b7280', fontSize: '0.8rem', marginTop: 24, lineHeight: 1.5 }}>
               {guia.descripcion}
             </p>
           )}
         </div>
 
-        {/* Panel mapa */}
-        <div className="gv-map" style={{ position: 'relative', background: '#0d0d1a' }}>
-          {!mapSrc || loading ? (
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.25)', fontSize: '0.85rem', padding: '0 1.5rem', textAlign: 'center' }}>
-              {loading ? 'Cargando mapa…' : 'Agregá al menos 2 lugares para ver la ruta'}
-            </div>
+        {/* Panel mapa / CTA */}
+        <div className="gv-map" style={{
+          background: 'radial-gradient(circle at 30% 40%, #fffbeb 0%, #fef3c7 100%)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexDirection: 'column', gap: 20, padding: '2.5rem',
+        }}>
+          {loading ? (
+            <p style={{ color: '#9ca3af', fontSize: '0.85rem' }}>Cargando paradas…</p>
+          ) : !mapUrl ? (
+            <p style={{ color: '#9ca3af', fontSize: '0.85rem', textAlign: 'center' }}>
+              Agregá al menos un lugar para ver la ruta
+            </p>
           ) : (
-            <iframe
-              title={`Ruta: ${guia.nombre}`}
-              src={mapSrc}
-              width="100%"
-              height="100%"
-              style={{ border: 0, display: 'block', minHeight: 280 }}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
+            <>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '3.5rem', marginBottom: 10 }}>🗺️</div>
+                <p style={{ color: '#374151', fontSize: '1rem', fontWeight: 700, margin: 0 }}>
+                  Ruta con {lugares.length} {lugares.length === 1 ? 'parada' : 'paradas'}
+                </p>
+                {guia.descripcion && (
+                  <p style={{ color: '#6b7280', fontSize: '0.82rem', marginTop: 6, maxWidth: 320, lineHeight: 1.5 }}>
+                    {guia.descripcion}
+                  </p>
+                )}
+              </div>
+              <a
+                href={mapUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  background: '#F5C842', color: '#111827',
+                  padding: '12px 28px', borderRadius: 10,
+                  fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none',
+                  boxShadow: '0 4px 16px rgba(245,200,66,0.4)',
+                  transition: 'transform 0.15s, box-shadow 0.15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(245,200,66,0.5)' }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(245,200,66,0.4)' }}
+              >
+                <span>📍</span> Abrir ruta en Google Maps
+              </a>
+              <p style={{ color: '#9ca3af', fontSize: '0.72rem', textAlign: 'center', margin: 0 }}>
+                Se abrirá en una nueva pestaña
+              </p>
+            </>
           )}
         </div>
       </div>
@@ -734,10 +747,6 @@ export default function Guias() {
   return (
     <div style={{ minHeight: '100vh', background: '#fafafa' }}>
       <style>{`
-        @keyframes fadeInUpToast {
-          from { opacity:0; transform:translateX(-50%) translateY(10px); }
-          to { opacity:1; transform:translateX(-50%) translateY(0); }
-        }
         @keyframes guiaFadeUp {
           from { opacity:0; transform:translateY(16px); }
           to { opacity:1; transform:translateY(0); }

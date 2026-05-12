@@ -16,6 +16,7 @@ import CookieConsent from './components/CookieConsent'
 import PrivacyPage from './pages/PrivacyPage'
 import TermsPage from './pages/TermsPage'
 import Guias from './pages/Guias'
+import Notificaciones from './pages/Notificaciones'
 
 function AnimatedRoutes() {
   const location = useLocation()
@@ -38,6 +39,14 @@ function AnimatedRoutes() {
         @keyframes fadeInUpToast {
           from { opacity: 0; transform: translateX(-50%) translateY(10px); }
           to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        @keyframes toastSlideDown {
+          from { opacity: 0; transform: translateX(-50%) translateY(-20px) scale(0.95); }
+          to   { opacity: 1; transform: translateX(-50%) translateY(0)     scale(1);    }
+        }
+        @keyframes toastSlideUp {
+          from { opacity: 1; transform: translateX(-50%) translateY(0)     scale(1);    }
+          to   { opacity: 0; transform: translateX(-50%) translateY(-14px) scale(0.96); }
         }
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(8px); }
@@ -73,6 +82,7 @@ function AnimatedRoutes() {
           <Route path="/sugerir-lugar" element={<SugerirLugar />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/guias" element={<Guias />} />
+          <Route path="/notificaciones" element={<Notificaciones />} />
 
           <Route path="/privacidad" element={<PrivacyPage />} />
           <Route path="/terminos" element={<TermsPage />} />

@@ -17,6 +17,7 @@ import { getResenasByLugar, createResena } from '../services/resenasService'
 import { createNotificacion } from '../services/notificacionesService'
 import { getImagenesByLugar } from '../services/imagenesService'
 import Loader from '../components/Loader'
+import Toast from '../components/Toast'
 import PhotoPickerSheet from '../components/PhotoPickerSheet'
 import FotoLightbox from '../components/FotoLightbox'
 import { formatRelativeEs } from '../lib/dateUtils'
@@ -780,28 +781,7 @@ export default function DetalleLugar() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
-      {toast && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 100,
-            backgroundColor: '#1f2937',
-            color: '#fff',
-            padding: '12px 20px',
-            borderRadius: '12px',
-            fontSize: '0.875rem',
-            boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
-            maxWidth: 'calc(100% - 2rem)',
-            textAlign: 'center',
-          }}
-          role="status"
-        >
-          {toast}
-        </div>
-      )}
+      <Toast msg={toast} />
 
       {modalOpen && (
         <div style={{

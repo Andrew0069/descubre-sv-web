@@ -5,7 +5,8 @@
       "PowerShell(cd \"C:\\\\Users\\\\andre\\\\Desktop\\\\Destino SV App\"; git show cc07ca2 -- src/pages/Home.jsx | Select-Object -First 100)",
       "mcp__claude_ai_Supabase__list_projects",
       "mcp__claude_ai_Supabase__apply_migration",
-      "mcp__claude_ai_Supabase__execute_sql"
+      "mcp__claude_ai_Supabase__execute_sql",
+      "Bash(node -e \"const d=require\\('./session-log.json'\\); console.log\\(d.sessions[d.sessions.length-1].id\\)\")"
     ]
   }
 }

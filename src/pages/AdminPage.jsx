@@ -6,6 +6,7 @@ import { getLugaresAdmin, createLugar, updateLugar, deleteLugar, updateImagenPri
 import { getResenasAdmin, deleteResena } from '../services/resenasService'
 import { getImagenesByLugar, createImagenLugar, deleteImagen, swapImagenOrden, reorderImagenes } from '../services/imagenesService'
 import { createNotificacion } from '../services/notificacionesService'
+import Toast from '../components/Toast'
 import { resolveImageUrl } from '../lib/imageUrl'
 import EditLugarForm from '../components/EditLugarForm'
 import NewLugarForm, { DEPARTAMENTOS } from '../components/NewLugarForm'
@@ -1124,16 +1125,7 @@ export default function AdminPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb', padding: '2rem' }}>
-      {toast && (
-        <div style={{
-          position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
-          backgroundColor: '#111827', color: '#fff', padding: '12px 24px',
-          borderRadius: '50px', fontSize: '0.875rem', fontWeight: 500,
-          zIndex: 999, boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-        }}>
-          {toast}
-        </div>
-      )}
+      <Toast msg={toast} />
 
       <div style={{ maxWidth: '1180px', margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
