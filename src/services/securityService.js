@@ -36,35 +36,22 @@ export async function logSecurityEvent(session, eventType = 'login') {
     const gps = gpsResult.status === 'fulfilled' ? gpsResult.value : null
     const ip = ipResult.status === 'fulfilled' ? ipResult.value : null
 
-    const row = {
-      event_type: eventType,
-      user_id: session?.user?.id ?? null,
-      email: session?.user?.email ?? null,
-      gps_lat: gps?.lat ?? null,
-      gps_lng: gps?.lng ?? null,
-      gps_accuracy_m: gps?.accuracy ?? null,
-      gps_denied: gps === null,
-      ip_address: ip?.ip ?? null,
-      ip_country_code: ip?.country_code ?? null,
-      ip_country_name: ip?.country_name ?? null,
-      ip_city: ip?.city ?? null,
-      ip_region: ip?.region ?? null,
-      ip_org: ip?.org ?? null,
-      ip_is_proxy: ip?.proxy ?? null,
-      user_agent: navigator.userAgent ?? null,
-    }
-
-    // resolve usuario_db_id from usuarios table if we have a user_id
-    if (row.user_id) {
-      const { data: u } = await supabase
-        .from('usuarios')
-        .select('id')
-        .eq('auth_id', row.user_id)
-        .maybeSingle()
-      row.usuario_db_id = u?.id ?? null
-    }
-
-    await supabase.from('security_logs').insert(row)
+    await supabase.rpc('registrar_security_log', {
+      p_event_type: eventType,
+      p_email: session?.user?.email ?? null,
+      p_gps_lat: gps?.lat ?? null,
+      p_gps_lng: gps?.lng ?? null,
+      p_gps_accuracy_m: gps?.accuracy ?? null,
+      p_gps_denied: gps === null,
+      p_ip_address: ip?.ip ?? null,
+      p_ip_country_code: ip?.country_code ?? null,
+      p_ip_country_name: ip?.country_name ?? null,
+      p_ip_city: ip?.city ?? null,
+      p_ip_region: ip?.region ?? null,
+      p_ip_org: ip?.org ?? null,
+      p_ip_is_proxy: ip?.proxy ?? null,
+      p_user_agent: navigator.userAgent ?? null,
+    })
   } catch {
     // silently swallow — never disrupt the login flow
   }
