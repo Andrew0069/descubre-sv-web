@@ -22,6 +22,9 @@ import PhotoPickerSheet from '../components/PhotoPickerSheet'
 import FotoLightbox from '../components/FotoLightbox'
 import { formatRelativeEs } from '../lib/dateUtils'
 
+const REPLY_MIN_LENGTH = 5
+const REPLY_MAX_LENGTH = 300
+
 
 
 
@@ -74,6 +77,37 @@ function getPublicUserName(usuario, fallback = 'Anónimo') {
   return usuario?.username ? `@${usuario.username}` : fallback
 }
 
+
+function buildRespuestasMap(rows = []) {
+  const map = {}
+  for (const row of rows) {
+    if (!map[row.resena_id]) map[row.resena_id] = []
+    map[row.resena_id].push(row)
+  }
+  return map
+}
+
+function buildThreadGroups(items = []) {
+  const sorted = [...items].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+  const byId = new Map(sorted.map((item) => [item.id, item]))
+  const roots = []
+  const childrenByParent = {}
+
+  for (const item of sorted) {
+    if (item.parent_respuesta_id && byId.has(item.parent_respuesta_id)) {
+      if (!childrenByParent[item.parent_respuesta_id]) childrenByParent[item.parent_respuesta_id] = []
+      childrenByParent[item.parent_respuesta_id].push(item)
+    } else {
+      roots.push(item)
+    }
+  }
+
+  return { roots, childrenByParent }
+}
+
+function getComposerKey(resenaId, parentRespuestaId = null) {
+  return parentRespuestaId ? `reply:${parentRespuestaId}` : `review:${resenaId}`
+}
 
 function HeartIcon({ filled = false, size = 16 }) {
   return (
@@ -159,6 +193,7 @@ export default function DetalleLugar() {
   const [modalOpen, setModalOpen] = useState(false)
   const [modalRatingHover, setModalRatingHover] = useState(null)
   const [session, setSession] = useState(null)
+  const [currentUserProfile, setCurrentUserProfile] = useState(null)
   const [authReady, setAuthReady] = useState(false)
   const [resenaTitulo, setResenaTitulo] = useState('')
   const [resenaTexto, setResenaTexto] = useState('')
@@ -173,10 +208,11 @@ export default function DetalleLugar() {
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const fotosRef = useRef([])
   const [showLoginModal, setShowLoginModal] = useState(false)
-  const [respuestaAbierta, setRespuestaAbierta] = useState(null) // resena_id activo
-  const [respuestaTexto, setRespuestaTexto] = useState('')
-  const [respuestaLoading, setRespuestaLoading] = useState(false)
   const [respuestas, setRespuestas] = useState({}) // { [resena_id]: [...] }
+  const [expandedThreads, setExpandedThreads] = useState({})
+  const [openComposer, setOpenComposer] = useState(null)
+  const [replyDrafts, setReplyDrafts] = useState({})
+  const [replySubmittingKey, setReplySubmittingKey] = useState(null)
   const [loginMensaje, setLoginMensaje] = useState('')
   const [esFavorito, setEsFavorito] = useState(false)
   const [favoritosCount, setFavoritosCount] = useState(0)
@@ -216,6 +252,24 @@ export default function DetalleLugar() {
     return () => data?.subscription?.unsubscribe()
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+
+    const loadCurrentUserProfile = async () => {
+      if (!session?.user?.id) {
+        setCurrentUserProfile(null)
+        return
+      }
+      const profile = await getUsuarioPerfil(session.user.id)
+      if (!cancelled) setCurrentUserProfile(profile ?? null)
+    }
+
+    loadCurrentUserProfile()
+    return () => {
+      cancelled = true
+    }
+  }, [session])
+
   const load = useCallback(async () => {
     if (!id) return
     setLoading(true)
@@ -227,6 +281,10 @@ export default function DetalleLugar() {
       setLugar(null)
       setNotFound(true)
       setResenas([])
+      setRespuestas({})
+      setExpandedThreads({})
+      setOpenComposer(null)
+      setReplyDrafts({})
       setRatingPromedio(null)
       setUserRating(null)
       setResenaLikeCounts({})
@@ -294,15 +352,12 @@ export default function DetalleLugar() {
     if (idsResenas.length > 0) {
       const { data: respData } = await supabase
         .from('respuestas_resena')
-        .select('*, usuarios(username, foto_perfil, avatar_url)')
+        .select('id, resena_id, usuario_id, contenido, created_at, parent_respuesta_id, usuarios(username, foto_perfil, avatar_url)')
         .in('resena_id', idsResenas)
         .order('created_at', { ascending: true })
-      const rmap = {}
-      for (const rr of respData ?? []) {
-        if (!rmap[rr.resena_id]) rmap[rr.resena_id] = []
-        rmap[rr.resena_id].push(rr)
-      }
-      setRespuestas(rmap)
+      setRespuestas(buildRespuestasMap(respData ?? []))
+    } else {
+      setRespuestas({})
     }
 
     // --- Favoritos: check user status + total count ---
@@ -339,15 +394,10 @@ export default function DetalleLugar() {
     if (!resenaIds.length) return
     const { data } = await supabase
       .from('respuestas_resena')
-      .select('*, usuarios(username, foto_perfil, avatar_url)')
+      .select('id, resena_id, usuario_id, contenido, created_at, parent_respuesta_id, usuarios(username, foto_perfil, avatar_url)')
       .in('resena_id', resenaIds)
       .order('created_at', { ascending: true })
-    const map = {}
-    for (const r of data ?? []) {
-      if (!map[r.resena_id]) map[r.resena_id] = []
-      map[r.resena_id].push(r)
-    }
-    setRespuestas(map)
+    setRespuestas(buildRespuestasMap(data ?? []))
   }, [])
 
   useEffect(() => {
@@ -378,6 +428,44 @@ export default function DetalleLugar() {
       state: { from: returnTo },
     })
   }, [navigate, returnTo])
+
+  const openReplyComposer = useCallback((config) => {
+    const composer = {
+      resenaId: config.resenaId,
+      duenioResenaId: config.duenioResenaId,
+      parentRespuestaId: config.parentRespuestaId ?? null,
+      replyToUserName: config.replyToUserName ?? null,
+      replyToUserId: config.replyToUserId ?? null,
+    }
+    setOpenComposer((prev) => {
+      if (
+        prev?.resenaId === composer.resenaId &&
+        prev?.parentRespuestaId === composer.parentRespuestaId
+      ) {
+        return null
+      }
+      return composer
+    })
+    setExpandedThreads((prev) => ({ ...prev, [config.resenaId]: true }))
+  }, [])
+
+  const updateReplyDraft = useCallback((resenaId, parentRespuestaId, value) => {
+    const key = getComposerKey(resenaId, parentRespuestaId)
+    setReplyDrafts((prev) => ({
+      ...prev,
+      [key]: value.slice(0, REPLY_MAX_LENGTH),
+    }))
+  }, [])
+
+  const clearReplyDraft = useCallback((resenaId, parentRespuestaId) => {
+    const key = getComposerKey(resenaId, parentRespuestaId)
+    setReplyDrafts((prev) => {
+      if (!(key in prev)) return prev
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+  }, [])
 
   useEffect(() => {
     if (!showLoginModal) return
@@ -535,15 +623,21 @@ export default function DetalleLugar() {
     [session, userResenaLikes, resenas],
   )
 
-  const handleResponder = useCallback(async (resenaId, duenioResenaId) => {
+  const handleResponder = useCallback(async ({
+    resenaId,
+    duenioResenaId,
+    parentRespuestaId = null,
+    replyToUserId = null,
+  }) => {
     if (!session?.user) {
       setLoginMensaje('Iniciá sesión para responder reseñas.')
       redirectToLogin()
       return
     }
 
-    const texto = respuestaTexto.trim()
-    if (!texto || texto.length < 5) return
+    const composerKey = getComposerKey(resenaId, parentRespuestaId)
+    const texto = (replyDrafts[composerKey] ?? '').trim()
+    if (!texto || texto.length < REPLY_MIN_LENGTH) return
 
     const allowedRespuesta = await checkRateLimit(session.user.id, 'crear_respuesta')
     if (allowedRespuesta === false) {
@@ -551,11 +645,13 @@ export default function DetalleLugar() {
       return
     }
 
-    setRespuestaLoading(true)
+    setReplySubmittingKey(composerKey)
 
-    const usuarioRow = await getUsuarioPerfil(session.user.id)
+    const usuarioRow = currentUserProfile ?? await getUsuarioPerfil(session.user.id)
 
-    if (!usuarioRow) { setRespuestaLoading(false); return }
+    if (!usuarioRow) { setReplySubmittingKey(null); return }
+
+    if (!currentUserProfile) setCurrentUserProfile(usuarioRow)
 
     const contenidoRespuesta = filterProfanity(texto)
 
@@ -565,11 +661,12 @@ export default function DetalleLugar() {
         resena_id: resenaId,
         usuario_id: usuarioRow.id,
         contenido: contenidoRespuesta,
+        parent_respuesta_id: parentRespuestaId,
       })
 
     if (error) {
       console.error('[handleResponder] insert error:', error)
-      setRespuestaLoading(false)
+      setReplySubmittingKey(null)
       return
     }
 
@@ -582,12 +679,27 @@ export default function DetalleLugar() {
       })
     }
 
+    if (
+      parentRespuestaId &&
+      replyToUserId &&
+      replyToUserId !== usuarioRow.id &&
+      replyToUserId !== duenioResenaId
+    ) {
+      await createNotificacion({
+        usuario_id: replyToUserId,
+        tipo: 'respuesta',
+        resena_id: resenaId,
+        actor_id: usuarioRow.id,
+      })
+    }
+
     const nuevaRespuesta = {
       id: crypto.randomUUID(),
       resena_id: resenaId,
       usuario_id: usuarioRow.id,
       contenido: contenidoRespuesta,
       created_at: new Date().toISOString(),
+      parent_respuesta_id: parentRespuestaId,
       usuarios: {
         username: usuarioRow.username ?? null,
         foto_perfil: usuarioRow.foto_perfil ?? null,
@@ -598,10 +710,11 @@ export default function DetalleLugar() {
       ...prev,
       [resenaId]: [...(prev[resenaId] ?? []), nuevaRespuesta],
     }))
-    setRespuestaTexto('')
-    setRespuestaAbierta(null)
-    setRespuestaLoading(false)
-  }, [respuestaTexto, session])
+    clearReplyDraft(resenaId, parentRespuestaId)
+    setExpandedThreads((prev) => ({ ...prev, [resenaId]: true }))
+    setOpenComposer(null)
+    setReplySubmittingKey(null)
+  }, [clearReplyDraft, currentUserProfile, replyDrafts, session, redirectToLogin])
 
   const handleFotos = (e) => {
     const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -742,6 +855,73 @@ export default function DetalleLugar() {
       setResenaPreview([])
       setResenaSuccess(false)
     }, 800)
+  }
+
+  const renderReplyComposer = ({
+    resenaId,
+    duenioResenaId,
+    parentRespuestaId = null,
+    replyToUserName = null,
+    replyToUserId = null,
+  }) => {
+    const composerKey = getComposerKey(resenaId, parentRespuestaId)
+    const draft = replyDrafts[composerKey] ?? ''
+    const isSubmitting = replySubmittingKey === composerKey
+    const currentUserName = getPublicUserName(currentUserProfile, t.anonimo)
+
+    return (
+      <div className="reply-composer">
+        <AvatarImg
+          src={currentUserProfile?.foto_perfil}
+          fallbackSrc={currentUserProfile?.avatar_url}
+          nombre={currentUserName}
+          size={34}
+          fontSize="0.8rem"
+        />
+        <div className="reply-composer__body">
+          {replyToUserName && (
+            <p className="reply-composer__hint">
+              {idioma === 'en' ? 'Replying to' : 'Respondiendo a'} <strong>{replyToUserName}</strong>
+            </p>
+          )}
+          <textarea
+            value={draft}
+            onChange={(e) => updateReplyDraft(resenaId, parentRespuestaId, e.target.value)}
+            placeholder={idioma === 'en' ? 'Write your reply...' : 'Escribí tu respuesta...'}
+            rows={parentRespuestaId ? 2 : 3}
+            className="respuesta-textarea reply-composer__textarea"
+          />
+          <div className="reply-composer__footer">
+            <span className="reply-composer__count">{draft.trim().length}/{REPLY_MAX_LENGTH}</span>
+            <div className="reply-composer__actions">
+              <button
+                type="button"
+                className="reply-composer__cancel"
+                onClick={() => {
+                  clearReplyDraft(resenaId, parentRespuestaId)
+                  setOpenComposer(null)
+                }}
+              >
+                {idioma === 'en' ? 'Cancel' : 'Cancelar'}
+              </button>
+              <button
+                type="button"
+                className="reply-composer__submit"
+                disabled={isSubmitting || draft.trim().length < REPLY_MIN_LENGTH}
+                onClick={() => handleResponder({
+                  resenaId,
+                  duenioResenaId,
+                  parentRespuestaId,
+                  replyToUserId,
+                })}
+              >
+                {isSubmitting ? '…' : idioma === 'en' ? 'Send' : 'Enviar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (loading) {
@@ -1793,6 +1973,11 @@ export default function DetalleLugar() {
                   const autor = getPublicUserName(r.usuarios, t.anonimo)
                   const rLikeCount = resenaLikeCounts[r.id] ?? 0
                   const rUserLiked = !!userResenaLikes[r.id]
+                  const threadItems = respuestas[r.id] ?? []
+                  const { roots, childrenByParent } = buildThreadGroups(threadItems)
+                  const totalReplies = threadItems.length
+                  const isThreadExpanded = !!expandedThreads[r.id]
+                  const reviewComposerOpen = openComposer?.resenaId === r.id && !openComposer?.parentRespuestaId
 
                   return (
                     <li
@@ -1911,7 +2096,7 @@ export default function DetalleLugar() {
                           )}
 
                           {/* Acciones: like + responder */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
                             <button
                               type="button"
                               onClick={() => handleToggleResenaLike(r.id)}
@@ -1936,11 +2121,14 @@ export default function DetalleLugar() {
                               type="button"
                               onClick={() => {
                                 if (!session?.user) {
+                                  setLoginMensaje('Iniciá sesión para responder reseñas.')
                                   redirectToLogin()
                                   return
                                 }
-                                setRespuestaAbierta(respuestaAbierta === r.id ? null : r.id)
-                                setRespuestaTexto('')
+                                openReplyComposer({
+                                  resenaId: r.id,
+                                  duenioResenaId: r.usuario_id,
+                                })
                               }}
                               style={{
                                 background: 'none',
@@ -1952,12 +2140,31 @@ export default function DetalleLugar() {
                                 fontWeight: 600,
                               }}
                             >
-                              Responder
+                              {idioma === 'en' ? 'Reply' : 'Responder'}
                             </button>
+                            {totalReplies > 0 && (
+                              <button
+                                type="button"
+                                className="reply-thread-toggle"
+                                onClick={() => setExpandedThreads((prev) => ({ ...prev, [r.id]: !prev[r.id] }))}
+                              >
+                                <span>{idioma === 'en'
+                                  ? `${totalReplies} repl${totalReplies === 1 ? 'y' : 'ies'}`
+                                  : `${totalReplies} respuesta${totalReplies === 1 ? '' : 's'}`}</span>
+                                <span>{isThreadExpanded
+                                  ? (idioma === 'en' ? 'Hide conversation' : 'Ocultar conversación')
+                                  : (idioma === 'en' ? 'View conversation' : 'Ver conversación')}</span>
+                              </button>
+                            )}
                           </div>
 
+                          {reviewComposerOpen && renderReplyComposer({
+                            resenaId: r.id,
+                            duenioResenaId: r.usuario_id,
+                          })}
+
                           {/* Input responder */}
-                          {respuestaAbierta === r.id && (
+                          {false && respuestaAbierta === r.id && (
                             <div style={{ marginTop: '10px', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                               <textarea
                                 value={respuestaTexto}
@@ -1999,8 +2206,94 @@ export default function DetalleLugar() {
                             </div>
                           )}
 
+                          {totalReplies > 0 && isThreadExpanded && (
+                            <div className="reply-thread">
+                              {roots.map((rep) => {
+                                const repNombre = getPublicUserName(rep.usuarios, t.anonimo)
+                                const childReplies = childrenByParent[rep.id] ?? []
+                                const childComposerOpen = openComposer?.resenaId === r.id && openComposer?.parentRespuestaId === rep.id
+
+                                return (
+                                  <div key={rep.id} className="reply-thread__item">
+                                    <div className="reply-card">
+                                      <AvatarImg
+                                        src={rep.usuarios?.foto_perfil}
+                                        fallbackSrc={rep.usuarios?.avatar_url}
+                                        nombre={repNombre}
+                                        size={30}
+                                        fontSize="0.7rem"
+                                      />
+                                      <div style={{ flex: 1, minWidth: 0 }}>
+                                        <p className="reply-card__meta">
+                                          <span className="reply-card__author">{repNombre}</span>
+                                          <span>{formatRelativeEs(rep.created_at)}</span>
+                                        </p>
+                                        <p className="reply-card__content">{rep.contenido}</p>
+                                        {childReplies.length === 0 && (
+                                          <button
+                                            type="button"
+                                            className="reply-card__action"
+                                            onClick={() => {
+                                              if (!session?.user) {
+                                                setLoginMensaje('Iniciá sesión para responder reseñas.')
+                                                redirectToLogin()
+                                                return
+                                              }
+                                              openReplyComposer({
+                                                resenaId: r.id,
+                                                duenioResenaId: r.usuario_id,
+                                                parentRespuestaId: rep.id,
+                                                replyToUserName: repNombre,
+                                                replyToUserId: rep.usuario_id,
+                                              })
+                                            }}
+                                          >
+                                            {idioma === 'en' ? 'Reply' : 'Responder'}
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {childComposerOpen && renderReplyComposer({
+                                      resenaId: r.id,
+                                      duenioResenaId: r.usuario_id,
+                                      parentRespuestaId: rep.id,
+                                      replyToUserName: openComposer?.replyToUserName ?? repNombre,
+                                      replyToUserId: openComposer?.replyToUserId ?? rep.usuario_id,
+                                    })}
+
+                                    {childReplies.map((child) => {
+                                      const childNombre = getPublicUserName(child.usuarios, t.anonimo)
+                                      return (
+                                        <div key={child.id} className="reply-card reply-card--child">
+                                          <AvatarImg
+                                            src={child.usuarios?.foto_perfil}
+                                            fallbackSrc={child.usuarios?.avatar_url}
+                                            nombre={childNombre}
+                                            size={28}
+                                            fontSize="0.7rem"
+                                          />
+                                          <div style={{ flex: 1, minWidth: 0 }}>
+                                            <p className="reply-card__meta">
+                                              <span className="reply-card__author">{childNombre}</span>
+                                              <span>{formatRelativeEs(child.created_at)}</span>
+                                            </p>
+                                            <p className="reply-card__replying">
+                                              {idioma === 'en' ? 'Replying to' : 'Respondiendo a'} <strong>{repNombre}</strong>
+                                            </p>
+                                            <p className="reply-card__content">{child.contenido}</p>
+                                          </div>
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+
                           {/* Respuestas */}
-                          {(respuestas[r.id] ?? []).map((rep) => {
+                          {false && (respuestas[r.id] ?? []).map((rep) => {
                             const repNombre = getPublicUserName(rep.usuarios, 'Anónimo')
                             return (
                               <div key={rep.id} style={{

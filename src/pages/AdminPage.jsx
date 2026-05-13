@@ -223,7 +223,7 @@ export default function AdminPage() {
 
     const { data: respuestasRows, error: respuestasError } = await supabase
       .from('respuestas_resena')
-      .select('id, resena_id, usuario_id, contenido, created_at, usuarios(nombre)')
+      .select('id, resena_id, usuario_id, contenido, created_at, parent_respuesta_id, usuarios(nombre)')
       .in('resena_id', ids)
       .order('created_at', { ascending: true })
 

@@ -881,6 +881,62 @@
         "Imágenes de reseñas en mobile: contenedor con overflowX:auto + scrollSnapType:x mandatory + WebkitOverflowScrolling:touch; cada imagen 70vw ancho con scrollSnapAlign:start; en desktop quedan como flex wrap de 110px original",
         "App.jsx: clase global .hide-scrollbar::-webkit-scrollbar { display:none } para ocultar el scrollbar de WebKit en el contenedor de fotos de reseñas"
       ]
+    },
+    {
+      "id": 49,
+      "date": "2026-05-12",
+      "ai_tool": "Gemini 3.1 Pro (High)",
+      "summary": "Optimización de conteos y promedios en Home usando funciones RPC.",
+      "files_modified": [
+        "src/services/favoritosService.js",
+        "src/services/likesService.js",
+        "src/pages/Home.jsx"
+      ],
+      "changes": [
+        "Reemplazada la query getAllFavoritosConteo por la RPC get_conteos_favoritos",
+        "Reemplazada la query getAllRatingsLugares por la RPC get_ratings_lugares",
+        "Home.jsx: simplificada la asignación de promedios_rating y favoritos_count en loadLugares para usar la respuesta ya agrupada y calculada de la BD"
+      ]
+    },
+    {
+      "id": 50,
+      "date": "2026-05-12",
+      "ai_tool": "Codex",
+      "summary": "Hilos plegables para respuestas de reseÃ±as en DetalleLugar, con composer rediseÃ±ado, soporte de segundo nivel y migraciÃ³n verificada en Supabase.",
+      "files_modified": [
+        "src/pages/DetalleLugar.jsx",
+        "src/index.css",
+        "src/pages/AdminPage.jsx",
+        "supabase/respuestas-threading.sql",
+        "session-log.json"
+      ],
+      "changes": [
+        "DetalleLugar.jsx: respuestas de reseÃ±as pasaron de lista plana a estructura en memoria con raÃ­ces e hijas usando parent_respuesta_id",
+        "Agregado composer inline para responder reseÃ±as o respuestas concretas, con avatar, contador, cancelar/enviar y validaciÃ³n de 5 a 300 caracteres",
+        "Las conversaciones ahora quedan plegadas por defecto bajo cada reseÃ±a con toggle Ver conversaciÃ³n / Ocultar conversaciÃ³n",
+        "La UI de respuestas se rediseÃ±Ã³ en dos niveles visuales: respuesta raÃ­z y respuesta hija con sangrÃ­a y contexto de 'respondiendo a'",
+        "handleResponder fue extendido para insertar parent_respuesta_id y actualizar el hilo local sin recargar la pÃ¡gina",
+        "AdminPage.jsx: el fetch de respuestas ahora incluye parent_respuesta_id para conservar trazabilidad en moderaciÃ³n",
+        "Creado supabase/respuestas-threading.sql con la columna parent_respuesta_id, foreign key autorreferenciada ON DELETE CASCADE e Ã­ndice dedicado",
+        "Validado con npm run build y verificado en Supabase que la columna, la foreign key y el Ã­ndice quedaron creados correctamente"
+      ]
+    },
+    {
+      "id": 51,
+      "date": "2026-05-12",
+      "ai_tool": "Claude Code (Sonnet 4.6)",
+      "summary": "Límite de 2 niveles en hilos de respuestas y notificación al autor de la respuesta padre.",
+      "files_modified": [
+        "src/pages/DetalleLugar.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "DetalleLugar.jsx: botón 'Responder' en respuesta raíz (nivel 1) ahora se oculta cuando ya tiene respuestas hijas — el hilo se detiene en nivel 2 sin posibilidad de cascada",
+        "handleResponder: agregado parámetro replyToUserId; cuando se responde a una respuesta (parentRespuestaId presente), se envía notificación al autor de esa respuesta si es distinto del autor de la reseña y del usuario que responde",
+        "renderReplyComposer: agregado parámetro replyToUserId y lo pasa a handleResponder al enviar",
+        "childComposer: pasa replyToUserId: openComposer?.replyToUserId ?? rep.usuario_id para asegurar que el autor correcto reciba la notificación",
+        "Build validado con npm run build — sin errores nuevos"
+      ]
     }
   ]
 }
