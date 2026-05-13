@@ -32,7 +32,7 @@ export async function createLugar(payload) {
   const { data, error } = await supabase
     .from('lugares')
     .insert(payload)
-    .select(`id, nombre, descripcion, direccion, departamento_id, categoria_id, precio_entrada, subtipo, destacado, imagen_principal, map_url, latitud, longitud, horarios, updated_at, categorias(id, nombre, color), departamentos(id, nombre)`)
+    .select(`id, nombre, descripcion, direccion, departamento_id, categoria_id, precio_entrada, subtipo, destacado, imagen_principal, latitud, longitud, horarios, updated_at, categorias(id, nombre, color), departamentos(id, nombre)`)
     .maybeSingle()
   return { data: data ?? null, error }
 }

@@ -898,7 +898,23 @@ export default function AdminPage() {
       accion: 'DELETE',
       tabla: 'lugares',
       registro_id: lugarSeleccionado.id,
-      detalle: { nombre: lugarSeleccionado.nombre },
+      detalle: {
+        nombre: lugarSeleccionado.nombre,
+        descripcion: lugarSeleccionado.descripcion ?? null,
+        direccion: lugarSeleccionado.direccion ?? null,
+        departamento: lugarSeleccionado.departamentos?.nombre ?? null,
+        departamento_id: lugarSeleccionado.departamento_id ?? null,
+        categoria: lugarSeleccionado.categorias?.nombre ?? null,
+        categoria_id: lugarSeleccionado.categoria_id ?? null,
+        precio_entrada: lugarSeleccionado.precio_entrada ?? null,
+        subtipo: lugarSeleccionado.subtipo ?? null,
+        destacado: lugarSeleccionado.destacado ?? false,
+        latitud: lugarSeleccionado.latitud ?? null,
+        longitud: lugarSeleccionado.longitud ?? null,
+        horarios: lugarSeleccionado.horarios ?? null,
+        imagen_principal: lugarSeleccionado.imagen_principal ?? null,
+        imagenes_eliminadas: paths.length,
+      },
     })
 
     const idEliminado = lugarSeleccionado.id
