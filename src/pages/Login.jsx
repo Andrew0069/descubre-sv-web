@@ -11,8 +11,10 @@ import {
   validateUsername,
 } from '../lib/authValidation'
 
-const MSG_BLOQUEO =
+const MSG_BLOQUEO_AUTO =
   "Tu cuenta ha sido bloqueada por seguridad. Usa '¿Olvidaste tu contraseña?' para desbloquearla."
+const MSG_BLOQUEO_ADMIN =
+  'Tu cuenta ha sido bloqueada. Por favor contacta al administrador: Spotter.App.com'
 
 function parseRpcPayload(data) {
   if (data == null) return null
@@ -70,6 +72,7 @@ export default function Login() {
   const [success, setSuccess] = useState('')
   const [forgotMode, setForgotMode] = useState(false)
   const [cuentaBloqueada, setCuentaBloqueada] = useState(false)
+  const [bloqueadoPorAdmin, setBloqueadoPorAdmin] = useState(false)
   const [splashVisible, setSplashVisible] = useState(true)
   const [splashFading, setSplashFading] = useState(false)
   const [cardVisible, setCardVisible] = useState(false)
@@ -104,9 +107,11 @@ export default function Login() {
       if (qErr) {
         console.error('[Login] bloqueado check:', qErr)
         setCuentaBloqueada(false)
+        setBloqueadoPorAdmin(false)
         return
       }
       setCuentaBloqueada(userData?.bloqueado === true)
+      setBloqueadoPorAdmin(userData?.bloqueado_por_admin === true)
     }, 400)
     return () => {
       cancelled = true
@@ -126,7 +131,7 @@ export default function Login() {
     }
 
     if (!isSignUp && cuentaBloqueada) {
-      setError(MSG_BLOQUEO)
+      setError(bloqueadoPorAdmin ? MSG_BLOQUEO_ADMIN : MSG_BLOQUEO_AUTO)
       setLoading(false)
       return
     }
@@ -245,7 +250,8 @@ export default function Login() {
         const row = parseRpcPayload(rpcData)
         if (row?.bloqueado === true) {
           setCuentaBloqueada(true)
-          setError(MSG_BLOQUEO)
+          setBloqueadoPorAdmin(false)
+          setError(MSG_BLOQUEO_AUTO)
         } else {
           const rest = intentosRestantesDesde(row)
           if (rest != null) {
@@ -270,6 +276,7 @@ export default function Login() {
     }
 
     setCuentaBloqueada(false)
+    setBloqueadoPorAdmin(false)
     navigate(returnTo, { replace: true })
     setLoading(false)
   }
@@ -333,7 +340,9 @@ export default function Login() {
   }
 
   const mensajeBloqueoVisible = !isSignUp && cuentaBloqueada
-  const textoError = mensajeBloqueoVisible ? MSG_BLOQUEO : error
+  const textoError = mensajeBloqueoVisible
+    ? (bloqueadoPorAdmin ? MSG_BLOQUEO_ADMIN : MSG_BLOQUEO_AUTO)
+    : error
 
   return (
     <div
@@ -420,7 +429,7 @@ export default function Login() {
           </button>
         </div>
 
-        {!isSignUp && (
+        {!isSignUp && !bloqueadoPorAdmin && (
           <div style={{ textAlign: 'right', marginBottom: '0.75rem', marginTop: '-0.5rem' }}>
             <span
               onClick={handleForgotPassword}

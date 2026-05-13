@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { getUsuarioAdmin, getUsuarioId } from '../services/usuariosService'
+import {
+  bloquearUsuario,
+  desbloquearUsuario,
+  eliminarUsuarioPerfil,
+  getUsuarioAdmin,
+  getUsuarioId,
+  getUsuariosAdmin,
+  resetearIntentosUsuario,
+} from '../services/usuariosService'
 import { getLugaresAdmin, createLugar, updateLugar, deleteLugar, updateImagenPrincipal } from '../services/lugaresService'
 import { getResenasAdmin, deleteResena } from '../services/resenasService'
 import { getImagenesByLugar, createImagenLugar, deleteImagen, swapImagenOrden, reorderImagenes } from '../services/imagenesService'
@@ -139,6 +147,11 @@ export default function AdminPage() {
   const [securityLogs, setSecurityLogs] = useState([])
   const [loadingSecurityLogs, setLoadingSecurityLogs] = useState(false)
   const [securityFilter, setSecurityFilter] = useState('todos')
+  const [usuarios, setUsuarios] = useState([])
+  const [loadingUsuarios, setLoadingUsuarios] = useState(false)
+  const [userActionId, setUserActionId] = useState(null)
+  const [userSearch, setUserSearch] = useState('')
+  const [confirmEliminarUser, setConfirmEliminarUser] = useState(null)
   const [uploading, setUploading] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deletingLugar, setDeletingLugar] = useState(false)
@@ -326,6 +339,26 @@ export default function AdminPage() {
     cargarLogs()
   }, [activeSection, cargarLogs, checking])
 
+  const cargarUsuarios = useCallback(async () => {
+    setLoadingUsuarios(true)
+    const { data, error } = await getUsuariosAdmin()
+
+    if (error) {
+      console.error(error)
+      showToast('Error al cargar usuarios')
+      setUsuarios([])
+    } else {
+      setUsuarios(data ?? [])
+    }
+
+    setLoadingUsuarios(false)
+  }, [showToast])
+
+  useEffect(() => {
+    if (checking || activeSection !== 'usuarios') return
+    cargarUsuarios()
+  }, [activeSection, cargarUsuarios, checking])
+
   const cargarSecurityLogs = useCallback(async () => {
     setLoadingSecurityLogs(true)
     const { data } = await supabase
@@ -347,17 +380,145 @@ export default function AdminPage() {
     setSecurityLogs(prev => prev.map(l => l.id === log.id ? { ...l, flagged: !l.flagged } : l))
   }
 
-  const handleBloquearUsuarioSecurity = async (log) => {
-    if (!log.usuario_db_id) return
-    await supabase.from('usuarios').update({ bloqueado: true }).eq('id', log.usuario_db_id)
-    await supabase.from('admin_logs').insert({
-      admin_id: adminId,
+  const updateUsuarioLocalState = useCallback((userId, changes) => {
+    setUsuarios((prev) => prev.map((user) => (
+      user.id === userId ? { ...user, ...changes } : user
+    )))
+  }, [])
+
+  const handleBloquearUsuario = useCallback(async (user, detail = {}) => {
+    if (!user?.id) return false
+    setUserActionId(user.id)
+
+    const { error } = await bloquearUsuario(user.id)
+    if (error) {
+      console.error(error)
+      showToast('No se pudo bloquear el usuario')
+      setUserActionId(null)
+      return false
+    }
+
+    updateUsuarioLocalState(user.id, { bloqueado: true })
+
+    const { error: logError } = await insertAdminLog({
       accion: 'UPDATE',
       tabla: 'usuarios',
-      registro_id: log.usuario_db_id,
-      detalle: { motivo: 'seguridad', security_log_id: log.id },
+      registro_id: user.id,
+      detalle: {
+        accion_admin: 'bloquear_usuario',
+        email: user.email ?? null,
+        ...detail,
+      },
     })
-    showToast('Usuario bloqueado')
+
+    if (logError) showToast('Usuario bloqueado, pero no se pudo registrar en bitácora')
+    else showToast('Usuario bloqueado')
+
+    setUserActionId(null)
+    return true
+  }, [insertAdminLog, showToast, updateUsuarioLocalState])
+
+  const handleDesbloquearUsuario = useCallback(async (user) => {
+    if (!user?.id) return
+    setUserActionId(user.id)
+
+    const { error: unlockError } = await desbloquearUsuario(user.id)
+    if (unlockError) {
+      console.error(unlockError)
+      showToast('No se pudo desbloquear el usuario')
+      setUserActionId(null)
+      return
+    }
+
+    const { error: resetError } = await resetearIntentosUsuario(user.id)
+    if (resetError) {
+      console.error(resetError)
+      showToast('Se desbloqueó, pero no se reiniciaron los intentos')
+    } else {
+      showToast('Usuario desbloqueado')
+    }
+
+    updateUsuarioLocalState(user.id, { bloqueado: false })
+
+    const { error: logError } = await insertAdminLog({
+      accion: 'UPDATE',
+      tabla: 'usuarios',
+      registro_id: user.id,
+      detalle: {
+        accion_admin: 'desbloquear_usuario',
+        email: user.email ?? null,
+      },
+    })
+
+    if (logError) showToast('Usuario desbloqueado, pero no se pudo registrar en bitácora')
+
+    setUserActionId(null)
+  }, [insertAdminLog, showToast, updateUsuarioLocalState])
+
+  const handleResetearIntentosUsuario = useCallback(async (user) => {
+    if (!user?.id) return
+    setUserActionId(user.id)
+
+    const { error } = await resetearIntentosUsuario(user.id)
+    if (error) {
+      console.error(error)
+      showToast('No se pudieron reiniciar los intentos')
+      setUserActionId(null)
+      return
+    }
+
+    const { error: logError } = await insertAdminLog({
+      accion: 'UPDATE',
+      tabla: 'usuarios',
+      registro_id: user.id,
+      detalle: {
+        accion_admin: 'resetear_intentos',
+        email: user.email ?? null,
+      },
+    })
+
+    if (logError) showToast('Intentos reiniciados, pero no se pudo registrar en bitácora')
+    else showToast('Intentos reiniciados')
+
+    setUserActionId(null)
+  }, [insertAdminLog, showToast])
+
+  const handleEliminarUsuario = useCallback(async (user) => {
+    if (!user?.id) return
+    setUserActionId(user.id)
+    setConfirmEliminarUser(null)
+
+    await insertAdminLog({
+      accion: 'DELETE',
+      tabla: 'usuarios',
+      registro_id: user.id,
+      detalle: {
+        accion_admin: 'eliminar_perfil',
+        email: user.email ?? null,
+        username: user.username ?? null,
+        nombre: user.nombre ?? null,
+      },
+    })
+
+    const { error } = await eliminarUsuarioPerfil(user.id)
+    if (error) {
+      console.error(error)
+      showToast('No se pudo eliminar el perfil')
+      setUserActionId(null)
+      return
+    }
+
+    setUsuarios((prev) => prev.filter((u) => u.id !== user.id))
+    showToast('Perfil eliminado')
+    setUserActionId(null)
+  }, [insertAdminLog, showToast])
+
+  const handleBloquearUsuarioSecurity = async (log) => {
+    if (!log.usuario_db_id) return
+    await handleBloquearUsuario(
+      { id: log.usuario_db_id, email: log.email ?? null },
+      { motivo: 'seguridad', security_log_id: log.id },
+    )
   }
 
   const cargarImagenes = useCallback(async (lugarId) => {
@@ -1118,14 +1279,69 @@ export default function AdminPage() {
   const sidebarItems = [
     { id: 'lugares', label: `Lugares (${lugares.length})` },
     { id: 'sugerencias', label: `Sugerencias (${sugerencias.filter((s) => (s.estado || 'pendiente') === 'pendiente').length})` },
+    { id: 'usuarios', label: `Usuarios (${usuarios.length})` },
     { id: 'resenas', label: 'Reseñas' },
     { id: 'bitacora', label: 'Bitácora' },
     { id: 'seguridad', label: 'Seguridad' },
   ]
 
+  const filteredUsuarios = usuarios.filter((user) => {
+    const query = userSearch.trim().toLowerCase()
+    if (!query) return true
+
+    return [user.nombre, user.email, user.username]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(query))
+  })
+
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb', padding: '2rem' }}>
       <Toast msg={toast} />
+
+      {confirmEliminarUser && (
+        <div style={{
+          position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999,
+        }}>
+          <div style={{
+            backgroundColor: '#fff', borderRadius: '14px', padding: '2rem',
+            maxWidth: '420px', width: '90%', boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+          }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#111827', marginTop: 0 }}>
+              Eliminar perfil
+            </h3>
+            <p style={{ fontSize: '0.9rem', color: '#374151', lineHeight: 1.5 }}>
+              ¿Estás seguro que deseas eliminar el perfil de{' '}
+              <strong>{confirmEliminarUser.nombre || confirmEliminarUser.username || confirmEliminarUser.email}</strong>?
+            </p>
+            <p style={{ fontSize: '0.82rem', color: '#6b7280', marginBottom: '1.5rem' }}>
+              El usuario deberá crear una nueva cuenta. La acción quedará registrada en la bitácora.
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setConfirmEliminarUser(null)}
+                style={{ ...buttonBase, backgroundColor: '#f3f4f6', color: '#374151' }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={userActionId === confirmEliminarUser.id}
+                onClick={() => handleEliminarUsuario(confirmEliminarUser)}
+                style={{
+                  ...buttonBase,
+                  backgroundColor: '#dc2626',
+                  color: '#fff',
+                  opacity: userActionId === confirmEliminarUser.id ? 0.7 : 1,
+                }}
+              >
+                {userActionId === confirmEliminarUser.id ? 'Eliminando...' : 'Confirmar eliminación'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div style={{ maxWidth: '1180px', margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
@@ -1143,7 +1359,7 @@ export default function AdminPage() {
                 </text>
               </svg>
             </h1>
-            <p style={{ fontSize: '0.85rem', color: '#9ca3af', marginTop: '4px' }}>Gestión de lugares, sugerencias, reseñas y bitácora</p>
+            <p style={{ fontSize: '0.85rem', color: '#9ca3af', marginTop: '4px' }}>Gestión de lugares, usuarios, sugerencias, reseñas y bitácora</p>
           </div>
           <button
             type="button"
@@ -1766,6 +1982,155 @@ export default function AdminPage() {
                       )
                     })}
                   </div>
+                )}
+              </section>
+            )}
+
+            {activeSection === 'usuarios' && (
+              <section style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflowX: 'auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', gap: '1rem', flexWrap: 'wrap' }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#111827', margin: 0 }}>Gestión de Usuarios</h2>
+                    <p style={{ fontSize: '0.85rem', color: '#6b7280', margin: '4px 0 0' }}>{filteredUsuarios.length} usuario{filteredUsuarios.length !== 1 ? 's' : ''} visible{filteredUsuarios.length !== 1 ? 's' : ''}</p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <input
+                      type="search"
+                      placeholder="Buscar por nombre, correo o username"
+                      value={userSearch}
+                      onChange={(e) => setUserSearch(e.target.value)}
+                      style={{
+                        minWidth: '260px',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #d1d5db',
+                        fontSize: '0.85rem',
+                        color: '#111827',
+                      }}
+                    />
+                    <button type="button" onClick={cargarUsuarios} style={{ ...buttonBase, backgroundColor: '#f3f4f6', color: '#374151' }}>
+                      Actualizar
+                    </button>
+                  </div>
+                </div>
+
+                {loadingUsuarios ? (
+                  <p style={{ color: '#6b7280' }}>Cargando usuarios...</p>
+                ) : filteredUsuarios.length === 0 ? (
+                  <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#9ca3af', border: '1px dashed #e5e7eb', borderRadius: '12px' }}>
+                    {usuarios.length === 0 ? 'No hay usuarios para mostrar.' : 'No hay usuarios que coincidan con la búsqueda.'}
+                  </div>
+                ) : (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '920px' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+                        <th style={{ textAlign: 'left', padding: '10px', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>Usuario</th>
+                        <th style={{ textAlign: 'left', padding: '10px', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>Correo</th>
+                        <th style={{ textAlign: 'left', padding: '10px', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>Estado</th>
+                        <th style={{ textAlign: 'left', padding: '10px', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>Rol</th>
+                        <th style={{ textAlign: 'left', padding: '10px', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>Registro</th>
+                        <th style={{ textAlign: 'left', padding: '10px', fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase' }}>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredUsuarios.map((user) => {
+                        const isWorking = userActionId === user.id
+
+                        return (
+                          <tr key={user.id} style={{ borderBottom: '1px solid #f3f4f6', verticalAlign: 'middle' }}>
+                            <td style={{ padding: '12px 10px' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                <span style={{ color: '#111827', fontWeight: 700, fontSize: '0.88rem' }}>{user.nombre || 'Sin nombre'}</span>
+                                <span style={{ color: '#6b7280', fontSize: '0.8rem' }}>@{user.username || 'sin-username'}</span>
+                              </div>
+                            </td>
+                            <td style={{ padding: '12px 10px', color: '#374151', fontSize: '0.84rem' }}>{user.email || 'Sin correo'}</td>
+                            <td style={{ padding: '12px 10px' }}>
+                              <span style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                borderRadius: '999px',
+                                padding: '5px 10px',
+                                fontSize: '0.74rem',
+                                fontWeight: 800,
+                                backgroundColor: user.bloqueado ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.12)',
+                                color: user.bloqueado ? '#dc2626' : '#059669',
+                              }}>
+                                {user.bloqueado ? 'Bloqueado' : 'Activo'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '12px 10px', color: '#374151', fontSize: '0.84rem', fontWeight: 600 }}>
+                              {user.is_admin ? 'Admin' : 'Usuario'}
+                            </td>
+                            <td style={{ padding: '12px 10px', color: '#374151', fontSize: '0.84rem', whiteSpace: 'nowrap' }}>
+                              {formatDateTime(user.created_at)}
+                            </td>
+                            <td style={{ padding: '12px 10px' }}>
+                              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                {user.bloqueado ? (
+                                  <button
+                                    type="button"
+                                    disabled={isWorking}
+                                    onClick={() => handleDesbloquearUsuario(user)}
+                                    style={{
+                                      ...buttonBase,
+                                      backgroundColor: 'rgba(16,185,129,0.12)',
+                                      color: '#059669',
+                                      opacity: isWorking ? 0.7 : 1,
+                                    }}
+                                  >
+                                    {isWorking ? 'Procesando...' : 'Desbloquear'}
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    disabled={isWorking}
+                                    onClick={() => handleBloquearUsuario(user)}
+                                    style={{
+                                      ...buttonBase,
+                                      backgroundColor: '#fef2f2',
+                                      color: '#dc2626',
+                                      opacity: isWorking ? 0.7 : 1,
+                                    }}
+                                  >
+                                    {isWorking ? 'Procesando...' : 'Bloquear'}
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  disabled={isWorking}
+                                  onClick={() => handleResetearIntentosUsuario(user)}
+                                  style={{
+                                    ...buttonBase,
+                                    backgroundColor: '#f3f4f6',
+                                    color: '#374151',
+                                    opacity: isWorking ? 0.7 : 1,
+                                  }}
+                                >
+                                  Reiniciar intentos
+                                </button>
+                                {!user.is_admin && (
+                                  <button
+                                    type="button"
+                                    disabled={isWorking}
+                                    onClick={() => setConfirmEliminarUser(user)}
+                                    style={{
+                                      ...buttonBase,
+                                      backgroundColor: '#fef2f2',
+                                      color: '#991b1b',
+                                      opacity: isWorking ? 0.7 : 1,
+                                    }}
+                                  >
+                                    Eliminar perfil
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
                 )}
               </section>
             )}

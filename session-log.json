@@ -1,6 +1,6 @@
 {
   "project": "Destino SV App",
-  "last_updated": "2026-05-12",
+  "last_updated": "2026-05-13",
   "sessions": [
     {
       "id": 1,
@@ -936,6 +936,71 @@
         "renderReplyComposer: agregado parámetro replyToUserId y lo pasa a handleResponder al enviar",
         "childComposer: pasa replyToUserId: openComposer?.replyToUserId ?? rep.usuario_id para asegurar que el autor correcto reciba la notificación",
         "Build validado con npm run build — sin errores nuevos"
+      ]
+    },
+    {
+      "id": 52,
+      "date": "2026-05-13",
+      "ai_tool": "Claude Code Sonnet 4.6",
+      "summary": "Home limita a top 10 lugares más destacados cuando no hay filtros activos.",
+      "files_modified": [
+        "src/pages/Home.jsx"
+      ],
+      "changes": [
+        "filtrados memo: cuando no hay categoría, subtipo ni búsqueda activos, ordena por score (destacado + favoritos_count*2 + promedio_rating*10) y limita a 10 resultados",
+        "Con cualquier filtro activo se sigue mostrando la lista completa filtrada sin límite"
+      ]
+    },
+    {
+      "id": 53,
+      "date": "2026-05-13",
+      "ai_tool": "Codex",
+      "summary": "Nueva gestión de usuarios en AdminPage con bloqueo, desbloqueo y reinicio de intentos de login.",
+      "files_modified": [
+        "src/pages/AdminPage.jsx",
+        "src/services/usuariosService.js",
+        "session-log.json"
+      ],
+      "changes": [
+        "usuariosService.js: agregados getUsuariosAdmin, bloquearUsuario, desbloquearUsuario y resetearIntentosUsuario para centralizar la administración de cuentas",
+        "AdminPage.jsx: creada la pestaña Usuarios con búsqueda por nombre, correo o username y listado del estado de cada cuenta",
+        "AdminPage.jsx: añadidas acciones Bloquear, Desbloquear y Reiniciar intentos con botones deshabilitados mientras la operación está en curso",
+        "Desbloquear ahora también llama a resetear_intentos para limpiar el contador de intentos fallidos al restaurar acceso",
+        "Todas las acciones sobre usuarios registran entrada en admin_logs con detalle específico para bitácora",
+        "La acción rápida de bloqueo desde Seguridad ahora reutiliza el helper compartido de usuarios en lugar de hacer el update directo",
+        "Validado con npm run build; compilación correcta sin errores nuevos"
+      ]
+    },
+    {
+      "id": 54,
+      "date": "2026-05-13",
+      "ai_tool": "Claude Code Sonnet 4.6",
+      "summary": "Fix bloqueo de usuarios desde Admin: política RLS faltante + RPC admin para resetear intentos.",
+      "files_modified": [
+        "src/services/usuariosService.js"
+      ],
+      "changes": [
+        "Supabase: nueva política RLS \"Admin puede actualizar usuarios\" en tabla usuarios (UPDATE para authenticated donde is_admin=true) — sin ella bloquearUsuario/desbloquearUsuario eran silenciosamente ignoradas por RLS",
+        "Supabase: nueva función SECURITY DEFINER admin_resetear_intentos(p_user_id uuid) que verifica is_admin del caller antes de resetear intentos_fallidos/bloqueado/bloqueado_en por id interno",
+        "usuariosService.js: resetearIntentosUsuario ahora llama admin_resetear_intentos en lugar de resetear_intentos (la original solo permitía que el usuario reseteara sus propios intentos y rechazaba llamadas desde admin)"
+      ]
+    },
+    {
+      "id": 55,
+      "date": "2026-05-13",
+      "ai_tool": "Claude Code Sonnet 4.6",
+      "summary": "Bloqueo admin diferenciado + feature de eliminar perfil desde Admin.",
+      "files_modified": [
+        "src/services/usuariosService.js",
+        "src/pages/Login.jsx",
+        "src/pages/AdminPage.jsx"
+      ],
+      "changes": [
+        "Supabase: nueva columna bloqueado_por_admin boolean DEFAULT false en tabla usuarios",
+        "Supabase: nueva política RLS \"Admin puede eliminar usuarios\" (DELETE para authenticated donde is_admin=true)",
+        "usuariosService.js: bloquearUsuario ahora también setea bloqueado_por_admin=true; desbloquearUsuario setea bloqueado_por_admin=false; getUsuarioBloqueado retorna ambos campos; nueva función eliminarUsuarioPerfil(userId)",
+        "Login.jsx: dos mensajes de bloqueo diferenciados — MSG_BLOQUEO_AUTO (bloqueo automático por intentos, mantiene link de recuperar contraseña) y MSG_BLOQUEO_ADMIN ('Tu cuenta ha sido bloqueada. Por favor contacta al administrador: Spotter.App.com', oculta '¿Olvidaste tu contraseña?')",
+        "AdminPage.jsx: botón 'Eliminar perfil' por usuario (solo en no-admins), modal de confirmación con doble confirmación, handler handleEliminarUsuario que registra en bitácora antes de eliminar y remueve de la lista local"
       ]
     }
   ]

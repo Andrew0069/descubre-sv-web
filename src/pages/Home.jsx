@@ -292,6 +292,8 @@ export default function Home() {
 
   const filtrados = useMemo(() => {
     let list = lugares
+    const hayFiltro = categoriaId !== null || filtroSubtipo !== 'Todos' || !!filtroBusquedaNombre
+
     if (categoriaId === 'OTROS') {
       const idsOtras = categoriasOtras.map((c) => c.id)
       list = list.filter((l) => idsOtras.includes(l.categoria_id))
@@ -305,6 +307,15 @@ export default function Home() {
       const q = filtroBusquedaNombre.toLowerCase()
       list = list.filter((l) => l.nombre?.toLowerCase().includes(q))
     }
+
+    if (!hayFiltro) {
+      list = [...list].sort((a, b) => {
+        const scoreA = (a.destacado ? 1000 : 0) + (a.favoritos_count || 0) * 2 + (a.promedio_rating || 0) * 10
+        const scoreB = (b.destacado ? 1000 : 0) + (b.favoritos_count || 0) * 2 + (b.promedio_rating || 0) * 10
+        return scoreB - scoreA
+      }).slice(0, 10)
+    }
+
     return list
   }, [lugares, categoriaId, filtroSubtipo, filtroBusquedaNombre, categoriasOtras])
 

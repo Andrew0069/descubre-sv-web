@@ -105,13 +105,78 @@ export async function getUsuarioNavbar(authId) {
 /**
  * Verifica si un usuario está bloqueado dado su email.
  * @param {string} email
- * @returns {Promise<{bloqueado}|null>}
+ * @returns {Promise<{data: {bloqueado, bloqueado_por_admin}|null, error}>}
  */
 export async function getUsuarioBloqueado(email) {
   const { data, error } = await supabase
     .from('usuarios')
-    .select('bloqueado')
+    .select('bloqueado, bloqueado_por_admin')
     .eq('email', email)
     .maybeSingle()
   return { data: data ?? null, error }
+}
+
+/**
+ * Obtiene usuarios para administraciÃ³n.
+ * @returns {Promise<{data: Array, error: import('@supabase/supabase-js').PostgrestError|null}>}
+ */
+export async function getUsuariosAdmin() {
+  const { data, error } = await supabase
+    .from('usuarios')
+    .select('id, nombre, email, username, bloqueado, is_admin, created_at')
+    .order('created_at', { ascending: false })
+
+  return { data: data ?? [], error }
+}
+
+/**
+ * Bloquea un usuario.
+ * @param {string} userId
+ * @returns {Promise<{error: import('@supabase/supabase-js').PostgrestError|null}>}
+ */
+export async function bloquearUsuario(userId) {
+  const { error } = await supabase
+    .from('usuarios')
+    .update({ bloqueado: true, bloqueado_por_admin: true })
+    .eq('id', userId)
+
+  return { error }
+}
+
+/**
+ * Desbloquea un usuario.
+ * @param {string} userId
+ * @returns {Promise<{error: import('@supabase/supabase-js').PostgrestError|null}>}
+ */
+export async function desbloquearUsuario(userId) {
+  const { error } = await supabase
+    .from('usuarios')
+    .update({ bloqueado: false, bloqueado_por_admin: false })
+    .eq('id', userId)
+
+  return { error }
+}
+
+/**
+ * Elimina el perfil de un usuario (fila en tabla usuarios).
+ * El registro en admin_logs permanece. El usuario deberá crear una nueva cuenta.
+ * @param {string} userId - id interno (PK de usuarios)
+ * @returns {Promise<{error: import('@supabase/supabase-js').PostgrestError|null}>}
+ */
+export async function eliminarUsuarioPerfil(userId) {
+  const { error } = await supabase
+    .from('usuarios')
+    .delete()
+    .eq('id', userId)
+  return { error }
+}
+
+/**
+ * Reinicia intentos de login de un usuario.
+ * @param {string} userId
+ * @returns {Promise<{error: import('@supabase/supabase-js').PostgrestError|null}>}
+ */
+export async function resetearIntentosUsuario(userId) {
+  const { error } = await supabase.rpc('admin_resetear_intentos', { p_user_id: userId })
+  return { error }
 }
