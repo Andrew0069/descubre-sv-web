@@ -1327,7 +1327,7 @@ export default function AdminPage() {
   })
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f9fafb', padding: '2rem' }}>
+    <div className="admin-page">
       <Toast msg={toast} />
 
       {confirmEliminarUser && (
@@ -1375,10 +1375,10 @@ export default function AdminPage() {
         </div>
       )}
 
-      <div style={{ maxWidth: '1180px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
+      <div className="admin-container">
+        <div className="admin-topbar">
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#111827', margin: 0 }}>
+            <h1 className="admin-topbar__title">
               Panel Admin —{' '}
               <svg viewBox="0 0 200 48" height="36" xmlns="http://www.w3.org/2000/svg" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
                 <path d="M22 2 C13 2, 5 10, 5 20 C5 33, 22 48, 22 48 C22 48, 39 33, 39 20 C39 10 31 2, 22 2 Z" fill="#F5A623" />
@@ -1391,39 +1391,27 @@ export default function AdminPage() {
                 </text>
               </svg>
             </h1>
-            <p style={{ fontSize: '0.85rem', color: '#9ca3af', marginTop: '4px' }}>Gestión de lugares, usuarios, sugerencias, reseñas y bitácora</p>
+            <p className="admin-topbar__subtitle">Gestión de lugares, usuarios, sugerencias, reseñas y bitácora</p>
           </div>
           <button
             type="button"
             onClick={() => navigate('/')}
-            style={{
-              backgroundColor: 'transparent', border: '1px solid #e5e7eb',
-              borderRadius: '8px', padding: '8px 16px', fontSize: '0.85rem',
-              color: '#6b7280', cursor: 'pointer',
-            }}
+            className="admin-pill-secondary"
           >
             ← Volver al sitio
           </button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '1.5rem' }}>
-          <aside style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', height: 'fit-content' }}>
-            <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>
-              Admin
-            </p>
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <div className="admin-layout">
+          <aside className="admin-sidebar">
+            <p className="admin-eyebrow">Admin</p>
+            <nav className="admin-sidebar__nav">
               {sidebarItems.map((item) => (
-                <div key={item.id} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div key={item.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <button
                     type="button"
                     onClick={() => setActiveSection(item.id)}
-                    style={{
-                      width: '100%', textAlign: 'left', padding: '10px 12px',
-                      borderRadius: '8px', border: 'none', cursor: 'pointer',
-                      fontSize: '0.9rem', fontWeight: activeSection === item.id ? 700 : 500,
-                      color: activeSection === item.id ? '#0EA5E9' : '#374151',
-                      backgroundColor: activeSection === item.id ? 'rgba(14,165,233,0.08)' : 'transparent',
-                    }}
+                    className={`admin-tab${activeSection === item.id ? ' is-active' : ''}`}
                   >
                     {item.label}
                   </button>
@@ -1431,18 +1419,7 @@ export default function AdminPage() {
                     <button
                       type="button"
                       onClick={handleActivarCreacionLugar}
-                      style={{
-                        width: '100%',
-                        textAlign: 'left',
-                        padding: '9px 12px 9px 24px',
-                        borderRadius: '8px',
-                        border: '1px solid rgba(14,165,233,0.18)',
-                        cursor: 'pointer',
-                        fontSize: '0.86rem',
-                        fontWeight: 800,
-                        color: '#0EA5E9',
-                        backgroundColor: isCreatingLugar ? 'rgba(14,165,233,0.12)' : 'rgba(14,165,233,0.05)',
-                      }}
+                      className={`admin-cta-primary${isCreatingLugar ? ' is-active' : ''}`}
                     >
                       + Nuevo lugar
                     </button>
@@ -1452,31 +1429,15 @@ export default function AdminPage() {
             </nav>
 
             {activeSection === 'lugares' && (
-              <div style={{ marginTop: '1.25rem', borderTop: '1px solid #f3f4f6', paddingTop: '1rem' }}>
-                <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>
-                  Lugares
-                </p>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div className="admin-sidebar__divider">
+                <p className="admin-eyebrow">Lugares</p>
+                <ul className="admin-place-list">
                   {lugares.map((l) => (
                     <li key={l.id} style={{ minWidth: 0 }}>
                       <button
                         type="button"
                         onClick={() => handleSeleccionarLugar(l)}
-                        style={{
-                          width: '100%',
-                          minHeight: '42px',
-                          textAlign: 'left',
-                          padding: '10px 12px',
-                          borderRadius: '8px',
-                          border: 'none',
-                          cursor: 'pointer',
-                          fontSize: '0.88rem', fontWeight: lugarSeleccionado?.id === l.id ? 600 : 400,
-                          lineHeight: 1.35,
-                          color: lugarSeleccionado?.id === l.id ? '#0EA5E9' : '#374151',
-                          backgroundColor: lugarSeleccionado?.id === l.id ? 'rgba(14,165,233,0.08)' : 'transparent',
-                          overflowWrap: 'anywhere',
-                          wordBreak: 'break-word',
-                        }}
+                        className={`admin-place-row${lugarSeleccionado?.id === l.id ? ' is-active' : ''}`}
                       >
                         {l.nombre}
                       </button>
@@ -1489,18 +1450,14 @@ export default function AdminPage() {
 
           <main style={{ minWidth: 0 }}>
             {activeSection === 'lugares' && (
-              <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+              <div className="admin-panel">
                 {isCreatingLugar ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'flex-start', borderBottom: '1px solid #f3f4f6', paddingBottom: '1rem' }}>
+                    <div className="admin-panel__header">
                       <div>
-                        <p style={{ fontSize: '0.78rem', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 0.35rem' }}>
-                          Crear lugar
-                        </p>
-                        <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#111827', margin: 0 }}>
-                          Nuevo lugar
-                        </h2>
-                        <p style={{ fontSize: '0.86rem', color: '#6b7280', margin: '0.35rem 0 0' }}>
+                        <p className="admin-eyebrow">Crear lugar</p>
+                        <h2 className="admin-title">Nuevo lugar</h2>
+                        <p className="admin-subtitle">
                           Completa la información principal. Después podrás agregar fotos desde la edición del lugar.
                         </p>
                       </div>
@@ -1518,50 +1475,29 @@ export default function AdminPage() {
                     />
                   </div>
                 ) : !lugarSeleccionado ? (
-                  <div style={{ textAlign: 'center', padding: '4rem 1rem', color: '#9ca3af', border: '1px dashed #e5e7eb', borderRadius: '12px' }}>
-                    <p style={{ fontSize: '1rem', fontWeight: 700, color: '#6b7280', margin: '0 0 0.35rem' }}>Lugares</p>
-                    <p style={{ margin: 0 }}>Selecciona un lugar del sidebar para editar su información y galería.</p>
+                  <div className="admin-empty">
+                    <p className="admin-eyebrow">Lugares</p>
+                    <p className="admin-empty__title">Selecciona un lugar</p>
+                    <p className="admin-empty__body">Elige un lugar del sidebar para editar su información y galería.</p>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'flex-start', borderBottom: '1px solid #f3f4f6', paddingBottom: '1rem' }}>
+                    <div className="admin-panel__header">
                       <div>
-                        <p style={{ fontSize: '0.78rem', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 0.35rem' }}>
-                          Editar lugar
-                        </p>
-                        <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#111827', margin: 0 }}>
-                          {lugarSeleccionado.nombre}
-                        </h2>
-                        <p style={{ fontSize: '0.86rem', color: '#6b7280', margin: '0.35rem 0 0' }}>
+                        <p className="admin-eyebrow">Editar lugar</p>
+                        <h2 className="admin-title">{lugarSeleccionado.nombre}</h2>
+                        <p className="admin-subtitle">
                           Actualiza los datos principales y administra las fotos del lugar.
                         </p>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-                        <span style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          borderRadius: '999px',
-                          backgroundColor: '#f3f4f6',
-                          color: '#374151',
-                          padding: '5px 10px',
-                          fontSize: '0.78rem',
-                          fontWeight: 800,
-                          whiteSpace: 'nowrap',
-                        }}>
+                      <div className="admin-panel__header-actions">
+                        <span className="admin-chip">
                           {imagenes.length} foto{imagenes.length !== 1 ? 's' : ''}
                         </span>
                         <button
                           type="button"
                           onClick={() => setConfirmDelete(true)}
-                          style={{
-                            ...buttonBase,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            backgroundColor: '#FEF2F2',
-                            color: '#DC2626',
-                            border: '1px solid #FECACA',
-                          }}
+                          className="admin-pill-danger"
                         >
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                             <polyline points="3 6 5 6 21 6" />
@@ -1584,23 +1520,13 @@ export default function AdminPage() {
                       onCancel={handleCancelarEdicion}
                     />
 
-                    <section style={{ border: '1px solid #e5e7eb', borderRadius: '10px', overflow: 'hidden', backgroundColor: '#fff' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', padding: '1rem 1.25rem', borderBottom: '1px solid #f3f4f6' }}>
+                    <section className="admin-gallery">
+                      <div className="admin-gallery__header">
                         <div>
-                          <p style={{ fontSize: '0.78rem', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
-                            Galería
-                          </p>
-                          <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#111827', margin: '0.25rem 0 0' }}>
-                            Fotos del lugar
-                          </h3>
+                          <p className="admin-eyebrow">Galería</p>
+                          <h3 className="admin-title-sm">Fotos del lugar</h3>
                         </div>
-                        <label style={{
-                          backgroundColor: '#0EA5E9', color: '#fff', borderRadius: '8px',
-                          padding: '8px 18px', fontSize: '0.85rem', fontWeight: 700,
-                          cursor: uploading ? 'not-allowed' : 'pointer',
-                          opacity: uploading ? 0.7 : 1,
-                          whiteSpace: 'nowrap',
-                        }}>
+                        <label className={`admin-cta-primary admin-cta-primary--inline${uploading ? ' is-loading' : ''}`}>
                           {uploading ? 'Subiendo...' : '+ Subir foto'}
                           <input
                             ref={fileRef}
@@ -1613,35 +1539,34 @@ export default function AdminPage() {
                         </label>
                       </div>
 
-                      <div style={{ padding: '1.25rem' }}>
+                      <div className="admin-gallery__body">
                         {imagenes.length === 0 ? (
-                          <div style={{ textAlign: 'center', padding: '3rem 1rem', border: '1px dashed #e5e7eb', borderRadius: '10px', color: '#9ca3af', backgroundColor: '#f9fafb' }}>
-                            <p style={{ margin: 0 }}>Sin fotos todavía. Subí la primera.</p>
+                          <div className="admin-empty" style={{ padding: '2.5rem 1rem' }}>
+                            <p className="admin-empty__title">Sin fotos todavía</p>
+                            <p className="admin-empty__body">Subí la primera con el botón de arriba.</p>
                           </div>
                         ) : (
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: '1rem' }}>
+                          <div className="admin-gallery__grid">
                             {imagenes.map((img, idx) => {
                               const esPortada = idx === 0
                               return (
-                                <div key={img.id} style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '4/3', border: `2px solid ${esPortada ? '#10B981' : '#e5e7eb'}`, backgroundColor: '#f3f4f6' }}>
+                                <div
+                                  key={img.id}
+                                  className={`admin-photo-card${esPortada ? ' is-cover' : ''}`}
+                                  style={{ '--i': idx }}
+                                >
                                   <img
                                     src={resolveImageUrl(img.ruta_imagen, 'lugares-fotos')}
                                     alt=""
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                   />
 
                                   {/* ↑/↓ reorder buttons */}
-                                  <div style={{ position: 'absolute', top: '8px', left: '8px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                  <div className="admin-photo-reorder">
                                     {idx > 0 && (
                                       <button
                                         type="button"
                                         onClick={() => handleMoverImagen(idx, -1)}
-                                        style={{
-                                          backgroundColor: 'rgba(17,24,39,0.72)', color: '#fff',
-                                          border: 'none', borderRadius: '6px', width: '26px', height: '26px',
-                                          cursor: 'pointer', display: 'flex', alignItems: 'center',
-                                          justifyContent: 'center', fontSize: '0.85rem', fontWeight: 800,
-                                        }}
+                                        className="admin-photo-btn"
                                         aria-label="Mover arriba"
                                       >↑</button>
                                     )}
@@ -1649,12 +1574,7 @@ export default function AdminPage() {
                                       <button
                                         type="button"
                                         onClick={() => handleMoverImagen(idx, 1)}
-                                        style={{
-                                          backgroundColor: 'rgba(17,24,39,0.72)', color: '#fff',
-                                          border: 'none', borderRadius: '6px', width: '26px', height: '26px',
-                                          cursor: 'pointer', display: 'flex', alignItems: 'center',
-                                          justifyContent: 'center', fontSize: '0.85rem', fontWeight: 800,
-                                        }}
+                                        className="admin-photo-btn"
                                         aria-label="Mover abajo"
                                       >↓</button>
                                     )}
@@ -1664,36 +1584,18 @@ export default function AdminPage() {
                                   <button
                                     type="button"
                                     onClick={() => handleEliminarFoto(img)}
-                                    style={{
-                                      position: 'absolute', top: '8px', right: '8px',
-                                      backgroundColor: 'rgba(239,68,68,0.94)', color: '#fff',
-                                      border: 'none', borderRadius: '999px', width: '28px', height: '28px',
-                                      cursor: 'pointer', display: 'flex', alignItems: 'center',
-                                      justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800,
-                                    }}
+                                    className="admin-photo-btn--danger"
                                     aria-label="Eliminar foto"
                                   >×</button>
 
                                   {/* Portada badge / button */}
                                   {esPortada ? (
-                                    <div style={{
-                                      position: 'absolute', bottom: '8px', left: '8px',
-                                      backgroundColor: 'rgba(16,185,129,0.94)', color: '#fff',
-                                      fontSize: '0.7rem', fontWeight: 800, padding: '4px 9px',
-                                      borderRadius: '999px', pointerEvents: 'none',
-                                    }}>
-                                      Portada
-                                    </div>
+                                    <div className="admin-photo-badge">Portada</div>
                                   ) : (
                                     <button
                                       type="button"
                                       onClick={() => handleHacerPortada(img)}
-                                      style={{
-                                        position: 'absolute', bottom: '8px', left: '8px',
-                                        backgroundColor: 'rgba(17,24,39,0.72)', color: '#fff',
-                                        border: 'none', borderRadius: '999px', padding: '4px 9px',
-                                        fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer',
-                                      }}
+                                      className="admin-photo-btn--ghost"
                                     >
                                       Hacer portada
                                     </button>
@@ -1743,35 +1645,37 @@ export default function AdminPage() {
                         }))
                       }
                       return (
-                        <section style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid #f0f0f0' }}>
-                          <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px' }}>🕐 Horarios (GMT-6)</h3>
-
-                          <div style={{ marginBottom: '16px' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px', color: '#111827' }}>
-                              <input
-                                type="checkbox"
-                                checked={es24Horas}
-                                onChange={handleEs24HorasChange}
-                                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                              />
-                              Abierto 24 horas
-                            </label>
+                        <section className="admin-hours">
+                          <div className="admin-hours__header">
+                            <p className="admin-eyebrow" style={{ margin: 0 }}>Horarios</p>
+                            <h3 className="admin-title-sm">🕐 Horarios (GMT-6)</h3>
                           </div>
 
+                          <label className="admin-hours__24h">
+                            <input
+                              type="checkbox"
+                              checked={es24Horas}
+                              onChange={handleEs24HorasChange}
+                              style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#f59e0b' }}
+                            />
+                            Abierto 24 horas
+                          </label>
+
                           {!es24Horas && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <div className="admin-hours__list">
                               {dias.map(({ key, label }) => {
                                 const d = (formData.horarios || {})[key] || { abierto: false, abre: '09:00', cierra: '18:00' }
                                 return (
-                                  <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                                    <span style={{ width: '82px', fontSize: '14px', fontWeight: 500, color: '#333' }}>{label}</span>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                                  <div key={key} className="admin-hours-row">
+                                    <span className="admin-hours-row__label">{label}</span>
+                                    <label className={`admin-hours-row__toggle${d.abierto ? ' is-on' : ''}`}>
                                       <input
                                         type="checkbox"
                                         checked={d.abierto || false}
                                         onChange={(e) => handleHorarioChange(key, 'abierto', e.target.checked)}
+                                        style={{ accentColor: '#16a34a' }}
                                       />
-                                      <span style={{ fontSize: '13px', color: d.abierto ? '#16a34a' : '#aaa' }}>
+                                      <span>
                                         {d.abierto ? 'Abierto' : 'Cerrado'}
                                       </span>
                                     </label>
@@ -1781,14 +1685,14 @@ export default function AdminPage() {
                                           type="time"
                                           value={d.abre || '09:00'}
                                           onChange={(e) => handleHorarioChange(key, 'abre', e.target.value)}
-                                          style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px' }}
+                                          className="admin-time-input"
                                         />
-                                        <span style={{ color: '#aaa' }}>–</span>
+                                        <span className="admin-hours-row__dash">–</span>
                                         <input
                                           type="time"
                                           value={d.cierra || '18:00'}
                                           onChange={(e) => handleHorarioChange(key, 'cierra', e.target.value)}
-                                          style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px' }}
+                                          className="admin-time-input"
                                         />
                                       </>
                                     )}
@@ -1799,17 +1703,8 @@ export default function AdminPage() {
                           )}
                           <button
                             onClick={handleGuardarHorarios}
-                            style={{
-                              marginTop: '20px',
-                              padding: '10px 20px',
-                              background: '#0ea5e9',
-                              color: '#fff',
-                              border: 'none',
-                              borderRadius: '8px',
-                              fontWeight: 600,
-                              fontSize: '14px',
-                              cursor: 'pointer',
-                            }}
+                            className="admin-cta-primary admin-cta-primary--inline"
+                            style={{ marginTop: '20px' }}
                           >
                             Guardar horarios
                           </button>

@@ -1053,6 +1053,33 @@
         "index.css @media (max-width: 640px): tabs ahora flex:1 1 auto con min-width:0 (caben los 4 sin scroll horizontal en pantallas ~360px), padding del panel reducido a 14px, title 1.1rem, description 0.86rem, cards 14px padding/14px radius, chips 6/9px, range 1.05rem — el desktop queda intacto",
         "Validado con npm run build; compilación sin errores nuevos"
       ]
+    },
+    {
+      "id": 58,
+      "date": "2026-05-14",
+      "ai_tool": "Claude Code Opus 4.7",
+      "summary": "Restyle estetico completo de la tab Lugares del Admin (topbar, sidebar, panel, galeria, horarios, EditLugarForm, NewLugarForm) para que comparta paleta amarillo-crema-magenta, radii, sombras calidas y micro-animaciones con Home/LugarTravelerPanel. Cero cambios de logica.",
+      "files_modified": [
+        "src/index.css",
+        "src/pages/AdminPage.jsx",
+        "src/components/EditLugarForm.jsx",
+        "src/components/NewLugarForm.jsx",
+        "session-log.json",
+        "CLAUDE.md"
+      ],
+      "changes": [
+        "src/index.css: nuevo bloque '=== Admin Lugares restyle ===' con namespace .admin-* (panel, sidebar, tabs pill, place-row, gallery, photo-card, hours, formularios) y @keyframes adminFadeUp. Paleta heredada del .traveler-panel (sesion 57): fondo crema linear-gradient(180deg,#fffdf5,#fff8e8), borde rgba(245,200,66,.30), sombra calida 0 18px 44px rgba(120,85,0,.10), CTA gradient amarillo->magenta linear-gradient(135deg,#f59e0b,#ec4899) con sombra rosa.",
+        "AdminPage.jsx wrapper raiz -> .admin-page; topbar .admin-topbar/.admin-topbar__title/__subtitle; '<- Volver al sitio' -> .admin-pill-secondary; layout 260px 1fr -> .admin-layout (CSS Grid responsive).",
+        "Sidebar -> .admin-sidebar (radius 18px, sticky top:1rem); tabs como pills .admin-tab + .is-active gradient amarillo->magenta con sombra rosa; '+ Nuevo lugar' -> .admin-cta-primary (gradient full-width, ring magenta cuando isCreatingLugar); sub-lista de lugares -> .admin-place-row con .is-active (barra izquierda amarilla 3px + tinte gradient suave, translateX hover).",
+        "Panel principal -> .admin-panel (radius 22px, animacion adminFadeUp 0.32s); header con .admin-eyebrow/.admin-title/.admin-subtitle en paleta calida (#9a7a2e/#241808/#6f571c); chip 'N fotos' -> .admin-chip (pill amarillo #fff3c4 borde #fcd34d); boton Eliminar -> .admin-pill-danger (pill rojo con hover-lift y sombra rosa-roja); empty state 'Selecciona un lugar' -> .admin-empty (dashed amarillo, fondo #fffdf5).",
+        "Galeria -> .admin-gallery con header en tinte crema (linear-gradient(135deg,#fffaf0,#fff4d6)); boton '+ Subir foto' -> .admin-cta-primary inline; grid sin cambio estructural; cards -> .admin-photo-card con animacion adminFadeUp escalonada via --i (style={{'--i':idx}}), hover translateY(-2px) scale(1.01) y sombra calida, portada con .is-cover (ring verde 2px #10B981 + glow); botones reorder/delete/hacer-portada aparecen en opacity 0 -> 1 al hover/focus del card; badge 'Portada' -> .admin-photo-badge (pill verde con sombra suave).",
+        "Horarios -> .admin-hours (border-top amarillo, padding-top 1.5rem); titulo con eyebrow + .admin-title-sm; checkbox 'Abierto 24 horas' -> .admin-hours__24h (pill crema con hover); cada fila dia -> .admin-hours-row con hover background-color #fffdf5 y radius 10px; toggle Abierto/Cerrado -> .admin-hours-row__toggle con .is-on (verde #16a34a sobre #dcfce7); inputs time -> .admin-time-input con focus ring amarillo box-shadow:0 0 0 3px rgba(245,158,11,.18); boton 'Guardar horarios' -> .admin-cta-primary inline.",
+        "EditLugarForm.jsx y NewLugarForm.jsx: eliminados fieldStyle/labelStyle/createFieldStyle/createLabelStyle inline; ahora usan .admin-form-card/__header/__body/__footer/__extra, .admin-form-field con focus ring amarillo, .admin-form-label en #7c5d12, .admin-form-grid-2/-cat para layouts, .admin-form-toggle con .admin-form-toggle__track/__thumb (switch gradient amarillo->magenta cuando .is-on); footer con .admin-pill-secondary + .admin-cta-primary.",
+        "Responsive media query (max-width:640px) en index.css: .admin-layout colapsa a 1fr, .admin-sidebar pierde sticky, .admin-panel padding 1.1rem, grid de galeria a minmax(140px,1fr), header de panel apila vertical, padding de form-card reducido a 16px.",
+        "Cero cambios de logica: handleSeleccionarLugar, handleSubirFoto, handleMoverImagen, handleHacerPortada, handleEliminarFoto, handleHorarioChange, handleGuardarHorarios, handleCrearLugar, handleUpdateLugar, handleActivarCreacionLugar, handleCancelarCreacionLugar, todos los estados (lugares, lugarSeleccionado, formData, imagenes, isCreatingLugar, uploading), RLS y queries Supabase quedan intactos. Firmas de EditLugarForm/NewLugarForm sin cambio.",
+        "Tabs del /admin no tocadas: usuarios, resenas, sugerencias, logs siguen con la apariencia gris/azul anterior (alcance acordado: solo Lugares).",
+        "Vite build: 119 modulos transformados sin errores ni warnings nuevos. El fallo posterior del plugin PWA workbox (hero-bg.png > 2 MiB precache limit) es preexistente y no relacionado con este restyle."
+      ]
     }
   ]
 }

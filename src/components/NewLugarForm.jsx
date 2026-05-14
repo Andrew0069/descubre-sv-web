@@ -19,28 +19,6 @@ export const DEPARTAMENTOS = [
   { label: 'Usulután', value: 'b0000000-0000-0000-0000-000000000005' },
 ]
 
-const createFieldStyle = {
-  width: '100%',
-  minHeight: '42px',
-  border: '1px solid #d1d5db',
-  borderRadius: '8px',
-  padding: '10px 12px',
-  fontSize: '0.9rem',
-  lineHeight: 1.45,
-  color: '#111827',
-  backgroundColor: '#ffffff',
-  outline: 'none',
-  boxSizing: 'border-box',
-}
-
-const createLabelStyle = {
-  display: 'block',
-  marginBottom: '7px',
-  fontSize: '0.82rem',
-  fontWeight: 700,
-  color: '#374151',
-}
-
 export default function NewLugarForm({
   formData,
   categorias = [],
@@ -52,31 +30,15 @@ export default function NewLugarForm({
   onCancel,
 }) {
   return (
-    <div style={{
-      border: '1px solid #e5e7eb',
-      borderRadius: '10px',
-      backgroundColor: '#ffffff',
-      overflow: 'hidden',
-    }}>
-      <div style={{ padding: '18px 20px', borderBottom: '1px solid #f3f4f6' }}>
-        <p style={{
-          margin: '0 0 4px',
-          fontSize: '0.74rem',
-          fontWeight: 800,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          color: '#9ca3af',
-        }}>
-          Información del lugar
-        </p>
-        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#111827' }}>
-          Datos del nuevo lugar
-        </h3>
+    <div className="admin-form-card">
+      <div className="admin-form-card__header">
+        <p className="admin-eyebrow">Información del lugar</p>
+        <h3 className="admin-title-sm">Datos del nuevo lugar</h3>
       </div>
 
-      <div style={{ padding: '20px', display: 'grid', gap: '18px' }}>
+      <div className="admin-form-card__body">
         <div>
-          <label style={createLabelStyle}>
+          <label className="admin-form-label">
             Nombre*
           </label>
           <input
@@ -85,12 +47,12 @@ export default function NewLugarForm({
             value={formData.nombre}
             onChange={onChange}
             required
-            style={createFieldStyle}
+            className="admin-form-field"
           />
         </div>
 
         <div>
-          <label style={createLabelStyle}>
+          <label className="admin-form-label">
             Descripción*
           </label>
           <textarea
@@ -99,16 +61,12 @@ export default function NewLugarForm({
             onChange={onChange}
             required
             rows={5}
-            style={{
-              ...createFieldStyle,
-              minHeight: '120px',
-              resize: 'vertical',
-            }}
+            className="admin-form-field admin-form-field--textarea"
           />
         </div>
 
         <div>
-          <label style={createLabelStyle}>
+          <label className="admin-form-label">
             Dirección
           </label>
           <input
@@ -116,25 +74,20 @@ export default function NewLugarForm({
             name="direccion"
             value={formData.direccion}
             onChange={onChange}
-            style={createFieldStyle}
+            className="admin-form-field"
           />
         </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
-          gap: '16px',
-          alignItems: 'end',
-        }}>
-          <div style={{ minWidth: 0 }}>
-            <label style={createLabelStyle}>
+        <div className="admin-form-grid-2">
+          <div className="admin-form-min0">
+            <label className="admin-form-label">
               Departamento
             </label>
             <select
               name="departamento_id"
               value={formData.departamento_id}
               onChange={onChange}
-              style={createFieldStyle}
+              className="admin-form-field"
             >
               {DEPARTAMENTOS.map((departamento) => (
                 <option key={departamento.value} value={departamento.value}>{departamento.label}</option>
@@ -142,15 +95,15 @@ export default function NewLugarForm({
             </select>
           </div>
 
-          <div style={{ minWidth: 0 }}>
-            <label style={createLabelStyle}>
+          <div className="admin-form-min0">
+            <label className="admin-form-label">
               Categoría
             </label>
             <select
               name="categoria_id"
               value={formData.categoria_id}
               onChange={onChange}
-              style={createFieldStyle}
+              className="admin-form-field"
             >
               {categorias.map((categoria) => (
                 <option key={categoria.id} value={categoria.id}>{categoria.nombre}</option>
@@ -161,14 +114,9 @@ export default function NewLugarForm({
         </div>
 
         {formData.categoria_id === '__nueva__' && (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-            gap: '16px',
-            alignItems: 'start',
-          }}>
+          <div className="admin-form-grid-cat">
             <div>
-            <label style={createLabelStyle}>
+            <label className="admin-form-label">
               Nombre de la nueva categoría
             </label>
             <input
@@ -176,7 +124,7 @@ export default function NewLugarForm({
               name="nueva_categoria_nombre"
               value={formData.nueva_categoria_nombre}
               onChange={onChange}
-              style={createFieldStyle}
+              className="admin-form-field"
             />
             </div>
             <div>
@@ -205,14 +153,9 @@ export default function NewLugarForm({
           </div>
         )}
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
-          gap: '16px',
-          alignItems: 'end',
-        }}>
-          <div style={{ minWidth: 0 }}>
-            <label style={createLabelStyle}>
+        <div className="admin-form-grid-2">
+          <div className="admin-form-min0">
+            <label className="admin-form-label">
               Precio entrada
             </label>
             <input
@@ -221,12 +164,12 @@ export default function NewLugarForm({
               value={formData.precio_entrada}
               onChange={onChange}
               placeholder='Gratis, $5'
-              style={createFieldStyle}
+              className="admin-form-field"
             />
           </div>
 
-          <div style={{ minWidth: 0 }}>
-            <label style={createLabelStyle}>
+          <div className="admin-form-min0">
+            <label className="admin-form-label">
               Subtipo
             </label>
             <input
@@ -235,80 +178,33 @@ export default function NewLugarForm({
               value={formData.subtipo}
               onChange={onChange}
               placeholder="Hotel, Playa, Volcán"
-              style={createFieldStyle}
+              className="admin-form-field"
             />
           </div>
 
-          <label style={{
-            minHeight: '42px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '12px',
-            padding: '10px 12px',
-            border: '1px solid #e5e7eb',
-            borderRadius: '8px',
-            backgroundColor: '#f9fafb',
-            cursor: 'pointer',
-            boxSizing: 'border-box',
-            minWidth: 0,
-          }}>
-            <span style={{
-              minWidth: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '2px',
-              color: '#374151',
-              fontSize: '0.84rem',
-              fontWeight: 800,
-              lineHeight: 1.2,
-            }}>
+          <label className="admin-form-toggle">
+            <span className="admin-form-toggle__text">
               Destacado
-              <span style={{
-                color: formData.destacado ? '#0EA5E9' : '#9ca3af',
-                fontSize: '0.74rem',
-                fontWeight: 700,
-              }}>
+              <span className={`admin-form-toggle__hint${formData.destacado ? ' is-on' : ''}`}>
                 {formData.destacado ? 'Activo' : 'Inactivo'}
               </span>
             </span>
-            <span style={{ position: 'relative', width: '44px', height: '24px', flexShrink: 0 }}>
+            <span className="admin-form-toggle__switch">
               <input
                 type="checkbox"
                 checked={formData.destacado}
                 onChange={onToggleDestacado}
-                style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+                className="admin-form-toggle__input"
               />
-              <span style={{
-                position: 'absolute',
-                inset: 0,
-                borderRadius: '999px',
-                backgroundColor: formData.destacado ? '#0EA5E9' : '#d1d5db',
-                transition: 'background-color 0.15s ease',
-              }} />
-              <span style={{
-                position: 'absolute',
-                top: '2px',
-                left: formData.destacado ? '22px' : '2px',
-                width: '20px',
-                height: '20px',
-                borderRadius: '999px',
-                backgroundColor: '#ffffff',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.22)',
-                transition: 'left 0.15s ease',
-              }} />
+              <span className={`admin-form-toggle__track${formData.destacado ? ' is-on' : ''}`} />
+              <span className={`admin-form-toggle__thumb${formData.destacado ? ' is-on' : ''}`} />
             </span>
           </label>
         </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
-          gap: '16px',
-          alignItems: 'end',
-        }}>
-          <div style={{ minWidth: 0 }}>
-            <label style={createLabelStyle}>
+        <div className="admin-form-grid-2">
+          <div className="admin-form-min0">
+            <label className="admin-form-label">
               Latitud
             </label>
             <input
@@ -317,12 +213,12 @@ export default function NewLugarForm({
               value={formData.latitud}
               onChange={onChange}
               step="any"
-              style={createFieldStyle}
+              className="admin-form-field"
             />
           </div>
 
-          <div style={{ minWidth: 0 }}>
-            <label style={createLabelStyle}>
+          <div className="admin-form-min0">
+            <label className="admin-form-label">
               Longitud
             </label>
             <input
@@ -331,7 +227,7 @@ export default function NewLugarForm({
               value={formData.longitud}
               onChange={onChange}
               step="any"
-              style={createFieldStyle}
+              className="admin-form-field"
             />
           </div>
         </div>
@@ -342,32 +238,12 @@ export default function NewLugarForm({
         />
       </div>
 
-      <div style={{
-        display: 'flex',
-        justifyContent: 'flex-end',
-        gap: '10px',
-        padding: '14px 20px',
-        borderTop: '1px solid #f3f4f6',
-        backgroundColor: '#f9fafb',
-        flexWrap: 'wrap',
-      }}>
+      <div className="admin-form-card__footer">
         <button
           type="button"
           onClick={onCancel}
           disabled={isSaving}
-          style={{
-            minWidth: '104px',
-            border: '1px solid #d1d5db',
-            borderRadius: '8px',
-            backgroundColor: '#ffffff',
-            color: '#4b5563',
-            padding: '9px 14px',
-            fontSize: '0.84rem',
-            fontWeight: 800,
-            cursor: isSaving ? 'not-allowed' : 'pointer',
-            opacity: isSaving ? 0.7 : 1,
-            whiteSpace: 'nowrap',
-          }}
+          className="admin-pill-secondary"
         >
           Cancelar
         </button>
@@ -375,19 +251,7 @@ export default function NewLugarForm({
           type="button"
           onClick={onSave}
           disabled={isSaving}
-          style={{
-            minWidth: '148px',
-            border: '1px solid #0EA5E9',
-            borderRadius: '8px',
-            backgroundColor: '#0EA5E9',
-            color: '#ffffff',
-            padding: '9px 16px',
-            fontSize: '0.84rem',
-            fontWeight: 800,
-            cursor: isSaving ? 'not-allowed' : 'pointer',
-            opacity: isSaving ? 0.7 : 1,
-            whiteSpace: 'nowrap',
-          }}
+          className={`admin-cta-primary admin-cta-primary--inline${isSaving ? ' is-loading' : ''}`}
         >
           {isSaving ? 'Creando...' : 'Crear lugar'}
         </button>
