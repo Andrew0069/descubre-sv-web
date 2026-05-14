@@ -405,12 +405,11 @@ body {
 .traveler-panel {
   position: relative;
   overflow: hidden;
-  border-radius: 18px;
-  border: 1px solid rgba(203, 168, 87, 0.32);
-  background:
-    radial-gradient(circle at top right, rgba(245, 197, 24, 0.16), transparent 34%),
-    linear-gradient(180deg, #fffdf8 0%, #f6f1e7 100%);
-  box-shadow: 0 14px 36px rgba(98, 72, 15, 0.08);
+  max-width: 100%;
+  border-radius: 22px;
+  border: 1px solid rgba(245, 200, 66, 0.45);
+  background: linear-gradient(135deg, #fff4c2 0%, #fde68a 55%, #fcd34d 100%);
+  box-shadow: 0 18px 44px rgba(120, 85, 0, 0.14);
 }
 
 .traveler-panel__hero {
@@ -418,7 +417,7 @@ body {
   justify-content: space-between;
   gap: 16px;
   padding: 22px 22px 16px;
-  border-bottom: 1px solid rgba(203, 168, 87, 0.18);
+  border-bottom: 1px solid rgba(245, 200, 66, 0.35);
 }
 
 .traveler-panel__eyebrow {
@@ -435,6 +434,8 @@ body {
   color: #241808;
   font-size: 1.15rem;
   line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .traveler-panel__description {
@@ -468,25 +469,31 @@ body {
 .traveler-tab {
   flex: 0 0 auto;
   min-width: 124px;
-  border: 1px solid rgba(202, 162, 68, 0.22);
-  border-radius: 14px;
-  background: rgba(255, 252, 245, 0.82);
+  border: 1px solid rgba(245, 200, 66, 0.5);
+  border-radius: 999px;
+  background: #ffffff;
   color: #7c5d12;
-  padding: 12px 14px;
+  padding: 12px 16px;
   text-align: left;
   cursor: pointer;
-  transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease, box-shadow 0.24s ease;
+  transition: transform 0.24s ease, border-color 0.24s ease, background-color 0.24s ease, box-shadow 0.24s ease, color 0.24s ease;
 }
 
 .traveler-tab:hover {
-  transform: translateY(-2px);
-  border-color: rgba(202, 162, 68, 0.38);
+  transform: translateY(-1px);
+  border-color: rgba(245, 158, 11, 0.6);
+  box-shadow: 0 6px 14px rgba(245, 158, 11, 0.15);
 }
 
 .traveler-tab.is-active {
-  background: linear-gradient(180deg, #fff5c6 0%, #f8e7a3 100%);
-  border-color: rgba(202, 162, 68, 0.42);
-  box-shadow: 0 10px 22px rgba(174, 132, 32, 0.12);
+  background: linear-gradient(135deg, #f59e0b 0%, #ec4899 100%);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(236, 72, 153, 0.32);
+}
+
+.traveler-tab.is-active small {
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .traveler-tab span,
@@ -542,11 +549,12 @@ body {
 
 .traveler-card,
 .traveler-budget-card {
-  border: 1px solid rgba(202, 162, 68, 0.18);
+  border: 1px solid rgba(245, 200, 66, 0.28);
   border-radius: 16px;
-  background: rgba(255, 253, 247, 0.92);
+  background: #ffffff;
   padding: 16px;
-  box-shadow: 0 10px 28px rgba(109, 79, 16, 0.05);
+  box-shadow: 0 10px 24px rgba(120, 85, 0, 0.08);
+  min-width: 0;
 }
 
 .traveler-card__header h4,
@@ -602,18 +610,18 @@ body {
 }
 
 .traveler-chip--light {
-  background: #fff3cf;
+  background: #fff3c4;
   color: #7d5d11;
 }
 
 .traveler-chip--mid {
-  background: #f7e4aa;
-  color: #734f00;
+  background: #fcd34d;
+  color: #6b3f00;
 }
 
 .traveler-chip--deep {
-  background: #e8cf8b;
-  color: #573c00;
+  background: #fbbf24;
+  color: #4a2b00;
 }
 
 .traveler-route-badge {
@@ -649,8 +657,8 @@ body {
 .traveler-bar-fill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #f4c237 0%, #d69b07 100%);
-  box-shadow: 0 0 14px rgba(214, 155, 7, 0.22);
+  background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 60%, #ec4899 100%);
+  box-shadow: 0 0 14px rgba(236, 72, 153, 0.25);
   transition: width 0.32s ease;
 }
 
@@ -679,23 +687,82 @@ body {
 }
 
 @media (max-width: 640px) {
-  .traveler-panel__hero,
-  .traveler-panel__body {
-    padding-left: 16px;
-    padding-right: 16px;
+  .traveler-panel {
+    border-radius: 18px;
   }
 
   .traveler-panel__hero {
     flex-direction: column;
+    padding: 18px 14px 14px;
+  }
+
+  .traveler-panel__body {
+    padding: 16px 14px 18px;
+  }
+
+  .traveler-panel__title {
+    font-size: 1.1rem;
+  }
+
+  .traveler-panel__description {
+    font-size: 0.86rem;
+    line-height: 1.45;
+  }
+
+  .traveler-panel__tags {
+    justify-content: flex-start;
+    gap: 6px;
   }
 
   .traveler-tabs {
-    padding-left: 16px;
-    padding-right: 16px;
+    gap: 6px;
+    padding: 12px 14px 0;
   }
 
   .traveler-tab {
-    min-width: 112px;
-    padding: 11px 12px;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 9px 10px;
+    text-align: center;
+  }
+
+  .traveler-tab span {
+    font-size: 0.78rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .traveler-tab small {
+    font-size: 0.65rem;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .traveler-card,
+  .traveler-budget-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .traveler-chip {
+    padding: 6px 9px;
+    font-size: 0.72rem;
+  }
+
+  .traveler-route-badge {
+    padding: 6px 9px;
+    font-size: 0.72rem;
+  }
+
+  .traveler-range {
+    font-size: 1.05rem;
+  }
+
+  .traveler-budget-grid span {
+    font-size: 0.72rem;
+    padding: 6px 8px;
   }
 }
