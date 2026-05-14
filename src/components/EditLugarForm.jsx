@@ -1,4 +1,5 @@
 import CategoryColorPicker from './CategoryColorPicker'
+import TravelerInfoEditor from './TravelerInfoEditor'
 
 const SUBTIPOS = ['Hotel', 'Hostal', 'Airbnb', 'Restaurante', 'Bar', 'Atracción']
 const DEFAULT_CATEGORY_COLOR = '#2196F3'
@@ -25,7 +26,15 @@ const labelStyle = {
   color: '#374151',
 }
 
-export default function EditLugarForm({ formData, categorias = [], onChange, onToggleDestacado, onSave, onCancel }) {
+export default function EditLugarForm({
+  formData,
+  categorias = [],
+  onChange,
+  onTravelerInfoChange,
+  onToggleDestacado,
+  onSave,
+  onCancel,
+}) {
   return (
     <div style={{
       border: '1px solid #e5e7eb',
@@ -239,6 +248,11 @@ export default function EditLugarForm({ formData, categorias = [], onChange, onT
             </span>
           </label>
         </div>
+
+        <TravelerInfoEditor
+          value={formData.info_viajero}
+          onChange={onTravelerInfoChange}
+        />
       </div>
 
       <div style={{ padding: '0 20px 16px' }}>

@@ -23,7 +23,7 @@ export async function getLugarById(id) {
 export async function getLugaresAdmin() {
   const { data, error } = await supabase
     .from('lugares')
-    .select(`id, nombre, descripcion, direccion, departamento_id, categoria_id, precio_entrada, subtipo, destacado, imagen_principal, latitud, longitud, horarios, updated_at, categorias(id, nombre, color), departamentos(id, nombre)`)
+    .select(`id, nombre, descripcion, direccion, departamento_id, categoria_id, precio_entrada, subtipo, destacado, imagen_principal, latitud, longitud, horarios, info_viajero, updated_at, categorias(id, nombre, color), departamentos(id, nombre)`)
     .order('nombre', { ascending: true })
   return { data: data ?? [], error }
 }
@@ -32,7 +32,7 @@ export async function createLugar(payload) {
   const { data, error } = await supabase
     .from('lugares')
     .insert(payload)
-    .select(`id, nombre, descripcion, direccion, departamento_id, categoria_id, precio_entrada, subtipo, destacado, imagen_principal, latitud, longitud, horarios, updated_at, categorias(id, nombre, color), departamentos(id, nombre)`)
+    .select(`id, nombre, descripcion, direccion, departamento_id, categoria_id, precio_entrada, subtipo, destacado, imagen_principal, latitud, longitud, horarios, info_viajero, updated_at, categorias(id, nombre, color), departamentos(id, nombre)`)
     .maybeSingle()
   return { data: data ?? null, error }
 }

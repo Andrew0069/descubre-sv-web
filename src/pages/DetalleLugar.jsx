@@ -20,6 +20,7 @@ import Loader from '../components/Loader'
 import Toast from '../components/Toast'
 import PhotoPickerSheet from '../components/PhotoPickerSheet'
 import FotoLightbox from '../components/FotoLightbox'
+import LugarTravelerPanel from '../components/LugarTravelerPanel'
 import { formatRelativeEs } from '../lib/dateUtils'
 
 const REPLY_MIN_LENGTH = 5
@@ -1823,6 +1824,8 @@ export default function DetalleLugar() {
               })()}
             </div>
           )}
+
+          <LugarTravelerPanel lugar={lugar} />
         </div>
 
         {/* RIGHT COLUMN */}

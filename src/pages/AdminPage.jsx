@@ -18,6 +18,7 @@ import Toast from '../components/Toast'
 import { resolveImageUrl } from '../lib/imageUrl'
 import EditLugarForm from '../components/EditLugarForm'
 import NewLugarForm, { DEPARTAMENTOS } from '../components/NewLugarForm'
+import { createEmptyTravelerInfo, sanitizeTravelerInfo } from '../lib/travelerInfo'
 
 const buttonBase = {
   border: 'none',
@@ -44,6 +45,7 @@ const emptyNewLugarForm = {
   destacado: false,
   latitud: 0,
   longitud: 0,
+  info_viajero: createEmptyTravelerInfo(),
 }
 
 function formatDateTime(value) {
@@ -134,6 +136,7 @@ export default function AdminPage() {
     latitud: '',
     longitud: '',
     horarios: null,
+    info_viajero: createEmptyTravelerInfo(),
   })
   const [imagenes, setImagenes] = useState([])
   const [resenas, setResenas] = useState([])
@@ -559,6 +562,7 @@ export default function AdminPage() {
         latitud: '',
         longitud: '',
         horarios: null,
+        info_viajero: createEmptyTravelerInfo(),
       })
       return
     }
@@ -577,6 +581,7 @@ export default function AdminPage() {
       latitud: lugarSeleccionado.latitud ?? '',
       longitud: lugarSeleccionado.longitud ?? '',
       horarios: lugarSeleccionado.horarios ?? null,
+      info_viajero: lugarSeleccionado.info_viajero ?? createEmptyTravelerInfo(),
     })
   }, [categorias, lugarSeleccionado])
 
@@ -612,6 +617,14 @@ export default function AdminPage() {
     })
   }
 
+  const handleTravelerInfoChange = (nextValue) => {
+    setFormData((prev) => ({ ...prev, info_viajero: nextValue }))
+  }
+
+  const handleNewTravelerInfoChange = (nextValue) => {
+    setNewLugarForm((prev) => ({ ...prev, info_viajero: nextValue }))
+  }
+
   const handleCancelarEdicion = () => {
     if (!lugarSeleccionado) return
     const categoria = categorias.find((item) => item.id === lugarSeleccionado.categoria_id)
@@ -628,6 +641,7 @@ export default function AdminPage() {
       latitud: lugarSeleccionado.latitud ?? '',
       longitud: lugarSeleccionado.longitud ?? '',
       horarios: lugarSeleccionado.horarios ?? null,
+      info_viajero: lugarSeleccionado.info_viajero ?? createEmptyTravelerInfo(),
     })
   }
 
@@ -722,6 +736,7 @@ export default function AdminPage() {
       destacado: newLugarForm.destacado,
       latitud: Number(newLugarForm.latitud) || 0,
       longitud: Number(newLugarForm.longitud) || 0,
+      info_viajero: sanitizeTravelerInfo(newLugarForm.info_viajero),
       usuario_id: usuario,
       aprobado: true,
       promedio_estrellas: 0,
@@ -814,6 +829,7 @@ export default function AdminPage() {
       destacado: formData.destacado,
       latitud: formData.latitud !== '' ? Number(formData.latitud) : null,
       longitud: formData.longitud !== '' ? Number(formData.longitud) : null,
+      info_viajero: sanitizeTravelerInfo(formData.info_viajero),
     }
     const camposModificados = Object.keys(payload).filter((key) => payload[key] !== lugarSeleccionado[key])
 
@@ -1495,6 +1511,7 @@ export default function AdminPage() {
                       categorias={categorias}
                       isSaving={creatingLugar}
                       onChange={handleNewLugarChange}
+                      onTravelerInfoChange={handleNewTravelerInfoChange}
                       onToggleDestacado={handleToggleNewDestacado}
                       onSave={handleCrearLugar}
                       onCancel={handleCancelarCreacionLugar}
@@ -1561,6 +1578,7 @@ export default function AdminPage() {
                       formData={formData}
                       categorias={categorias}
                       onChange={handleFormChange}
+                      onTravelerInfoChange={handleTravelerInfoChange}
                       onToggleDestacado={handleToggleDestacado}
                       onSave={handleUpdateLugar}
                       onCancel={handleCancelarEdicion}

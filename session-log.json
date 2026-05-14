@@ -1,6 +1,6 @@
 {
   "project": "Destino SV App",
-  "last_updated": "2026-05-13",
+  "last_updated": "2026-05-14",
   "sessions": [
     {
       "id": 1,
@@ -1001,6 +1001,38 @@
         "usuariosService.js: bloquearUsuario ahora también setea bloqueado_por_admin=true; desbloquearUsuario setea bloqueado_por_admin=false; getUsuarioBloqueado retorna ambos campos; nueva función eliminarUsuarioPerfil(userId)",
         "Login.jsx: dos mensajes de bloqueo diferenciados — MSG_BLOQUEO_AUTO (bloqueo automático por intentos, mantiene link de recuperar contraseña) y MSG_BLOQUEO_ADMIN ('Tu cuenta ha sido bloqueada. Por favor contacta al administrador: Spotter.App.com', oculta '¿Olvidaste tu contraseña?')",
         "AdminPage.jsx: botón 'Eliminar perfil' por usuario (solo en no-admins), modal de confirmación con doble confirmación, handler handleEliminarUsuario que registra en bitácora antes de eliminar y remueve de la lista local"
+      ]
+    },
+    {
+      "id": 56,
+      "date": "2026-05-14",
+      "ai_tool": "Codex",
+      "summary": "Nuevo módulo dinámico de movilidad y presupuesto por lugar, editor manual en Admin y corrección del bug de espacios en los campos de info viajero.",
+      "files_modified": [
+        "src/pages/DetalleLugar.jsx",
+        "src/components/LugarTravelerPanel.jsx",
+        "src/components/TravelerInfoEditor.jsx",
+        "src/components/NewLugarForm.jsx",
+        "src/components/EditLugarForm.jsx",
+        "src/pages/AdminPage.jsx",
+        "src/services/lugaresService.js",
+        "src/lib/travelerInfo.js",
+        "src/index.css",
+        "supabase/add-info-viajero-column.sql",
+        "session-log.json"
+      ],
+      "changes": [
+        "DetalleLugar.jsx: agregado el componente LugarTravelerPanel debajo del bloque de ubicación/horarios para mostrar información de movilidad, Uber, presupuestos y tips locales por lugar",
+        "Creado LugarTravelerPanel.jsx con tabs dinámicos, animaciones suaves y paleta blanco hueso + amarillo, mostrando solo las secciones disponibles según info_viajero",
+        "Creado TravelerInfoEditor.jsx para capturar manualmente rutas de buses, estimados de Uber, presupuestos por nivel, tips locales y zonas cercanas desde Admin",
+        "NewLugarForm.jsx y EditLugarForm.jsx: integrado TravelerInfoEditor dentro de los formularios sin cambiar el resto del flujo de lugares",
+        "AdminPage.jsx: extendidos newLugarForm y formData con info_viajero; el guardado ahora sanea ese objeto antes de crear o actualizar un lugar",
+        "lugaresService.js: las consultas de admin y creación ahora incluyen la columna info_viajero",
+        "Creado travelerInfo.js para centralizar estructuras vacías, normalización, sanitización y utilidades del nuevo módulo",
+        "index.css: agregados estilos del panel viajero, tabs, chips, tarjetas y barras animadas con diseño cálido consistente con la app",
+        "Creado supabase/add-info-viajero-column.sql para añadir la columna jsonb info_viajero en la tabla lugares",
+        "Corregido el bug donde no se podía usar espacio en los campos del editor: la normalización ya no hace trim en cada render y solo recorta al guardar",
+        "Validado con npm run build; la compilación terminó correctamente"
       ]
     }
   ]

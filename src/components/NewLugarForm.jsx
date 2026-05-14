@@ -1,5 +1,6 @@
 import CategoryColorPicker from './CategoryColorPicker'
 import { DEFAULT_CATEGORY_COLOR } from '../pages/AdminPage'
+import TravelerInfoEditor from './TravelerInfoEditor'
 
 export const DEPARTAMENTOS = [
   { label: 'Ahuachapán', value: 'b0000000-0000-0000-0000-000000000011' },
@@ -40,7 +41,16 @@ const createLabelStyle = {
   color: '#374151',
 }
 
-export default function NewLugarForm({ formData, categorias = [], isSaving, onChange, onToggleDestacado, onSave, onCancel }) {
+export default function NewLugarForm({
+  formData,
+  categorias = [],
+  isSaving,
+  onChange,
+  onTravelerInfoChange,
+  onToggleDestacado,
+  onSave,
+  onCancel,
+}) {
   return (
     <div style={{
       border: '1px solid #e5e7eb',
@@ -325,6 +335,11 @@ export default function NewLugarForm({ formData, categorias = [], isSaving, onCh
             />
           </div>
         </div>
+
+        <TravelerInfoEditor
+          value={formData.info_viajero}
+          onChange={onTravelerInfoChange}
+        />
       </div>
 
       <div style={{
