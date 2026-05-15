@@ -328,28 +328,85 @@ function TimelineCard({ lugar, dia, hora, onRemove, onUpdateParada, onToast }) {
         </select>
 
         {dia && (
-          <input
-            type="time"
+          <TimePicker12h
+            compact
             value={hora ?? ''}
-            onChange={handleHoraChange}
-            title="Hora de visita"
-            style={{
-              width: '100%',
-              padding: '4px 6px',
-              borderRadius: '6px',
-              border: '1.5px solid #e5e7eb',
-              fontSize: '0.72rem',
-              color: hora ? '#111827' : '#9ca3af',
-              backgroundColor: '#fafafa',
-              outline: 'none',
-              cursor: 'pointer',
-              boxSizing: 'border-box',
+            onChange={(newHora) => {
+              onUpdateParada(lugar.id, 'hora', newHora)
+              if (dia && newHora) {
+                const result = checkHorario(lugar, dia, newHora)
+                if (result.status !== 'open' && result.message) onToast(result.message, 4500)
+              }
             }}
           />
         )}
 
         {statusIndicator}
       </div>
+    </div>
+  )
+}
+
+// 12-hour time picker with AM/PM toggle
+function TimePicker12h({ value, onChange, compact = false }) {
+  const toDisplay = (val) => {
+    if (!val) return { h: 12, m: 0, period: 'AM' }
+    const [hh, mm] = val.split(':').map(Number)
+    return { h: hh % 12 || 12, m: mm, period: hh >= 12 ? 'PM' : 'AM' }
+  }
+  const { h, m, period } = toDisplay(value)
+
+  const emit = (h12, min, per) => {
+    let h24 = h12 % 12
+    if (per === 'PM') h24 += 12
+    onChange(`${String(h24).padStart(2, '0')}:${String(min).padStart(2, '0')}`)
+  }
+
+  const sel = {
+    borderRadius: 7,
+    border: '1.5px solid #fcd34d',
+    background: '#fff',
+    color: value ? '#111827' : '#9ca3af',
+    outline: 'none',
+    cursor: 'pointer',
+    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+    appearance: 'none',
+    WebkitAppearance: 'none',
+    textAlign: 'center',
+    ...(compact
+      ? { padding: '3px 2px', fontSize: '0.7rem', minWidth: 34, width: 34 }
+      : { padding: '7px 6px', fontSize: '0.83rem', minWidth: 50, width: 50 }),
+  }
+
+  const btn = {
+    borderRadius: 7,
+    border: '1.5px solid #fcd34d',
+    background: value && period === 'PM' ? '#F5C842' : '#fff',
+    color: '#92400e',
+    fontWeight: 700,
+    cursor: 'pointer',
+    transition: 'background-color 0.2s ease',
+    ...(compact
+      ? { padding: '3px 5px', fontSize: '0.66rem', minWidth: 30 }
+      : { padding: '7px 10px', fontSize: '0.78rem', minWidth: 46 }),
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: compact ? 3 : 5, alignItems: 'center' }}>
+      <select style={sel} value={h} onChange={e => emit(+e.target.value, m, period)}
+        onFocus={e => { e.target.style.borderColor = '#F5C842'; e.target.style.boxShadow = '0 0 0 3px rgba(245,200,66,0.18)' }}
+        onBlur={e => { e.target.style.borderColor = '#fcd34d'; e.target.style.boxShadow = 'none' }}>
+        {Array.from({ length: 12 }, (_, i) => i + 1).map(n => <option key={n} value={n}>{n}</option>)}
+      </select>
+      <span style={{ fontWeight: 800, color: '#b45309', fontSize: compact ? '0.75rem' : '0.9rem', lineHeight: 1, flexShrink: 0 }}>:</span>
+      <select style={sel} value={m} onChange={e => emit(h, +e.target.value, period)}
+        onFocus={e => { e.target.style.borderColor = '#F5C842'; e.target.style.boxShadow = '0 0 0 3px rgba(245,200,66,0.18)' }}
+        onBlur={e => { e.target.style.borderColor = '#fcd34d'; e.target.style.boxShadow = 'none' }}>
+        {Array.from({ length: 12 }, (_, i) => i * 5).map(n => <option key={n} value={n}>{String(n).padStart(2, '0')}</option>)}
+      </select>
+      <button type="button" style={btn} onClick={() => emit(h, m, period === 'AM' ? 'PM' : 'AM')}>
+        {period}
+      </button>
     </div>
   )
 }
@@ -926,8 +983,7 @@ export default function Guias() {
     }
   }
 
-  const handleGuiaHoraChange = (e) => {
-    const hora = e.target.value
+  const handleGuiaHoraChange = (hora) => {
     setGuiaHora(hora)
     setRutaActual((prev) => prev.map((p) => ({ ...p, hora: hora || null })))
     if (guiaFecha && hora) {
@@ -1346,16 +1402,11 @@ export default function Guias() {
                     className="guia-date-input"
                   />
                 </div>
-                <div style={{ flex: '1', minWidth: '120px' }}>
-                  <label style={{ fontSize: '0.68rem', fontWeight: 700, color: '#b45309', display: 'block', marginBottom: '4px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                <div style={{ flex: '1 1 auto' }}>
+                  <label style={{ fontSize: '0.68rem', fontWeight: 700, color: '#b45309', display: 'block', marginBottom: '6px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                     Hora
                   </label>
-                  <input
-                    type="time"
-                    value={guiaHora}
-                    onChange={handleGuiaHoraChange}
-                    className="guia-date-input"
-                  />
+                  <TimePicker12h value={guiaHora} onChange={handleGuiaHoraChange} />
                 </div>
                 {(guiaFecha || guiaHora) && (
                   <button
