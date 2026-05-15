@@ -32,6 +32,16 @@ Al **finalizar cada sesión**, actualiza el archivo `session-log.json` en la ra�
 
 ## Resumen de sesiones recientes
 
+### 2026-05-14 - Claude Code Sonnet 4.6 (sesión 61)
+- **Fan de imágenes animado en Guías + programación por día/hora + detección de horarios:**
+  - Archivos: `src/pages/Guias.jsx`, `src/services/guiasService.js`, `src/components/Toast.jsx`. Supabase: columna `paradas_config jsonb DEFAULT '{}'` en tabla `guias`.
+  - **Fan animation:** `getPreviewImgs(lugar)` extrae hasta 3 URLs de `imagenes_lugar` (orden ascendente). `LugarChip` envuelto en `.lugar-chip-wrap` con overlay `.lugar-chip-fan` — en hover las 3 cartas se despliegan con rotaciones -18°/0°/+18° y `cubic-bezier(0.34,1.56,0.64,1)`; con 1 imagen sube sin rotar (`.is-single`).
+  - **Scheduling por parada:** `rutaActual` migrado de `Lugar[]` a `ParadaItem[] ({ lugar, dia, hora })`. `TimelineCard` tiene nueva firma `({ lugar, dia, hora, onRemove, onUpdateParada, onToast })` con `<select>` de día (Lun–Dom) y `<input type="time">` que aparece al elegir día. Pill verde **"✓ Abierto"** / naranja **"⚠ Cerrado"** calculado por `useMemo`.
+  - **Detección de horarios:** `checkHorario(lugar, dia, hora)` evalúa `es24Horas`, `cerrado_dia` (encuentra próximo día abierto), `antes_apertura` y `despues_cierre`. `format12h()` standalone para mensajes legibles. Toast naranja disparado automáticamente al cambiar día u hora.
+  - **Persistencia:** `handleGuardar` construye `paradas_config: { [lugar_id]: {dia, hora} }` e incluye en el payload. `handleCargar` rehidrata `ParadaItem[]` desde `guia.paradas_config` al editar guía existente. Guías antiguas reciben `{}` como default — backward compatible.
+  - **Toast.jsx:** reordenada detección — `"cerrado"` → `warning` (naranja) antes de check `success`; eliminado `"cerrad"` del branch de success para evitar colisiones.
+  - Build: 119 módulos sin errores nuevos.
+
 ### 2026-05-14 - Claude Code Opus 4.7 (sesión 58)
 - **Restyle estético completo del Admin Lugares (sinergia con Home/Main):**
   - Archivos: `src/index.css` (nuevo bloque `.admin-*`), `src/pages/AdminPage.jsx` (solo sección lugares), `src/components/EditLugarForm.jsx`, `src/components/NewLugarForm.jsx`. Cero cambios de lógica — handlers, estados, RLS, queries Supabase y firmas de componentes intactos.

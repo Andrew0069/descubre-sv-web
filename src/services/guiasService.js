@@ -9,19 +9,19 @@ export async function getGuiasByUser(userId) {
   return { data, error }
 }
 
-export async function createGuia({ user_id, nombre, descripcion, lugares_ids }) {
+export async function createGuia({ user_id, nombre, descripcion, lugares_ids, paradas_config }) {
   const { data, error } = await supabase
     .from('guias')
-    .insert({ user_id, nombre, descripcion, lugares_ids })
+    .insert({ user_id, nombre, descripcion, lugares_ids, paradas_config: paradas_config ?? {} })
     .select()
     .single()
   return { data, error }
 }
 
-export async function updateGuia(id, { nombre, descripcion, lugares_ids }) {
+export async function updateGuia(id, { nombre, descripcion, lugares_ids, paradas_config }) {
   const { data, error } = await supabase
     .from('guias')
-    .update({ nombre, descripcion, lugares_ids })
+    .update({ nombre, descripcion, lugares_ids, paradas_config: paradas_config ?? {} })
     .eq('id', id)
     .select()
     .single()

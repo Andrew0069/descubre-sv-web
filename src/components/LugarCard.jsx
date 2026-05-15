@@ -73,7 +73,6 @@ function LugarCard({ lugar, isFeatured }) {
     .find((foto) => foto?.ruta_imagen?.trim())?.ruta_imagen
   const img = resolveImageUrl(imagenPrincipal || imagenRelacionada, 'lugares-fotos', { transform: { width: isFeatured ? 800 : 400, height: 267, resize: 'cover' } })
   const showImage = Boolean(img) && !imageError
-  const precio = lugar.precio_entrada ?? null
   const catBg = cat ? getCategoriaBadgeBackground(cat) : TROPICAL_GRADIENT
 
   useEffect(() => {
@@ -293,11 +292,6 @@ function LugarCard({ lugar, isFeatured }) {
         </p>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          {precio != null && (
-            <span style={{ fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              🎫 <span style={{ fontWeight: 600, color: '#374151' }}>{precio}</span>
-            </span>
-          )}
           {lugar.promedio_rating ? (
             <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem', fontWeight: '600', color: '#e11d48', marginLeft: 'auto' }}>
               <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">

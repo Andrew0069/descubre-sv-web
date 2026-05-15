@@ -961,7 +961,6 @@ export default function DetalleLugar() {
   const dep = lugar.departamentos
   const img = resolveImageUrl(lugar.imagen_principal, 'lugares-fotos')
   const totalResenas = resenas.length
-  const entrada = lugar.precio_entrada ?? null
   const urlsDesdeTabla = (imagenes ?? [])
     .map((i) => resolveImageUrl(i.ruta_imagen, 'lugares-fotos'))
     .filter(Boolean)
@@ -1646,14 +1645,6 @@ export default function DetalleLugar() {
           <>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}>
               📍 {dep.nombre}
-            </span>
-            <span style={{ margin: '0 14px', color: '#d1d5db' }}>|</span>
-          </>
-        )}
-        {entrada != null && (
-          <>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}>
-              🎫 {entrada}
             </span>
             <span style={{ margin: '0 14px', color: '#d1d5db' }}>|</span>
           </>

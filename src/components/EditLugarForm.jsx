@@ -36,6 +36,20 @@ export default function EditLugarForm({
 
         <div>
           <label className="admin-form-label">
+            Dirección
+          </label>
+          <input
+            type="text"
+            name="direccion"
+            value={formData.direccion ?? ''}
+            onChange={onChange}
+            className="admin-form-field"
+            placeholder="ej. Km 12 Carretera a Santa Ana"
+          />
+        </div>
+
+        <div>
+          <label className="admin-form-label">
             Descripción
           </label>
           <textarea

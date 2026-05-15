@@ -126,6 +126,7 @@ export default function AdminPage() {
   const [formData, setFormData] = useState({
     nombre: '',
     descripcion: '',
+    direccion: '',
     categoria_id: '',
     nueva_categoria_nombre: '',
     categoria_color: DEFAULT_CATEGORY_COLOR,
@@ -552,6 +553,7 @@ export default function AdminPage() {
       setFormData({
         nombre: '',
         descripcion: '',
+        direccion: '',
         categoria_id: '',
         nueva_categoria_nombre: '',
         categoria_color: DEFAULT_CATEGORY_COLOR,
@@ -571,6 +573,7 @@ export default function AdminPage() {
     setFormData({
       nombre: lugarSeleccionado.nombre ?? '',
       descripcion: lugarSeleccionado.descripcion ?? '',
+      direccion: lugarSeleccionado.direccion ?? '',
       categoria_id: lugarSeleccionado.categoria_id ?? '',
       nueva_categoria_nombre: '',
       categoria_color: categoria?.color || DEFAULT_CATEGORY_COLOR,
@@ -631,6 +634,7 @@ export default function AdminPage() {
     setFormData({
       nombre: lugarSeleccionado.nombre ?? '',
       descripcion: lugarSeleccionado.descripcion ?? '',
+      direccion: lugarSeleccionado.direccion ?? '',
       categoria_id: lugarSeleccionado.categoria_id ?? '',
       nueva_categoria_nombre: '',
       categoria_color: categoria?.color || DEFAULT_CATEGORY_COLOR,
@@ -823,6 +827,7 @@ export default function AdminPage() {
     const payload = {
       nombre: formData.nombre,
       descripcion: formData.descripcion,
+      direccion: formData.direccion?.trim() || null,
       categoria_id: categoriaId || null,
       precio_entrada: formData.precio_entrada,
       subtipo: formData.subtipo || null,

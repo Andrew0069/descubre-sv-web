@@ -21,12 +21,111 @@ function getThumb(lugar) {
   })
 }
 
+function getPreviewImgs(lugar) {
+  const sorted = (lugar.imagenes_lugar ?? [])
+    .slice()
+    .sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
+    .filter((f) => f?.ruta_imagen?.trim())
+    .slice(0, 3)
+  const urls = sorted.map((f) =>
+    resolveImageUrl(f.ruta_imagen, 'lugares-fotos', {
+      transform: { width: 200, height: 160, resize: 'cover' },
+    })
+  )
+  if (urls.length === 0 && lugar.imagen_principal?.trim()) {
+    const u = resolveImageUrl(lugar.imagen_principal, 'lugares-fotos', {
+      transform: { width: 200, height: 160, resize: 'cover' },
+    })
+    if (u) return [u]
+  }
+  return urls.filter(Boolean)
+}
+
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('es-SV', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
   })
+}
+
+function format12h(time) {
+  if (!time) return '?'
+  const [hh, mm] = time.split(':')
+  const h = parseInt(hh, 10)
+  return `${h % 12 || 12}:${mm} ${h >= 12 ? 'PM' : 'AM'}`
+}
+
+function getDiaFromDate(dateStr) {
+  if (!dateStr) return null
+  const d = new Date(dateStr + 'T12:00:00')
+  const keys = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado']
+  return keys[d.getDay()]
+}
+
+const DIA_LABELS = {
+  lunes: 'lunes',
+  martes: 'martes',
+  miercoles: 'miércoles',
+  jueves: 'jueves',
+  viernes: 'viernes',
+  sabado: 'sábado',
+  domingo: 'domingo',
+}
+
+const DIAS_SEMANA = [
+  { key: 'lunes',     label: 'Lun' },
+  { key: 'martes',    label: 'Mar' },
+  { key: 'miercoles', label: 'Mié' },
+  { key: 'jueves',    label: 'Jue' },
+  { key: 'viernes',   label: 'Vie' },
+  { key: 'sabado',    label: 'Sáb' },
+  { key: 'domingo',   label: 'Dom' },
+]
+
+function checkHorario(lugar, dia, hora) {
+  const h = lugar.horarios
+  if (!h) return { status: 'sin_horario', message: '' }
+  if (h.es24Horas) return { status: 'open', message: '' }
+
+  const diaData = h[dia]
+  if (!diaData || !diaData.abierto) {
+    const DAYS = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo']
+    const startIdx = DAYS.indexOf(dia)
+    let nextOpen = null
+    for (let i = 1; i <= 7; i++) {
+      const c = DAYS[(startIdx + i) % 7]
+      if (h[c]?.abierto) { nextOpen = c; break }
+    }
+    const hint = nextOpen
+      ? ` Abre el ${DIA_LABELS[nextOpen]} a las ${format12h(h[nextOpen].abre)}.`
+      : ' No tiene días con horario disponible.'
+    return {
+      status: 'cerrado_dia',
+      message: `${lugar.nombre} está cerrado los ${DIA_LABELS[dia]}.${hint}`,
+    }
+  }
+
+  const toMins = (t) => {
+    const [hh, mm] = (t ?? '00:00').split(':').map(Number)
+    return hh * 60 + mm
+  }
+  const abreMins   = toMins(diaData.abre)
+  const cierraMins = toMins(diaData.cierra)
+  const horaMins   = toMins(hora)
+
+  if (horaMins < abreMins)
+    return {
+      status: 'antes_apertura',
+      message: `${lugar.nombre} aún no abre a esa hora. Abre a las ${format12h(diaData.abre)}.`,
+    }
+  if (horaMins >= cierraMins)
+    return {
+      status: 'despues_cierre',
+      message: `${lugar.nombre} ya está cerrado a esa hora. Cierra a las ${format12h(diaData.cierra)}.`,
+    }
+
+  return { status: 'open', message: '' }
 }
 
 // ─── sub-components ─────────────────────────────────────────────────────────
@@ -65,9 +164,51 @@ function StepperDots({ count, max = 8 }) {
 }
 
 // Single card in the route timeline
-function TimelineCard({ lugar, onRemove }) {
+function TimelineCard({ lugar, dia, hora, onRemove, onUpdateParada, onToast }) {
   const [hov, setHov] = useState(false)
   const thumb = getThumb(lugar)
+
+  const horarioStatus = useMemo(() => {
+    if (!dia || !hora) return null
+    return checkHorario(lugar, dia, hora)
+  }, [lugar, dia, hora])
+
+  const handleDiaChange = (e) => {
+    const newDia = e.target.value || null
+    onUpdateParada(lugar.id, 'dia', newDia)
+    if (newDia && hora) {
+      const result = checkHorario(lugar, newDia, hora)
+      if (result.status !== 'open' && result.message) onToast(result.message, 4500)
+    }
+  }
+
+  const handleHoraChange = (e) => {
+    const newHora = e.target.value || null
+    onUpdateParada(lugar.id, 'hora', newHora)
+    if (dia && newHora) {
+      const result = checkHorario(lugar, dia, newHora)
+      if (result.status !== 'open' && result.message) onToast(result.message, 4500)
+    }
+  }
+
+  const statusIndicator = horarioStatus && horarioStatus.status !== 'sin_horario' ? (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '4px',
+      padding: '3px 7px',
+      borderRadius: '20px',
+      fontSize: '0.65rem',
+      fontWeight: 700,
+      backgroundColor: horarioStatus.status === 'open' ? '#ecfdf5' : '#fff7ed',
+      color: horarioStatus.status === 'open' ? '#065f46' : '#92400e',
+      border: `1px solid ${horarioStatus.status === 'open' ? '#a7f3d0' : '#fcd34d'}`,
+      marginTop: '5px',
+      lineHeight: 1,
+    }}>
+      {horarioStatus.status === 'open' ? '✓ Abierto' : '⚠ Cerrado'}
+    </div>
+  ) : null
 
   return (
     <div
@@ -139,7 +280,7 @@ function TimelineCard({ lugar, onRemove }) {
       </div>
 
       {/* info */}
-      <div style={{ padding: '8px 10px 10px' }}>
+      <div style={{ padding: '8px 10px 4px' }}>
         <p style={{
           fontSize: '0.8rem',
           fontWeight: 700,
@@ -158,6 +299,56 @@ function TimelineCard({ lugar, onRemove }) {
             📍 {lugar.departamentos.nombre}
           </p>
         )}
+      </div>
+
+      {/* schedule controls */}
+      <div style={{ padding: '4px 10px 10px', borderTop: '1px solid #f3f4f6', marginTop: '4px' }}>
+        <select
+          value={dia ?? ''}
+          onChange={handleDiaChange}
+          title="Día de visita"
+          style={{
+            width: '100%',
+            padding: '4px 6px',
+            borderRadius: '6px',
+            border: '1.5px solid #e5e7eb',
+            fontSize: '0.72rem',
+            color: dia ? '#111827' : '#9ca3af',
+            backgroundColor: '#fafafa',
+            outline: 'none',
+            cursor: 'pointer',
+            marginBottom: '5px',
+            boxSizing: 'border-box',
+          }}
+        >
+          <option value="">Día de visita…</option>
+          {DIAS_SEMANA.map((d) => (
+            <option key={d.key} value={d.key}>{d.label}</option>
+          ))}
+        </select>
+
+        {dia && (
+          <input
+            type="time"
+            value={hora ?? ''}
+            onChange={handleHoraChange}
+            title="Hora de visita"
+            style={{
+              width: '100%',
+              padding: '4px 6px',
+              borderRadius: '6px',
+              border: '1.5px solid #e5e7eb',
+              fontSize: '0.72rem',
+              color: hora ? '#111827' : '#9ca3af',
+              backgroundColor: '#fafafa',
+              outline: 'none',
+              cursor: 'pointer',
+              boxSizing: 'border-box',
+            }}
+          />
+        )}
+
+        {statusIndicator}
       </div>
     </div>
   )
@@ -183,92 +374,110 @@ function Arrow() {
 function LugarChip({ lugar, enRuta, onAdd }) {
   const [hov, setHov] = useState(false)
   const thumb = getThumb(lugar)
+  const previewImgs = getPreviewImgs(lugar)
+  const hasFan = previewImgs.length >= 2
 
   return (
     <div
+      className={`lugar-chip-wrap${hasFan ? '' : ' is-single'}`}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
-      style={{
-        borderRadius: '12px',
-        overflow: 'hidden',
-        backgroundColor: '#fff',
-        border: enRuta ? '2px solid #F5C842' : '1px solid #e5e7eb',
-        boxShadow: hov ? '0 6px 20px rgba(0,0,0,0.1)' : '0 2px 8px rgba(0,0,0,0.05)',
-        transform: hov ? 'translateY(-2px)' : 'translateY(0)',
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
     >
-      <div style={{ width: '100%', aspectRatio: '4/3', overflow: 'hidden', backgroundColor: '#f3f4f6', flexShrink: 0 }}>
-        {thumb ? (
-          <img
-            src={thumb}
-            alt={lugar.nombre}
-            loading="lazy"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-          />
-        ) : (
-          <div style={{
-            width: '100%', height: '100%',
-            background: `linear-gradient(135deg, ${lugar.categorias?.color || '#0EA5E9'} 0%, #38bdf8 100%)`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '2rem',
-          }}>
-            📍
-          </div>
-        )}
-      </div>
+      {/* Fan card overlay — appears above the chip on hover */}
+      {previewImgs.length >= 1 && (
+        <div className="lugar-chip-fan" aria-hidden="true">
+          {previewImgs.map((url, idx) => (
+            <div key={idx} className="lugar-chip-fan__card">
+              <img src={url} alt="" />
+            </div>
+          ))}
+        </div>
+      )}
 
-      <div style={{ padding: '10px 12px 12px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-        <p style={{ fontSize: '0.82rem', fontWeight: 700, color: '#111827', margin: '0 0 2px', lineHeight: 1.3 }}>
-          {lugar.nombre}
-        </p>
-        {lugar.departamentos?.nombre && (
-          <p style={{ fontSize: '0.72rem', color: '#9ca3af', margin: '0 0 8px', lineHeight: 1.2 }}>
-            {lugar.departamentos.nombre}
+      {/* Chip body */}
+      <div
+        style={{
+          borderRadius: '12px',
+          overflow: 'hidden',
+          backgroundColor: '#fff',
+          border: enRuta ? '2px solid #F5C842' : '1px solid #e5e7eb',
+          boxShadow: hov ? '0 6px 20px rgba(0,0,0,0.1)' : '0 2px 8px rgba(0,0,0,0.05)',
+          transform: hov ? 'translateY(-2px)' : 'translateY(0)',
+          transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <div style={{ width: '100%', aspectRatio: '4/3', overflow: 'hidden', backgroundColor: '#f3f4f6', flexShrink: 0 }}>
+          {thumb ? (
+            <img
+              src={thumb}
+              alt={lugar.nombre}
+              loading="lazy"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
+          ) : (
+            <div style={{
+              width: '100%', height: '100%',
+              background: `linear-gradient(135deg, ${lugar.categorias?.color || '#0EA5E9'} 0%, #38bdf8 100%)`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '2rem',
+            }}>
+              📍
+            </div>
+          )}
+        </div>
+
+        <div style={{ padding: '10px 12px 12px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+          <p style={{ fontSize: '0.82rem', fontWeight: 700, color: '#111827', margin: '0 0 2px', lineHeight: 1.3 }}>
+            {lugar.nombre}
           </p>
-        )}
-        {lugar.categorias?.nombre && (
-          <span style={{
-            alignSelf: 'flex-start',
-            fontSize: '0.68rem',
-            fontWeight: 600,
-            backgroundColor: `${lugar.categorias?.color || '#0EA5E9'}18`,
-            color: lugar.categorias?.color || '#0EA5E9',
-            borderRadius: '20px',
-            padding: '2px 8px',
-            marginBottom: '8px',
-          }}>
-            {lugar.categorias.nombre}
-          </span>
-        )}
-        <button
-          type="button"
-          onClick={() => !enRuta && onAdd(lugar)}
-          style={{
-            marginTop: 'auto',
-            padding: '6px 0',
-            borderRadius: '8px',
-            border: enRuta ? '1.5px solid #F5C842' : '1.5px solid #F5C842',
-            backgroundColor: enRuta ? '#FEF9E7' : '#F5C842',
-            color: enRuta ? '#92400e' : '#111827',
-            fontSize: '0.75rem',
-            fontWeight: 700,
-            cursor: enRuta ? 'default' : 'pointer',
-            transition: 'background-color 0.2s ease',
-            width: '100%',
-          }}
-        >
-          {enRuta ? '✓ En tu ruta' : '+ Añadir a ruta'}
-        </button>
+          {lugar.departamentos?.nombre && (
+            <p style={{ fontSize: '0.72rem', color: '#9ca3af', margin: '0 0 8px', lineHeight: 1.2 }}>
+              {lugar.departamentos.nombre}
+            </p>
+          )}
+          {lugar.categorias?.nombre && (
+            <span style={{
+              alignSelf: 'flex-start',
+              fontSize: '0.68rem',
+              fontWeight: 600,
+              backgroundColor: `${lugar.categorias?.color || '#0EA5E9'}18`,
+              color: lugar.categorias?.color || '#0EA5E9',
+              borderRadius: '20px',
+              padding: '2px 8px',
+              marginBottom: '8px',
+            }}>
+              {lugar.categorias.nombre}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => !enRuta && onAdd(lugar)}
+            style={{
+              marginTop: 'auto',
+              padding: '6px 0',
+              borderRadius: '8px',
+              border: '1.5px solid #F5C842',
+              backgroundColor: enRuta ? '#FEF9E7' : '#F5C842',
+              color: enRuta ? '#92400e' : '#111827',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              cursor: enRuta ? 'default' : 'pointer',
+              transition: 'background-color 0.2s ease',
+              width: '100%',
+            }}
+          >
+            {enRuta ? '✓ En tu ruta' : '+ Añadir a ruta'}
+          </button>
+        </div>
       </div>
     </div>
   )
 }
 
 // Saved guide row
-function GuiaItem({ guia, lugares, onCargar, onEliminar }) {
+function GuiaItem({ guia, lugares, onCargar, onEliminar, onVer }) {
   const [confirmando, setConfirmando] = useState(false)
   const paradas = guia.lugares_ids?.length ?? 0
   const thumbLugar = lugares.find((l) => l.id === guia.lugares_ids?.[0])
@@ -286,22 +495,31 @@ function GuiaItem({ guia, lugares, onCargar, onEliminar }) {
       boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
     }}>
       {/* thumb */}
-      <div style={{
+      <button
+        type="button"
+        onClick={() => onVer(guia)}
+        aria-label={`Ver guia ${guia.nombre}`}
+        style={{
         width: '56px', height: '56px', borderRadius: '10px',
         overflow: 'hidden', flexShrink: 0, backgroundColor: '#f3f4f6',
+        border: 'none', padding: 0, cursor: 'pointer',
       }}>
         {thumb ? (
           <img src={thumb} alt={guia.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,#F5C842,#e6b800)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>🗺️</div>
         )}
-      </div>
+      </button>
 
       {/* info */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: '0.9rem', fontWeight: 700, color: '#111827', margin: '0 0 2px', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <button
+          type="button"
+          onClick={() => onVer(guia)}
+          style={{ display: 'block', width: '100%', padding: 0, border: 'none', background: 'none', textAlign: 'left', fontSize: '0.9rem', fontWeight: 700, color: '#111827', margin: '0 0 2px', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer' }}
+        >
           {guia.nombre}
-        </p>
+        </button>
         <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: 0 }}>
           {paradas} parada{paradas !== 1 ? 's' : ''} · {formatDate(guia.created_at)}
         </p>
@@ -552,7 +770,7 @@ export default function Guias() {
 
   const [lugares, setLugares] = useState([])
   const [categorias, setCategorias] = useState([])
-  const [rutaActual, setRutaActual] = useState([])
+  const [rutaActual, setRutaActual] = useState([]) // ParadaItem[]
   const [rutaNombre, setRutaNombre] = useState('')
   const [search, setSearch] = useState('')
   const [catFiltro, setCatFiltro] = useState(null)
@@ -561,6 +779,8 @@ export default function Guias() {
   const [user, setUser] = useState(null)
   const [toast, setToast] = useState(null)
   const [guiaEditandoId, setGuiaEditandoId] = useState(null)
+  const [guiaFecha, setGuiaFecha] = useState('')
+  const [guiaHora, setGuiaHora] = useState('')
   const [loadingLugares, setLoadingLugares] = useState(true)
   const timelineRef = useRef(null)
 
@@ -590,18 +810,16 @@ export default function Guias() {
     let cancelled = false
     setLoadingLugares(true)
       ; (async () => {
-        const { data } = await getLugaresHome()
+        const [{ data }, { data: categoriasData }] = await Promise.all([
+          getLugaresHome(),
+          supabase
+            .from('categorias')
+            .select('id, nombre, color')
+            .order('nombre', { ascending: true }),
+        ])
         if (!cancelled) {
           setLugares(data ?? [])
-          const cats = []
-          const seen = new Set()
-          for (const l of data ?? []) {
-            if (l.categorias && !seen.has(l.categorias.id)) {
-              cats.push(l.categorias)
-              seen.add(l.categorias.id)
-            }
-          }
-          setCategorias(cats)
+          setCategorias(categoriasData ?? [])
           setLoadingLugares(false)
         }
       })()
@@ -656,14 +874,26 @@ export default function Guias() {
     return list
   }, [lugares, catFiltro, search])
 
-  const rutaIds = useMemo(() => new Set(rutaActual.map((l) => l.id)), [rutaActual])
+  const rutaIds = useMemo(() => new Set(rutaActual.map((p) => p.lugar.id)), [rutaActual])
+
+  const guiaDia = useMemo(() => getDiaFromDate(guiaFecha), [guiaFecha])
+
+  const horarioSummary = useMemo(() => {
+    if (!guiaDia || !guiaHora || rutaActual.length === 0) return null
+    let open = 0, closed = 0
+    rutaActual.forEach((p) => {
+      const r = checkHorario(p.lugar, guiaDia, guiaHora)
+      if (r.status === 'open' || r.status === 'sin_horario') open++
+      else closed++
+    })
+    return { open, closed }
+  }, [rutaActual, guiaDia, guiaHora])
 
   const handleAdd = useCallback((lugar) => {
     setRutaActual((prev) => {
-      if (prev.some((l) => l.id === lugar.id)) return prev
-      return [...prev, lugar]
+      if (prev.some((p) => p.lugar.id === lugar.id)) return prev
+      return [...prev, { lugar, dia: null, hora: null }]
     })
-    // scroll timeline to end after state update
     setTimeout(() => {
       if (timelineRef.current) {
         timelineRef.current.scrollTo({ left: timelineRef.current.scrollWidth, behavior: 'smooth' })
@@ -672,13 +902,51 @@ export default function Guias() {
   }, [])
 
   const handleRemove = useCallback((id) => {
-    setRutaActual((prev) => prev.filter((l) => l.id !== id))
+    setRutaActual((prev) => prev.filter((p) => p.lugar.id !== id))
   }, [])
+
+  const handleUpdateParada = useCallback((lugarId, field, value) => {
+    setRutaActual((prev) =>
+      prev.map((p) => p.lugar.id === lugarId ? { ...p, [field]: value || null } : p)
+    )
+  }, [])
+
+  const handleGuiaFechaChange = (e) => {
+    const fecha = e.target.value
+    setGuiaFecha(fecha)
+    const dia = fecha ? getDiaFromDate(fecha) : null
+    setRutaActual((prev) => prev.map((p) => ({ ...p, dia })))
+    if (fecha && guiaHora) {
+      const conflictos = rutaActual.filter((p) => {
+        const r = checkHorario(p.lugar, dia, guiaHora)
+        return r.status !== 'open' && r.status !== 'sin_horario'
+      })
+      if (conflictos.length > 0)
+        showToast(`${conflictos.length} lugar${conflictos.length !== 1 ? 'es cerrados' : ' cerrado'} a esa hora. Revisá los detalles.`, 4500)
+    }
+  }
+
+  const handleGuiaHoraChange = (e) => {
+    const hora = e.target.value
+    setGuiaHora(hora)
+    setRutaActual((prev) => prev.map((p) => ({ ...p, hora: hora || null })))
+    if (guiaFecha && hora) {
+      const dia = getDiaFromDate(guiaFecha)
+      const conflictos = rutaActual.filter((p) => {
+        const r = checkHorario(p.lugar, dia, hora)
+        return r.status !== 'open' && r.status !== 'sin_horario'
+      })
+      if (conflictos.length > 0)
+        showToast(`${conflictos.length} lugar${conflictos.length !== 1 ? 'es cerrados' : ' cerrado'} a esa hora. Revisá los detalles.`, 4500)
+    }
+  }
 
   const handleLimpiar = () => {
     setRutaActual([])
     setRutaNombre('')
     setGuiaEditandoId(null)
+    setGuiaFecha('')
+    setGuiaHora('')
   }
 
   const handleGuardar = async () => {
@@ -690,11 +958,21 @@ export default function Guias() {
     if (rutaActual.length < 2) { showToast('Agrega al menos 2 lugares a tu ruta.'); return }
 
     setGuardando(true)
+
+    const paradaConfig = {
+      _guia_fecha: guiaFecha || null,
+      _guia_hora: guiaHora || null,
+    }
+    rutaActual.forEach((p) => {
+      if (p.dia || p.hora) paradaConfig[p.lugar.id] = { dia: p.dia, hora: p.hora }
+    })
+
     const payload = {
       user_id: user.id,
       nombre: rutaNombre.trim(),
       descripcion: null,
-      lugares_ids: rutaActual.map((l) => l.id),
+      lugares_ids: rutaActual.map((p) => p.lugar.id),
+      paradas_config: paradaConfig,
     }
 
     let result
@@ -717,12 +995,19 @@ export default function Guias() {
   }
 
   const handleCargar = (guia) => {
-    const lugaresDeGuia = guia.lugares_ids
-      .map((id) => lugares.find((l) => l.id === id))
+    const cfg = guia.paradas_config ?? {}
+    const paradaItems = (guia.lugares_ids ?? [])
+      .map((id) => {
+        const lugar = lugares.find((l) => l.id === id)
+        if (!lugar) return null
+        return { lugar, dia: cfg[id]?.dia ?? null, hora: cfg[id]?.hora ?? null }
+      })
       .filter(Boolean)
-    setRutaActual(lugaresDeGuia)
+    setRutaActual(paradaItems)
     setRutaNombre(guia.nombre)
     setGuiaEditandoId(guia.id)
+    setGuiaFecha(cfg._guia_fecha || '')
+    setGuiaHora(cfg._guia_hora || '')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -752,6 +1037,22 @@ export default function Guias() {
           to { opacity:1; transform:translateY(0); }
         }
         .guia-fade-up { animation: guiaFadeUp 0.4s ease forwards; }
+        @keyframes guiaDateIn {
+          from { opacity:0; transform:translateY(-10px) scale(0.98); }
+          to   { opacity:1; transform:translateY(0)    scale(1); }
+        }
+        .guia-date-picker { animation: guiaDateIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both; }
+        .guia-date-input {
+          width: 100%; padding: 8px 11px; border-radius: 8px;
+          border: 1.5px solid #fcd34d; font-size: 0.83rem;
+          color: #111827; background: #fff; outline: none;
+          box-sizing: border-box; cursor: pointer;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .guia-date-input:focus {
+          border-color: #F5C842;
+          box-shadow: 0 0 0 3px rgba(245,200,66,0.18);
+        }
         .guia-chip-grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
@@ -762,6 +1063,55 @@ export default function Guias() {
         .timeline-scroll::-webkit-scrollbar { height: 4px; }
         .timeline-scroll::-webkit-scrollbar-track { background: #f3f4f6; border-radius: 4px; }
         .timeline-scroll::-webkit-scrollbar-thumb { background: #F5C842; border-radius: 4px; }
+
+        /* ── Fan de imágenes (sobre imagen principal) ── */
+        .lugar-chip-wrap {
+          position: relative;
+        }
+        .lugar-chip-fan {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          aspect-ratio: 4 / 3;
+          pointer-events: none;
+          z-index: 20;
+          border-radius: 12px 12px 0 0;
+        }
+        .lugar-chip-fan__card {
+          position: absolute;
+          inset: 0;
+          border-radius: 10px;
+          overflow: hidden;
+          box-shadow: 0 6px 20px rgba(0,0,0,0.22);
+          transform-origin: bottom center;
+          transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.25s ease;
+        }
+        .lugar-chip-fan__card img {
+          width: 100%; height: 100%; object-fit: cover; display: block;
+        }
+        .lugar-chip-fan__card:nth-child(1),
+        .lugar-chip-fan__card:nth-child(2),
+        .lugar-chip-fan__card:nth-child(3) {
+          transform: rotate(0deg);
+          opacity: 0;
+        }
+        .lugar-chip-wrap:hover .lugar-chip-fan__card:nth-child(1) {
+          transform: rotate(-22deg);
+          opacity: 1;
+        }
+        .lugar-chip-wrap:hover .lugar-chip-fan__card:nth-child(2) {
+          transform: rotate(0deg) translateY(-8px);
+          opacity: 1;
+        }
+        .lugar-chip-wrap:hover .lugar-chip-fan__card:nth-child(3) {
+          transform: rotate(22deg);
+          opacity: 1;
+        }
+        .lugar-chip-wrap.is-single:hover .lugar-chip-fan__card:nth-child(1) {
+          transform: scale(1.05) translateY(-6px);
+          opacity: 1;
+        }
       `}</style>
 
       {/* ── NAV ── */}
@@ -793,7 +1143,8 @@ export default function Guias() {
               </text>
             </svg>
           </Link>
-          <span style={{ fontSize: '0.8rem', color: '#9ca3af', marginLeft: '4px' }}>/ Guías</span>
+          <span style={{ color: '#d1d5db', margin: '0 4px 0 6px' }}>|</span>
+          <span style={{ fontSize: '0.9rem', color: '#1a1a2e', fontWeight: 700 }}>Guías</span>
           <Link
             to="/"
             style={{
@@ -955,6 +1306,75 @@ export default function Guias() {
               </div>
             </div>
 
+            {/* ── FECHA Y HORA DE LA GUÍA ── */}
+            <div className="guia-date-picker" style={{
+              backgroundColor: '#fffbeb',
+              border: '1.5px solid #fde68a',
+              borderRadius: '14px',
+              padding: '14px 18px',
+              marginBottom: '16px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '1rem' }}>📅</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#92400e' }}>
+                  Fecha y hora de tu recorrido
+                </span>
+                {horarioSummary && (
+                  <div style={{ marginLeft: 'auto', display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    {horarioSummary.open > 0 && (
+                      <span style={{ fontSize: '0.68rem', fontWeight: 700, backgroundColor: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0', borderRadius: '20px', padding: '2px 8px' }}>
+                        ✓ {horarioSummary.open} abierto{horarioSummary.open !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {horarioSummary.closed > 0 && (
+                      <span style={{ fontSize: '0.68rem', fontWeight: 700, backgroundColor: '#fff7ed', color: '#92400e', border: '1px solid #fcd34d', borderRadius: '20px', padding: '2px 8px' }}>
+                        ⚠ {horarioSummary.closed} cerrado{horarioSummary.closed !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                <div style={{ flex: '1', minWidth: '140px' }}>
+                  <label style={{ fontSize: '0.68rem', fontWeight: 700, color: '#b45309', display: 'block', marginBottom: '4px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                    Fecha
+                  </label>
+                  <input
+                    type="date"
+                    value={guiaFecha}
+                    onChange={handleGuiaFechaChange}
+                    className="guia-date-input"
+                  />
+                </div>
+                <div style={{ flex: '1', minWidth: '120px' }}>
+                  <label style={{ fontSize: '0.68rem', fontWeight: 700, color: '#b45309', display: 'block', marginBottom: '4px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                    Hora
+                  </label>
+                  <input
+                    type="time"
+                    value={guiaHora}
+                    onChange={handleGuiaHoraChange}
+                    className="guia-date-input"
+                  />
+                </div>
+                {(guiaFecha || guiaHora) && (
+                  <button
+                    type="button"
+                    onClick={() => { setGuiaFecha(''); setGuiaHora(''); setRutaActual((prev) => prev.map((p) => ({ ...p, dia: null, hora: null }))) }}
+                    style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid #e5e7eb', backgroundColor: '#fff', color: '#9ca3af', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', alignSelf: 'flex-end' }}
+                  >
+                    Quitar
+                  </button>
+                )}
+              </div>
+              {guiaFecha && (
+                <p style={{ fontSize: '0.7rem', color: '#b45309', margin: '8px 0 0', lineHeight: 1.4 }}>
+                  {new Date(guiaFecha + 'T12:00:00').toLocaleDateString('es-SV', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                  {guiaHora && ` · ${format12h(guiaHora)}`}
+                </p>
+              )}
+            </div>
+
             {/* stepper label */}
             <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginBottom: '10px', fontWeight: 500 }}>
               {rutaActual.length} parada{rutaActual.length !== 1 ? 's' : ''} en tu ruta
@@ -966,27 +1386,40 @@ export default function Guias() {
               className="timeline-scroll"
               style={{
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 gap: '8px',
                 overflowX: 'auto',
                 paddingBottom: '8px',
               }}
             >
-              {rutaActual.map((lugar, i) => (
-                <div key={lugar.id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {i > 0 && <Arrow />}
-                  <TimelineCard lugar={lugar} onRemove={() => handleRemove(lugar.id)} />
+              {rutaActual.map((parada, i) => (
+                <div key={parada.lugar.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  {i > 0 && (
+                    <div style={{ paddingTop: '56px' }}>
+                      <Arrow />
+                    </div>
+                  )}
+                  <TimelineCard
+                    lugar={parada.lugar}
+                    dia={parada.dia}
+                    hora={parada.hora}
+                    onRemove={() => handleRemove(parada.lugar.id)}
+                    onUpdateParada={handleUpdateParada}
+                    onToast={showToast}
+                  />
                 </div>
               ))}
               {/* ghost add button */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Arrow />
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                <div style={{ paddingTop: '56px' }}>
+                  <Arrow />
+                </div>
                 <button
                   type="button"
                   onClick={() => document.getElementById('buscador')?.scrollIntoView({ behavior: 'smooth' })}
                   style={{
                     width: '160px',
-                    height: '150px',
+                    height: '190px',
                     flexShrink: 0,
                     borderRadius: '14px',
                     border: '2px dashed #F5C842',
@@ -1153,6 +1586,7 @@ export default function Guias() {
                     lugares={lugares}
                     onCargar={handleCargar}
                     onEliminar={handleEliminar}
+                    onVer={(guia) => navigate(`/guias?ver=${guia.id}`)}
                   />
                 ))}
               </div>

@@ -19,8 +19,8 @@ function detectType(msg) {
   if (!msg) return 'info'
   const lower = msg.toLowerCase()
   if (lower.includes('error') || lower.includes('falló') || lower.includes('fallo')) return 'error'
-  if (lower.includes('!') || lower.includes('guardad') || lower.includes('actualizad') || lower.includes('eliminad') || lower.includes('cerrad')) return 'success'
-  if (lower.includes('espera') || lower.includes('demasiadas') || lower.includes('límite')) return 'warning'
+  if (lower.includes('cerrado') || lower.includes('espera') || lower.includes('demasiadas') || lower.includes('límite')) return 'warning'
+  if (lower.includes('!') || lower.includes('guardad') || lower.includes('actualizad') || lower.includes('eliminad')) return 'success'
   return 'info'
 }
 

@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 const SYSTEM_COLORS = [
   '#f87171', '#fb923c', '#facc15', '#a3e635', '#34d399', '#2dd4bf',
   '#38bdf8', '#60a5fa', '#818cf8', '#a78bfa', '#c084fc', '#e879f9',
@@ -29,10 +31,25 @@ function uniqueColors(values) {
 }
 
 function Swatch({ color, selected, onSelect }) {
+  const [hovered, setHovered] = useState(false)
+  const [pressed, setPressed] = useState(false)
+  const isLifted = selected || hovered || pressed
+
+  const handleSelect = () => {
+    setPressed(true)
+    window.setTimeout(() => setPressed(false), 180)
+    onSelect(color)
+  }
+
   return (
     <button
       type="button"
-      onClick={() => onSelect(color)}
+      onClick={handleSelect}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => {
+        setHovered(false)
+        setPressed(false)
+      }}
       title={color}
       aria-label={`Seleccionar color ${color}`}
       style={{
@@ -42,10 +59,15 @@ function Swatch({ color, selected, onSelect }) {
         border: selected ? '2px solid #111827' : '1px solid rgba(17,24,39,0.12)',
         backgroundColor: color,
         cursor: 'pointer',
-        boxShadow: selected ? '0 0 0 3px rgba(14,165,233,0.18)' : 'none',
+        boxShadow: selected
+          ? '0 0 0 3px rgba(14,165,233,0.2), 0 8px 16px rgba(17,24,39,0.18)'
+          : hovered
+            ? '0 7px 14px rgba(17,24,39,0.16)'
+            : '0 1px 2px rgba(17,24,39,0.08)',
         padding: 0,
         position: 'relative',
-        transition: 'transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease',
+        transform: pressed ? 'scale(0.9)' : isLifted ? 'translateY(-2px) scale(1.08)' : 'translateY(0) scale(1)',
+        transition: 'transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.18s ease, border-color 0.18s ease',
       }}
     >
       {selected && (
@@ -57,6 +79,8 @@ function Swatch({ color, selected, onSelect }) {
             borderRadius: '999px',
             backgroundColor: '#ffffff',
             boxShadow: '0 1px 3px rgba(0,0,0,0.28)',
+            transform: pressed ? 'scale(0.75)' : 'scale(1)',
+            transition: 'transform 0.18s ease',
           }}
         />
       )}

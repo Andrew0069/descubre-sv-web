@@ -1080,6 +1080,78 @@
         "Tabs del /admin no tocadas: usuarios, resenas, sugerencias, logs siguen con la apariencia gris/azul anterior (alcance acordado: solo Lugares).",
         "Vite build: 119 modulos transformados sin errores ni warnings nuevos. El fallo posterior del plugin PWA workbox (hero-bg.png > 2 MiB precache limit) es preexistente y no relacionado con este restyle."
       ]
+    },
+    {
+      "id": 59,
+      "date": "2026-05-14",
+      "ai_tool": "Codex",
+      "summary": "Precio de entrada removido de las tarjetas LugarCard para evitar duplicidad con el modulo de presupuesto.",
+      "files_modified": [
+        "src/components/LugarCard.jsx",
+        "session-log.json"
+      ],
+      "changes": [
+        "LugarCard.jsx: eliminada la variable precio derivada de lugar.precio_entrada porque ya no se muestra en la tarjeta",
+        "LugarCard.jsx: removido el bloque visual del ticket/precio en la fila inferior, manteniendo intactos ubicacion, favoritos y rating"
+      ]
+    },
+    {
+      "id": 60,
+      "date": "2026-05-14",
+      "ai_tool": "Codex",
+      "summary": "Sidebar del Admin ajustado con altura fija al viewport y scroll interno para navegar lugares sin depender del desplazamiento principal.",
+      "files_modified": [
+        "src/index.css",
+        "session-log.json"
+      ],
+      "changes": [
+        "index.css: .admin-sidebar ahora usa max-height calc(100vh - 2rem), layout flex vertical y overflow hidden manteniendo position sticky",
+        "index.css: .admin-sidebar__divider y .admin-place-list fueron ajustados para que la lista de lugares tenga scroll vertical interno con overscroll contenido",
+        "index.css: agregado estilo de scrollbar fino en la lista de lugares y restaurado comportamiento normal del sidebar en mobile"
+      ]
+    },
+    {
+      "id": 61,
+      "date": "2026-05-14",
+      "ai_tool": "Claude Code Sonnet 4.6",
+      "summary": "Fan de imágenes animado en LugarChip + programación por día/hora por parada + detección de horarios con Toast.",
+      "files_modified": [
+        "src/pages/Guias.jsx",
+        "src/services/guiasService.js",
+        "src/components/Toast.jsx"
+      ],
+      "changes": [
+        "getPreviewImgs(): nueva función que retorna hasta 3 URLs de imagenes_lugar para el fan animation",
+        "format12h() y checkHorario(): helpers standalones para validar si un lugar estará abierto dado día y hora",
+        "LugarChip: wrapper .lugar-chip-wrap con .lugar-chip-fan overlay — 3 cartas fan-out en hover (CSS cubic-bezier spring)",
+        "TimelineCard: nueva firma con props dia/hora/onUpdateParada/onToast; select de día (lun-dom) + input type=time; pill verde/naranja según horario",
+        "handleUpdateParada: callback para actualizar dia/hora de una ParadaItem en rutaActual",
+        "rutaActual migrado de Lugar[] a ParadaItem[] ({ lugar, dia, hora })",
+        "handleGuardar: construye paradas_config ({[lugar_id]: {dia, hora}}) e incluye en payload",
+        "handleCargar: rehidrata ParadaItem[] desde guia.paradas_config al editar guía existente",
+        "Toast.jsx: reordenada detección de tipo — cerrado ahora dispara warning (naranja) antes de success",
+        "guiasService.js: createGuia/updateGuia incluyen paradas_config en insert/update",
+        "Supabase migration: ALTER TABLE guias ADD COLUMN paradas_config jsonb NOT NULL DEFAULT '{}'"
+      ]
+    },
+    {
+      "id": 62,
+      "date": "2026-05-14",
+      "ai_tool": "Claude Code Sonnet 4.6",
+      "summary": "Selector de fecha y hora a nivel de guía en Guias.jsx con animación spring y validación de horarios.",
+      "files_modified": [
+        "src/pages/Guias.jsx"
+      ],
+      "changes": [
+        "Agregado helper getDiaFromDate(dateStr) que deriva el día de la semana desde una fecha ISO.",
+        "Nuevos estados guiaFecha y guiaHora para la fecha/hora de la guía completa.",
+        "Memo guiaDia derivado de guiaFecha; memo horarioSummary que cuenta abiertos/cerrados para todos los stops.",
+        "Handlers handleGuiaFechaChange y handleGuiaHoraChange: auto-propagan dia/hora a todos los stops de rutaActual y disparan toast si hay conflictos.",
+        "handleLimpiar limpia guiaFecha y guiaHora; handleCargar los restaura desde paradas_config._guia_fecha/_guia_hora.",
+        "handleGuardar persiste _guia_fecha y _guia_hora dentro de paradas_config (JSONB, compatible hacia atrás).",
+        "CSS: @keyframes guiaDateIn (spring cubic-bezier) + clases .guia-date-picker y .guia-date-input con focus ring amarillo.",
+        "UI: panel animado dentro de la sección timeline con inputs de fecha y hora, pills verdes/naranjas de abiertos/cerrados, label legible de fecha+hora, botón Quitar."
+      ]
     }
   ]
 }
