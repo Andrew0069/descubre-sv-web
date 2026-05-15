@@ -49,6 +49,10 @@ function formatDate(iso) {
   })
 }
 
+function isGuiaCompletada(guia) {
+  return guia?.paradas_config?._estado === 'completada'
+}
+
 function format12h(time) {
   if (!time) return '?'
   const [hh, mm] = time.split(':')
@@ -537,6 +541,7 @@ function LugarChip({ lugar, enRuta, onAdd }) {
 function GuiaItem({ guia, lugares, onCargar, onEliminar, onVer }) {
   const [confirmando, setConfirmando] = useState(false)
   const paradas = guia.lugares_ids?.length ?? 0
+  const completada = isGuiaCompletada(guia)
   const thumbLugar = lugares.find((l) => l.id === guia.lugares_ids?.[0])
   const thumb = thumbLugar ? getThumb(thumbLugar) : null
 
@@ -584,22 +589,28 @@ function GuiaItem({ guia, lugares, onCargar, onEliminar, onVer }) {
 
       {/* actions */}
       <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-        <button
-          type="button"
-          onClick={() => onCargar(guia)}
-          style={{
-            padding: '6px 14px',
-            borderRadius: '8px',
-            border: 'none',
-            backgroundColor: '#F5C842',
-            color: '#111827',
-            fontSize: '0.78rem',
-            fontWeight: 700,
-            cursor: 'pointer',
-          }}
-        >
-          Editar
-        </button>
+        {completada ? (
+          <span style={{ padding: '6px 12px', borderRadius: '999px', backgroundColor: '#dcfce7', color: '#166534', fontSize: '0.76rem', fontWeight: 800 }}>
+            Completada
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onCargar(guia)}
+            style={{
+              padding: '6px 14px',
+              borderRadius: '8px',
+              border: 'none',
+              backgroundColor: '#F5C842',
+              color: '#111827',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            Editar
+          </button>
+        )}
         {confirmando ? (
           <button
             type="button"
@@ -694,6 +705,7 @@ function ViewerStop({ lugar, index, isLast }) {
 
 function GuiaViewer({ guia, lugares, loading, navigate }) {
   const mapUrl = buildRouteOpenUrl(lugares)
+  const completada = isGuiaCompletada(guia)
   return (
     <div style={{ minHeight: '100vh', background: '#fffbeb' }}>
       <style>{`
@@ -731,12 +743,18 @@ function GuiaViewer({ guia, lugares, loading, navigate }) {
         <h2 style={{ color: '#111827', fontSize: '1rem', fontWeight: 700, margin: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {guia.nombre}
         </h2>
-        <button
-          onClick={() => navigate(`/guias?editar=${guia.id}`)}
-          style={{ background: '#F5C842', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, color: '#111827', cursor: 'pointer', flexShrink: 0 }}
-        >
-          Editar ruta
-        </button>
+        {completada ? (
+          <span style={{ background: '#dcfce7', borderRadius: 999, padding: '6px 12px', fontSize: '0.78rem', fontWeight: 800, color: '#166534', flexShrink: 0 }}>
+            Completada
+          </span>
+        ) : (
+          <button
+            onClick={() => navigate(`/guias?editar=${guia.id}`)}
+            style={{ background: '#F5C842', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, color: '#111827', cursor: 'pointer', flexShrink: 0 }}
+          >
+            Editar ruta
+          </button>
+        )}
       </div>
 
       {/* Cuerpo dos paneles */}
@@ -916,7 +934,14 @@ export default function Guias() {
   useEffect(() => {
     if (!editarParam || misGuias.length === 0 || lugares.length === 0) return
     const guia = misGuias.find((g) => g.id === editarParam)
-    if (guia) handleCargar(guia)
+    if (guia) {
+      if (isGuiaCompletada(guia)) {
+        showToast('Esta ruta ya fue completada y no se puede editar.')
+        navigate(`/guias?ver=${guia.id}`, { replace: true })
+        return
+      }
+      handleCargar(guia)
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editarParam, misGuias, lugares])
 
@@ -1051,6 +1076,11 @@ export default function Guias() {
   }
 
   const handleCargar = (guia) => {
+    if (isGuiaCompletada(guia)) {
+      showToast('Esta ruta ya fue completada y no se puede editar.')
+      navigate(`/guias?ver=${guia.id}`)
+      return
+    }
     const cfg = guia.paradas_config ?? {}
     const paradaItems = (guia.lugares_ids ?? [])
       .map((id) => {

@@ -28,6 +28,22 @@ export async function updateGuia(id, { nombre, descripcion, lugares_ids, paradas
   return { data, error }
 }
 
+export async function completarGuia(guia) {
+  const { data, error } = await supabase
+    .from('guias')
+    .update({
+      paradas_config: {
+        ...(guia.paradas_config ?? {}),
+        _estado: 'completada',
+        _completado_en: new Date().toISOString(),
+      },
+    })
+    .eq('id', guia.id)
+    .select()
+    .single()
+  return { data, error }
+}
+
 export async function deleteGuia(id) {
   const { error } = await supabase
     .from('guias')

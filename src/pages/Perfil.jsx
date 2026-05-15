@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getUsuarioCompleto, updateUsuarioPerfil, updateUsuarioFoto } from '../services/usuariosService'
-import { getGuiasByUser } from '../services/guiasService'
+import { completarGuia, getGuiasByUser } from '../services/guiasService'
 import { resolveImageUrl } from '../lib/imageUrl'
 import { normalizeUsername, validateProfileName, validateUsername } from '../lib/authValidation'
 import Loader from '../components/Loader'
@@ -494,10 +494,41 @@ function TabHistorial({ historial }) {
 }
 
 /* ── Tab: Guías ── */
+function isGuiaCompletada(guia) {
+  return guia?.paradas_config?._estado === 'completada'
+}
+
+function getGuiaFechaProgramada(guia) {
+  return guia?.paradas_config?._guia_fecha || null
+}
+
+function puedeCompletarGuia(guia) {
+  const fecha = getGuiaFechaProgramada(guia)
+  if (!fecha) return true
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0)
+  const programada = new Date(`${fecha}T00:00:00`)
+  return programada <= hoy
+}
+
 function TabGuias({ guias }) {
   const navigate = useNavigate()
+  const [listaGuias, setListaGuias] = useState(guias)
+  const [completandoId, setCompletandoId] = useState(null)
 
-  if (!guias.length) return (
+  useEffect(() => {
+    setListaGuias(guias)
+  }, [guias])
+
+  const handleCompletar = async (guia) => {
+    setCompletandoId(guia.id)
+    const { data, error } = await completarGuia(guia)
+    setCompletandoId(null)
+    if (error) return
+    setListaGuias((prev) => prev.map((item) => item.id === guia.id ? { ...item, ...data } : item))
+  }
+
+  if (!listaGuias.length) return (
     <div className="perfil-empty">
       <div className="icon" style={{ background: 'linear-gradient(135deg,#fef9c3,#fde68a)' }}>
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -513,10 +544,13 @@ function TabGuias({ guias }) {
 
   return (
     <div className="perfil-guias-list">
-      {guias.map((g, i) => {
+      {listaGuias.map((g, i) => {
         const paradas = g.lugares_ids?.length ?? 0
-        const fecha = g.created_at
-          ? new Date(g.created_at).toLocaleDateString('es-SV', { day: '2-digit', month: 'short', year: 'numeric' })
+        const completada = isGuiaCompletada(g)
+        const puedeCompletar = puedeCompletarGuia(g)
+        const fechaProgramada = getGuiaFechaProgramada(g)
+        const fecha = fechaProgramada
+          ? new Date(fechaProgramada + 'T12:00:00').toLocaleDateString('es-SV', { day: '2-digit', month: 'short', year: 'numeric' })
           : ''
         return (
           <div key={g.id} className="perfil-guia-item" style={{ animationDelay: `${i * 0.06}s` }}>
@@ -529,14 +563,29 @@ function TabGuias({ guias }) {
                 </p>
               )}
               <p>{paradas} parada{paradas !== 1 ? 's' : ''}{fecha ? ` · ${fecha}` : ''}</p>
+              <span className={`perfil-guia-status ${completada ? 'completada' : 'pendiente'}`}>
+                {completada ? 'Completada' : 'Pendiente'}
+              </span>
             </div>
             <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
               <button className="perfil-guia-btn perfil-guia-btn--ver" onClick={() => navigate(`/guias?ver=${g.id}`)}>
                 Ver ruta
               </button>
-              <button className="perfil-guia-btn" onClick={() => navigate(`/guias?editar=${g.id}`)}>
-                Editar
-              </button>
+              {completada ? null : (
+                <>
+                  <button className="perfil-guia-btn" onClick={() => navigate(`/guias?editar=${g.id}`)}>
+                    Editar
+                  </button>
+                  <button
+                    className="perfil-guia-btn perfil-guia-btn--complete"
+                    disabled={completandoId === g.id || !puedeCompletar}
+                    title={puedeCompletar ? 'Marcar como completada' : 'Disponible desde la fecha programada'}
+                    onClick={() => handleCompletar(g)}
+                  >
+                    {completandoId === g.id ? 'Guardando...' : 'Completar'}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )

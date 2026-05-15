@@ -99,10 +99,15 @@
 .perfil-guia-info { flex:1; min-width:0; }
 .perfil-guia-info h3 { font-size:0.92rem; font-weight:700; color:#111827; margin:0 0 2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .perfil-guia-info p { font-size:0.78rem; color:#9ca3af; margin:0; }
+.perfil-guia-status { display:inline-flex; margin-top:6px; padding:3px 9px; border-radius:999px; font-size:0.7rem; font-weight:800; }
+.perfil-guia-status.pendiente { background:#fef3c7; color:#92400e; }
+.perfil-guia-status.completada { background:#dcfce7; color:#166534; }
 .perfil-guia-btn { padding:6px 14px; border-radius:8px; border:none; background:#F5C842; color:#111827; font-size:0.78rem; font-weight:700; cursor:pointer; flex-shrink:0; transition:opacity 0.2s,transform 0.15s; }
 .perfil-guia-btn:hover { opacity:0.82; transform:scale(1.05); }
+.perfil-guia-btn:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
 .perfil-guia-btn--ver { background:transparent; color:#d97706; border:1.5px solid #F5C842; }
 .perfil-guia-btn--ver:hover { background:#fef9c3; opacity:1; }
+.perfil-guia-btn--complete { background:#16a34a; color:#fff; }
 .perfil-guias-footer { margin-top:0.5rem; text-align:center; }
 .perfil-guias-cta { background:#F5C842; color:#111827; border:none; border-radius:50px; padding:0.7rem 1.5rem; font-size:0.88rem; font-weight:700; cursor:pointer; transition:opacity 0.2s,transform 0.2s; box-shadow:0 4px 14px rgba(245,200,66,0.35); }
 .perfil-guias-cta:hover { opacity:0.85; transform:translateY(-2px); }
