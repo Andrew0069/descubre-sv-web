@@ -62,40 +62,21 @@ export async function updateImagenPrincipal(id, url) {
   return { error }
 }
 
-export async function getLugaresCercanos({ lat, lng, excludeId, limit = 4 }) {
-  if (lat == null || lng == null) return { data: [], error: null }
+export async function getLugaresCercanos({ departamentoId, excludeId, limit = 4 }) {
+  if (!departamentoId) return { data: [], error: null }
   const { data, error } = await supabase
     .from('lugares')
-    .select('id, nombre, latitud, longitud, imagen_principal, categorias(nombre, color), departamentos(nombre), imagenes_lugar(ruta_imagen, orden)')
+    .select('id, nombre, imagen_principal, categorias(nombre, color), departamentos(nombre), imagenes_lugar(ruta_imagen, orden)')
     .eq('aprobado', true)
-    .not('latitud', 'is', null)
-    .not('longitud', 'is', null)
+    .eq('departamento_id', departamentoId)
     .neq('id', excludeId)
+    .limit(limit)
   if (error || !data) return { data: [], error }
-  const valid = data.filter((l) => {
-    const la = Number(l.latitud), ln = Number(l.longitud)
-    return Number.isFinite(la) && Number.isFinite(ln) && !(la === 0 && ln === 0)
+  const enriched = data.map((l) => {
+    const sortedImgs = (l.imagenes_lugar || []).slice().sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
+    const fallbackImg = sortedImgs[0]?.ruta_imagen ?? null
+    return { ...l, cover: l.imagen_principal || fallbackImg }
   })
-  const toRad = (d) => (d * Math.PI) / 180
-  const dist = (a, b) => {
-    const R = 6371
-    const dLat = toRad(b.lat - a.lat)
-    const dLng = toRad(b.lng - a.lng)
-    const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2
-    return 2 * R * Math.asin(Math.sqrt(s))
-  }
-  const enriched = valid
-    .map((l) => {
-      const sortedImgs = (l.imagenes_lugar || []).slice().sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
-      const fallbackImg = sortedImgs[0]?.ruta_imagen ?? null
-      return {
-        ...l,
-        cover: l.imagen_principal || fallbackImg,
-        _km: dist({ lat, lng }, { lat: Number(l.latitud), lng: Number(l.longitud) }),
-      }
-    })
-    .sort((a, b) => a._km - b._km)
-    .slice(0, limit)
   return { data: enriched, error: null }
 }
 

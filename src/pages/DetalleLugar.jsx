@@ -301,10 +301,9 @@ export default function DetalleLugar() {
 
     setLugar(lugarRow)
 
-    if (lugarRow?.latitud != null && lugarRow?.longitud != null) {
+    if (lugarRow?.departamento_id) {
       getLugaresCercanos({
-        lat: Number(lugarRow.latitud),
-        lng: Number(lugarRow.longitud),
+        departamentoId: lugarRow.departamento_id,
         excludeId: lugarRow.id,
         limit: 4,
       }).then(({ data }) => setLugaresCercanos(data ?? []))
@@ -2767,17 +2766,17 @@ export default function DetalleLugar() {
                 fontFamily: '"Bricolage Grotesque", "Plus Jakarta Sans", system-ui',
                 fontSize: 'clamp(1.3rem, 3.5vw, 1.6rem)',
                 fontWeight: 800, margin: 0, color: '#1F1611', letterSpacing: '-0.6px'
-              }}>Cerquita de aquí</h3>
+              }}>Más en</h3>
               <span style={{
                 fontFamily: '"Caveat", cursive', fontSize: 22,
                 color: '#FF6B3D', fontWeight: 700,
                 transform: 'rotate(-3deg)', display: 'inline-block'
-              }}>a pie</span>
+              }}>{lugar?.departamentos?.nombre ?? 'este departamento'}</span>
               <span style={{
                 fontFamily: '"Plus Jakarta Sans", system-ui',
                 fontSize: 12.5, color: '#7A6A5C', fontWeight: 600,
               }}>
-                {lugaresCercanos.length} lugar{lugaresCercanos.length !== 1 ? 'es' : ''} a menos de 10 min caminando
+                {lugaresCercanos.length} lugar{lugaresCercanos.length !== 1 ? 'es' : ''} en el mismo departamento
               </span>
             </div>
             <Link to="/" style={{
@@ -2795,8 +2794,6 @@ export default function DetalleLugar() {
           }}>
             {lugaresCercanos.map((p) => {
               const imgUrl = resolveImageUrl(p.cover || p.imagen_principal)
-              const km = typeof p._km === 'number' ? p._km : null
-              const distLabel = km == null ? '' : km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`
               const catColor = p.categorias?.color || '#F5A623'
               return (
                 <Link key={p.id} to={`/lugar/${p.id}`} style={{
@@ -2856,13 +2853,12 @@ export default function DetalleLugar() {
                       fontFamily: '"Plus Jakarta Sans", system-ui',
                       fontWeight: 800, fontSize: 14, color: '#1F1611', lineHeight: 1.25
                     }}>{p.nombre}</div>
-                    {distLabel && (
+                    {p.categorias?.nombre && (
                       <div style={{
-                        marginTop: 6, fontSize: 12, color: '#7A6A5C', fontWeight: 600,
+                        marginTop: 6, fontSize: 11.5, color: '#7A6A5C', fontWeight: 600,
                         fontFamily: '"Plus Jakarta Sans", system-ui',
-                        display: 'flex', alignItems: 'center', gap: 5
                       }}>
-                        📍 {distLabel}{p.departamentos?.nombre ? ` · ${p.departamentos.nombre}` : ''}
+                        {p.categorias.nombre}
                       </div>
                     )}
                   </div>

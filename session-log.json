@@ -3,6 +3,23 @@
   "last_updated": "2026-05-16",
   "sessions": [
     {
+      "id": 69,
+      "date": "2026-05-16",
+      "ai_tool": "Claude Code Sonnet 4.6",
+      "summary": "Sección 'Cerquita de aquí' cambiada de distancia geográfica a mismo departamento. Todos los lugares tenían latitud/longitud = 0, por lo que la sección nunca aparecía.",
+      "files_modified": [
+        "src/services/lugaresService.js",
+        "src/pages/DetalleLugar.jsx"
+      ],
+      "changes": [
+        "lugaresService.js — getLugaresCercanos reescrito: ahora filtra por departamento_id en lugar de calcular distancia Haversine. Query directa a Supabase con .eq('departamento_id', departamentoId).",
+        "DetalleLugar.jsx — llamada a getLugaresCercanos actualizada: usa lugarRow.departamento_id en lugar de latitud/longitud.",
+        "DetalleLugar.jsx — textos de la sección actualizados: 'Cerquita de aquí · a pie' → 'Más en {nombre departamento}'; subtítulo 'X lugares en el mismo departamento'.",
+        "DetalleLugar.jsx — cards: removido cálculo de distLabel y el bloque condicional {distLabel && ...}; reemplazado por nombre de categoría como subtítulo.",
+        "Build: npm run build OK, sin errores nuevos."
+      ]
+    },
+    {
       "id": 68,
       "date": "2026-05-16",
       "ai_tool": "Claude Code Opus 4.7 (1M)",
