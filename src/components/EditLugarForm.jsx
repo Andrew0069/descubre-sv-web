@@ -173,6 +173,97 @@ export default function EditLugarForm({
           value={formData.info_viajero}
           onChange={onTravelerInfoChange}
         />
+
+        <div className="admin-form-card__header" style={{ marginTop: 4 }}>
+          <p className="admin-eyebrow">Spotter · datos extra</p>
+          <h3 className="admin-title-sm">Detalles para viajeros</h3>
+        </div>
+
+        <div>
+          <label className="admin-form-label">Dato para viajeros</label>
+          <textarea
+            name="dato_viajero"
+            value={formData.dato_viajero ?? ''}
+            onChange={onChange}
+            rows={2}
+            placeholder="Ej. Abierto 24/7, ideal para un recorrido nocturno seguro."
+            className="admin-form-field admin-form-field--textarea"
+          />
+        </div>
+
+        <div className="admin-form-grid-2">
+          <div className="admin-form-min0">
+            <label className="admin-form-label">Tiempo recomendado</label>
+            <input
+              type="text"
+              name="tiempo_recomendado"
+              value={formData.tiempo_recomendado ?? ''}
+              onChange={onChange}
+              placeholder="Ej. 1–2h"
+              className="admin-form-field"
+            />
+          </div>
+
+          <label className="admin-form-toggle">
+            <span className="admin-form-toggle__text">
+              Wi-Fi disponible
+              <span className={`admin-form-toggle__hint${formData.tiene_wifi ? ' is-on' : ''}`}>
+                {formData.tiene_wifi ? 'Sí' : 'No'}
+              </span>
+            </span>
+            <span className="admin-form-toggle__switch">
+              <input
+                type="checkbox"
+                name="tiene_wifi"
+                checked={!!formData.tiene_wifi}
+                onChange={onChange}
+                className="admin-form-toggle__input"
+              />
+              <span className={`admin-form-toggle__track${formData.tiene_wifi ? ' is-on' : ''}`} />
+              <span className={`admin-form-toggle__thumb${formData.tiene_wifi ? ' is-on' : ''}`} />
+            </span>
+          </label>
+
+          <label className="admin-form-toggle">
+            <span className="admin-form-toggle__text">
+              Apto para familias
+              <span className={`admin-form-toggle__hint${formData.apto_familias ? ' is-on' : ''}`}>
+                {formData.apto_familias ? 'Sí' : 'No'}
+              </span>
+            </span>
+            <span className="admin-form-toggle__switch">
+              <input
+                type="checkbox"
+                name="apto_familias"
+                checked={!!formData.apto_familias}
+                onChange={onChange}
+                className="admin-form-toggle__input"
+              />
+              <span className={`admin-form-toggle__track${formData.apto_familias ? ' is-on' : ''}`} />
+              <span className={`admin-form-toggle__thumb${formData.apto_familias ? ' is-on' : ''}`} />
+            </span>
+          </label>
+
+          <label className="admin-form-toggle">
+            <span className="admin-form-toggle__text">
+              Joya local
+              <span className={`admin-form-toggle__hint${formData.es_joya_local ? ' is-on' : ''}`}>
+                {formData.es_joya_local ? 'Sí' : 'No'}
+              </span>
+            </span>
+            <span className="admin-form-toggle__switch">
+              <input
+                type="checkbox"
+                name="es_joya_local"
+                checked={!!formData.es_joya_local}
+                onChange={onChange}
+                className="admin-form-toggle__input"
+              />
+              <span className={`admin-form-toggle__track${formData.es_joya_local ? ' is-on' : ''}`} />
+              <span className={`admin-form-toggle__thumb${formData.es_joya_local ? ' is-on' : ''}`} />
+            </span>
+          </label>
+        </div>
       </div>
 
       <div className="admin-form-card__extra">

@@ -46,6 +46,11 @@ const emptyNewLugarForm = {
   latitud: 0,
   longitud: 0,
   info_viajero: createEmptyTravelerInfo(),
+  tiene_wifi: false,
+  apto_familias: false,
+  tiempo_recomendado: '',
+  dato_viajero: '',
+  es_joya_local: false,
 }
 
 function formatDateTime(value) {
@@ -181,6 +186,11 @@ export default function AdminPage() {
     longitud: '',
     horarios: null,
     info_viajero: createEmptyTravelerInfo(),
+    tiene_wifi: false,
+    apto_familias: false,
+    tiempo_recomendado: '',
+    dato_viajero: '',
+    es_joya_local: false,
   })
   const [imagenes, setImagenes] = useState([])
   const [resenas, setResenas] = useState([])
@@ -609,6 +619,11 @@ export default function AdminPage() {
         longitud: '',
         horarios: null,
         info_viajero: createEmptyTravelerInfo(),
+        tiene_wifi: false,
+        apto_familias: false,
+        tiempo_recomendado: '',
+        dato_viajero: '',
+        es_joya_local: false,
       })
       return
     }
@@ -629,11 +644,17 @@ export default function AdminPage() {
       longitud: lugarSeleccionado.longitud ?? '',
       horarios: lugarSeleccionado.horarios ?? null,
       info_viajero: lugarSeleccionado.info_viajero ?? createEmptyTravelerInfo(),
+      tiene_wifi: lugarSeleccionado.tiene_wifi ?? false,
+      apto_familias: lugarSeleccionado.apto_familias ?? false,
+      tiempo_recomendado: lugarSeleccionado.tiempo_recomendado ?? '',
+      dato_viajero: lugarSeleccionado.dato_viajero ?? '',
+      es_joya_local: lugarSeleccionado.es_joya_local ?? false,
     })
   }, [categorias, lugarSeleccionado])
 
   const handleFormChange = (e) => {
-    const { name, value } = e.target
+    const { name, value, type, checked } = e.target
+    const nextValue = type === 'checkbox' ? checked : value
     setFormData((prev) => {
       if (name === 'categoria_id') {
         const categoria = categorias.find((item) => item.id === value)
@@ -644,12 +665,13 @@ export default function AdminPage() {
           nueva_categoria_color: DEFAULT_CATEGORY_COLOR,
         }
       }
-      return { ...prev, [name]: value }
+      return { ...prev, [name]: nextValue }
     })
   }
 
   const handleNewLugarChange = (e) => {
-    const { name, value } = e.target
+    const { name, value, type, checked } = e.target
+    const nextValue = type === 'checkbox' ? checked : value
     setNewLugarForm((prev) => {
       if (name === 'categoria_id') {
         const categoria = categorias.find((item) => item.id === value)
@@ -660,7 +682,7 @@ export default function AdminPage() {
           nueva_categoria_color: DEFAULT_CATEGORY_COLOR,
         }
       }
-      return { ...prev, [name]: value }
+      return { ...prev, [name]: nextValue }
     })
   }
 
@@ -690,6 +712,11 @@ export default function AdminPage() {
       longitud: lugarSeleccionado.longitud ?? '',
       horarios: lugarSeleccionado.horarios ?? null,
       info_viajero: lugarSeleccionado.info_viajero ?? createEmptyTravelerInfo(),
+      tiene_wifi: lugarSeleccionado.tiene_wifi ?? false,
+      apto_familias: lugarSeleccionado.apto_familias ?? false,
+      tiempo_recomendado: lugarSeleccionado.tiempo_recomendado ?? '',
+      dato_viajero: lugarSeleccionado.dato_viajero ?? '',
+      es_joya_local: lugarSeleccionado.es_joya_local ?? false,
     })
   }
 
@@ -785,6 +812,11 @@ export default function AdminPage() {
       latitud: Number(newLugarForm.latitud) || 0,
       longitud: Number(newLugarForm.longitud) || 0,
       info_viajero: sanitizeTravelerInfo(newLugarForm.info_viajero),
+      tiene_wifi: newLugarForm.tiene_wifi ?? false,
+      apto_familias: newLugarForm.apto_familias ?? false,
+      tiempo_recomendado: (newLugarForm.tiempo_recomendado ?? '').trim() || null,
+      dato_viajero: (newLugarForm.dato_viajero ?? '').trim() || null,
+      es_joya_local: newLugarForm.es_joya_local ?? false,
       usuario_id: usuario,
       aprobado: true,
       promedio_estrellas: 0,
@@ -879,6 +911,11 @@ export default function AdminPage() {
       latitud: formData.latitud !== '' ? Number(formData.latitud) : null,
       longitud: formData.longitud !== '' ? Number(formData.longitud) : null,
       info_viajero: sanitizeTravelerInfo(formData.info_viajero),
+      tiene_wifi: formData.tiene_wifi ?? false,
+      apto_familias: formData.apto_familias ?? false,
+      tiempo_recomendado: (formData.tiempo_recomendado ?? '').trim() || null,
+      dato_viajero: (formData.dato_viajero ?? '').trim() || null,
+      es_joya_local: formData.es_joya_local ?? false,
     }
     const camposModificados = Object.keys(payload).filter((key) => payload[key] !== lugarSeleccionado[key])
 

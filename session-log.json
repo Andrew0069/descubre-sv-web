@@ -3,6 +3,77 @@
   "last_updated": "2026-05-16",
   "sessions": [
     {
+      "id": 68,
+      "date": "2026-05-16",
+      "ai_tool": "Claude Code Opus 4.7 (1M)",
+      "summary": "Iteración del restyle DetalleLugar: traveler panel (Ruta distinta) con bordes negros + tabs negros, paridad mobile en hero/gallery, fallback con icono y borde negro en cards de Cerquita.",
+      "files_modified": [
+        "src/index.css",
+        "src/components/LugarTravelerPanel.jsx",
+        "src/pages/DetalleLugar.jsx"
+      ],
+      "changes": [
+        "index.css — .traveler-panel ahora con borde 1.5px solid #1F1611 + hard-shadow 0 4px 0 #1F1611 y gradiente amarillo más saturado (#FFE38A → #FFCD45 → #FFB820).",
+        "index.css — .traveler-panel__eyebrow convertido a pill negro con texto amarillo y prefix '✦' coral (via ::before). Title con Bricolage Grotesque 800.",
+        "index.css — .traveler-tab ahora con borde negro 1.5px y fondo blanco; estado .is-active sobrescrito a fondo negro #1F1611 con texto blanco (era gradiente amarillo→magenta).",
+        "index.css — .traveler-card / .traveler-budget-card con borde negro 1.5px + hard-shadow 0 3px 0 #1F1611 (en lugar de soft warm shadow). Títulos h4 ahora con Bricolage Grotesque 800.",
+        "index.css — .traveler-chip variantes ahora con borde negro 1.5px; --deep cambiado a coral #FF6B3D. .traveler-route-badge en negro con texto amarillo.",
+        "LugarTravelerPanel.jsx — chips del hero ahora muestran 📍 dep, 🏷 categoría/subtipo y '✦ Entrada {precio}' (deep coral) cuando precio_entrada existe.",
+        "DetalleLugar.jsx — Carrusel mobile del hero ahora con borde 1.5px solid #1F1611 + hard-shadow 0 4px 0 #1F1611 (paridad con desktop) y pill coral '✦ FOTO DESTACADA' overlay cuando carouselIdx === 0.",
+        "DetalleLugar.jsx — Cards de Cerquita: bloque de imagen ahora con borde inferior negro 1.5px + overflow hidden; cuando no hay imgUrl se renderiza fallback con emoji 🏝️ sobre el gradiente de categoría. Pill de categoría con borde negro + hard-shadow 0 2px 0 #1F1611. Reemplazado background:url() por <img loading='lazy' onError=hide> para tracking real de carga.",
+        "Build: npm run build OK, sin errores nuevos."
+      ]
+    },
+    {
+      "id": 67,
+      "date": "2026-05-16",
+      "ai_tool": "Claude Code Opus 4.7 (1M)",
+      "summary": "Restyle editorial del DetalleLugar (sin tocar lógica): hero con Guardar/Share/Joya local en la barra superior, gallery con bordes negros delgados + 'Foto destacada', título con paréntesis en Caveat coral, cards con borde negro 1.5px + sombra hard, CTA reseñas coral, ubicación con botón negro full-width, horarios en card verde con 'Abierto ahora', CTA '¿Ya lo visitaste?' en columna derecha, cards de Cerquita con borde negro hard-shadow + contador + 'Ver todos'.",
+      "files_modified": [
+        "src/pages/DetalleLugar.jsx"
+      ],
+      "changes": [
+        "Hero header row: botón ← Volver convertido en pill blanco con borde negro 1.5px; añadidos botón circular Compartir (navigator.share + clipboard fallback), pill negro Guardar con icono bookmark (toggle esFavorito) y pill coral '✦ Joya local' visible solo si lugar.es_joya_local.",
+        "Gallery desktop: gap 8→10px; bordes 1.5px solid #1F1611 en los 3 slots + radius 20px en todos; pill coral '✦ FOTO DESTACADA' absolute top-left del slot principal; botón 'Ver las N fotos' restyleado a pill negro con shadow oscuro (texto dinámico con count).",
+        "Bloque pills bajo gallery: nueva pill de categoría (outline negro sobre blanco) + nueva pill de departamento (amarillo #FFE9A6 con borde negro y pin 📍). Sticker Joya local removido de aquí (ya vive en el header del hero).",
+        "Título H1: parser regex que separa nombre principal de la parte entre paréntesis; '(BINAES)' y similares se renderizan en Caveat italic coral #FF6B3D al lado del nombre.",
+        "Card 'Sobre este lugar' (left col): fondo cream #FFFBF1 + borde 1.5px solid #1F1611 + hard-shadow 0 4px 0 #1F1611 (radius 20px). Quick facts ahora con borde negro 1.5px sobre fondo blanco (en lugar de cream/EFE3CC).",
+        "Card 'Ubicación': mismo estilo cream + borde negro + hard-shadow; header con título Bricolage + pill outline '↗ Abrir en Maps' cuando hay coords. Botón 'Cómo llegar' convertido a full-width black 14px padding con hard-shadow coral 0 4px 0 #FF6B3D.",
+        "Horarios (rama es24Horas): nuevo card verde #EAF7E8 con borde negro y radius 18px, header con título Bricolage + pill verde 'Abierto ahora' (dot + texto). Card interno blanco con borde negro mostrando '24 horas, todos los días' + subtítulo. Grid de 7 días LUN–DOM como mini-cards con dot verde indicando abierto.",
+        "Card Reseñas (right col): mismo estilo cream + borde negro + hard-shadow. Header con H1 Bricolage + meta '{N} reseñas · X% positivas' (calc en cliente). Botón 'Escribir reseña' migrado de azul #0EA5E9 a pill coral #FF6B3D con borde negro y hard-shadow.",
+        "Nueva CTA '¿Ya lo visitaste?' (right col, después del card de reseñas): card dashed amarillo #FFF3D4/#F5A623 con eyebrow Caveat coral, texto Plus Jakarta y botón negro 'Contar' que abre el modal de reseña (con fallback a login).",
+        "Sección 'Cerquita de aquí': agregado contador '{N} lugares a menos de 10 min caminando' al lado del título y pill 'Ver todos →' a la derecha. Cards ahora con borde negro 1.5px + hard-shadow 0 4px 0 #1F1611 (en lugar de borde EFE3CC + sombra warm).",
+        "Sin cambios en handlers, queries, RLS, hooks ni firmas — solo JSX/estilos inline. Build: npm run build OK, sin errores nuevos."
+      ]
+    },
+    {
+      "id": 66,
+      "date": "2026-05-16",
+      "ai_tool": "Claude Code Opus 4.7",
+      "summary": "Rediseño Spotter del DetalleLugar: 5 campos nuevos en BD/Admin + restyle sutil (tipografía + paleta) + Dato para viajeros + Quick facts + Joya local + sección Cerquita de aquí.",
+      "files_modified": [
+        "index.html",
+        "src/pages/DetalleLugar.jsx",
+        "src/pages/AdminPage.jsx",
+        "src/components/EditLugarForm.jsx",
+        "src/components/NewLugarForm.jsx",
+        "src/services/lugaresService.js"
+      ],
+      "changes": [
+        "Migración Supabase add_spotter_fields_to_lugares: agrega tiene_wifi bool, apto_familias bool, tiempo_recomendado text, dato_viajero text, es_joya_local bool (default false).",
+        "lugaresService.js: nuevo getLugaresCercanos({lat,lng,excludeId,limit}) que filtra lugares aprobados con lat/lng, calcula Haversine en cliente y devuelve top N. getLugaresAdmin/createLugar SELECT extendido a los 5 campos.",
+        "AdminPage.jsx: formData y emptyNewLugarForm incluyen los 5 campos; handleFormChange y handleNewLugarChange soportan type=checkbox (usa checked); payloads de createLugar y updateLugar serializan tiempo_recomendado/dato_viajero como null si vacío; reset y reload de lugarSeleccionado hidratan los 5 campos.",
+        "EditLugarForm.jsx + NewLugarForm.jsx: nuevo bloque 'Spotter · datos extra' con textarea dato_viajero, input tiempo_recomendado y 3 toggles Wi-Fi / Familias / Joya local — reutilizando las clases .admin-form-* y el switch gradient existente.",
+        "index.html: añadido Bricolage Grotesque + Plus Jakarta Sans + Caveat al stylesheet de Google Fonts (sin tocar las existentes DM Sans/Playfair/Space Mono).",
+        "DetalleLugar.jsx — restyle sutil: H1 con Bricolage 800 letter-spacing -0.8px; H2 'Sobre este lugar' con Bricolage; párrafo descripción con Plus Jakarta y color ink2 #3B2E22.",
+        "DetalleLugar.jsx — Sticker '✨ Joya local' coral al lado del CategoryPill cuando lugar.es_joya_local = true.",
+        "DetalleLugar.jsx — Bloque 'Dato para viajeros' (background #FFF3D4, borde dashed #F5A623, eyebrow Caveat coral, body Plus Jakarta) renderizado solo si lugar.dato_viajero existe.",
+        "DetalleLugar.jsx — Grid de Quick Facts (entrada/wifi/familias/tiempo) en auto-fit minmax(120px,1fr), cards crema con borde #EFE3CC. Solo renderiza facts con valor.",
+        "DetalleLugar.jsx — Nueva sección 'Cerquita de aquí · a pie' (heading Bricolage + accento Caveat coral rotado) con grid de hasta 4 lugares cercanos por distancia Haversine, cards con hover translateY, badge de categoría con color de la categoria y label de distancia en metros/km. Se carga en el load() después de setLugar().",
+        "Build: npm run build OK, sin errores nuevos."
+      ]
+    },
+    {
       "id": 1,
       "date": "2026-05-06",
       "ai_tool": "Claude Code",
@@ -1195,6 +1266,31 @@
         "Home.jsx: revertido el auto-skip del splash (_splashShownOnce = true dentro de initHomeCache) porque el usuario prefiere que el splash siga apareciendo siempre y va a rediseñarlo por su cuenta; el cache hidrata datos en background y la transicion queda suave.",
         "DetalleLugar.jsx: fix root cause de recarga al volver a la pestana. onAuthStateChange ahora deduplica por user.id (setSession((prev) => prev?.user?.id === nextSession?.user?.id ? prev : nextSession)) para ignorar eventos TOKEN_REFRESHED que generaban una nueva referencia de session, recreaban el useCallback load (deps [id, session]) y disparaban setLoading(true) + refetch completo (lugar, reseñas, likes, imagenes, favoritos).",
         "Build: npm run build OK, sin errores nuevos; PWA precache regenerado."
+      ]
+    },
+    {
+      "id": 65,
+      "date": "2026-05-16",
+      "ai_tool": "Gemini 3.1 Pro (Antigravity)",
+      "summary": "Rediseño editorial tipo revista de la sección de Lugares en Home: layout masonry asimétrico, tipografía editorial con Playfair Display/DM Sans/Space Mono, tarjetas Featured (cinematic overlay) y Secondary (caption below), y fix de errores CSS/JSX que bloqueaban la carga en móvil.",
+      "files_modified": [
+        "index.html",
+        "src/index.css",
+        "src/components/LugarCard.jsx",
+        "src/pages/Home.jsx",
+        "session-log.json",
+        "CLAUDE.md"
+      ],
+      "changes": [
+        "index.html: agregados preconnect a Google Fonts y stylesheet para Playfair Display (400-900, italic), DM Sans (400-700) y Space Mono (400,700).",
+        "index.css (:root): agregadas CSS custom properties --font-heading (Playfair Display), --font-body (Avenir Next fallback a DM Sans) y --font-mono (Space Mono) para tipografía editorial.",
+        "index.css (editorial system): ~315 líneas nuevas al final del archivo — .editorial-masonry (grid 12 columnas asimétrico: featured=8col, secondary=4col, mobile=1col), .editorial-card--featured (cinematic card con overlay gradient, título sobre imagen, min-height 420-480px), .editorial-card--secondary (card con caption debajo, hover translateY + shadow, título serif con line-clamp), badges/heart/rating/section-heading components.",
+        "LugarCard.jsx: reescritura completa con dos variantes editoriales. Featured: imagen full-bleed con gradient overlay oscuro, título en Playfair Display sobre la imagen, ubicación en Space Mono, rating en amarillo. Secondary: imagen arriba con caption debajo, título serif con hover a --primary, ubicación en mono, rating con corazón SVG. Se preservan favoritos toggle, image error handling, category badges, skeleton loader.",
+        "Home.jsx: grid de lugares cambiado de 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3' a 'editorial-masonry'. Section heading refactorizado de inline styles a clases .editorial-section-label (mono, uppercase, blue) y .editorial-section-title (serif, clamp). Descripción usa --font-body.",
+        "Fix CSS: restaurado index.css desde git tras corrupción por edits incrementales (admin-form styles duplicados dentro de @media block, propiedad margin truncada). Re-aplicados cambios editoriales limpiamente al final del archivo sin tocar estilos admin existentes.",
+        "Fix JSX: eliminada propiedad duplicada 'display' en style object del Link en LugarCard.jsx línea 332 (tenía display:'block' y display:'flex' — causaba warning de Vite/esbuild).",
+        "Fix cache: limpiado node_modules/.vite y dev-dist para eliminar error 'Missing closing }' que persistía del CSS corrupto anterior.",
+        "Verificación: npm run dev sin errores en consola. Capturas de desktop (1280px) y mobile (390px) confirman layout editorial correcto en ambas resoluciones."
       ]
     }
   ]

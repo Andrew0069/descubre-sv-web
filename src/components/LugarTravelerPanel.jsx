@@ -131,9 +131,9 @@ export default function LugarTravelerPanel({ lugar }) {
           <p className="traveler-panel__description">{copy.description}</p>
         </div>
         <div className="traveler-panel__tags">
-          {lugar?.departamentos?.nombre && <span className="traveler-chip traveler-chip--light">{lugar.departamentos.nombre}</span>}
-          {lugar?.subtipo && <span className="traveler-chip traveler-chip--mid">{lugar.subtipo}</span>}
-          {lugar?.precio_entrada && <span className="traveler-chip traveler-chip--deep">Entrada {lugar.precio_entrada}</span>}
+          {lugar?.departamentos?.nombre && <span className="traveler-chip traveler-chip--light">📍 {lugar.departamentos.nombre}</span>}
+          {(lugar?.categorias?.nombre || lugar?.subtipo) && <span className="traveler-chip traveler-chip--light">🏷 {lugar?.categorias?.nombre || lugar.subtipo}</span>}
+          {lugar?.precio_entrada && <span className="traveler-chip traveler-chip--deep">✦ Entrada {lugar.precio_entrada}</span>}
         </div>
       </div>
 

@@ -7,7 +7,7 @@ import { getGradiente } from '../lib/categoriaVisual'
 import { useIdioma } from '../lib/idiomaContext'
 import { filterProfanity } from '../lib/profanityFilter'
 import { getUsuarioId, getUsuarioPerfil } from '../services/usuariosService'
-import { getLugarById } from '../services/lugaresService'
+import { getLugarById, getLugaresCercanos } from '../services/lugaresService'
 import { getFavoritoStatus, getFavoritosCount, addFavorito, removeFavorito } from '../services/favoritosService'
 import {
   getLikesCountLugar, getUserLikeLugar, addLikeLugar, removeLikeLugar,
@@ -111,14 +111,14 @@ function getComposerKey(resenaId, parentRespuestaId = null) {
   return parentRespuestaId ? `reply:${parentRespuestaId}` : `review:${resenaId}`
 }
 
-function HeartIcon({ filled = false, size = 16 }) {
+function HeartIcon({ filled = false, size = 16, color = '#ef4444' }) {
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 24 24"
-      fill={filled ? '#ef4444' : 'none'}
-      stroke={filled ? '#ef4444' : 'currentColor'}
+      fill={filled ? color : 'none'}
+      stroke={filled ? color : 'currentColor'}
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -182,6 +182,7 @@ export default function DetalleLugar() {
   }
 
   const [lugar, setLugar] = useState(null)
+  const [lugaresCercanos, setLugaresCercanos] = useState([])
   const [resenas, setResenas] = useState([])
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
@@ -299,6 +300,17 @@ export default function DetalleLugar() {
     }
 
     setLugar(lugarRow)
+
+    if (lugarRow?.latitud != null && lugarRow?.longitud != null) {
+      getLugaresCercanos({
+        lat: Number(lugarRow.latitud),
+        lng: Number(lugarRow.longitud),
+        excludeId: lugarRow.id,
+        limit: 4,
+      }).then(({ data }) => setLugaresCercanos(data ?? []))
+    } else {
+      setLugaresCercanos([])
+    }
 
     const userLikePromise = session?.user?.id
       ? getUserLikeLugar(id, session.user.id)
@@ -1154,27 +1166,94 @@ export default function DetalleLugar() {
       {/* HERO */}
       <section style={{ background: '#ffffff' }}>
         <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '20px 24px 0' }}>
-          <Link
-            to="/"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 14px',
-              borderRadius: '8px',
-              backgroundColor: '#f3f4f6',
-              color: '#374151',
-              fontSize: '0.85rem',
-              fontWeight: 500,
-              textDecoration: 'none',
-              marginBottom: '16px',
-              transition: 'background-color 0.2s ease',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#e5e7eb' }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#f3f4f6' }}
-          >
-            {t.volver}
-          </Link>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '14px',
+            gap: 10,
+            flexWrap: 'wrap',
+          }}>
+            <Link
+              to="/"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 16px',
+                borderRadius: 999,
+                background: '#ffffff',
+                color: '#1F1611',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                textDecoration: 'none',
+                border: '1.5px solid #1F1611',
+                fontFamily: '"Plus Jakarta Sans", system-ui',
+                transition: 'transform 0.18s ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'none' }}
+            >
+              {t.volver}
+            </Link>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button
+                type="button"
+                aria-label="Compartir"
+                onClick={() => {
+                  const url = window.location.href
+                  if (navigator.share) {
+                    navigator.share({ title: lugar?.nombre, url }).catch(() => {})
+                  } else if (navigator.clipboard) {
+                    navigator.clipboard.writeText(url).then(() => setToast('Enlace copiado'))
+                  }
+                }}
+                style={{
+                  width: 38, height: 38, borderRadius: '50%',
+                  background: '#ffffff',
+                  border: '1.5px solid #1F1611',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', color: '#1F1611',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={handleToggleFavorito}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  padding: '8px 16px', borderRadius: 999,
+                  background: '#1F1611', color: '#fff',
+                  border: '1.5px solid #1F1611',
+                  fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
+                  fontFamily: '"Plus Jakarta Sans", system-ui',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.18)',
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill={esFavorito ? '#FFC93D' : 'none'} stroke={esFavorito ? '#FFC93D' : 'currentColor'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                </svg>
+                {esFavorito ? 'Guardado' : 'Guardar'}
+              </button>
+              {lugar.es_joya_local && (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  padding: '7px 14px', borderRadius: 999,
+                  background: '#FF6B3D', color: '#fff',
+                  fontWeight: 800, fontSize: 11.5, letterSpacing: 0.5,
+                  textTransform: 'uppercase',
+                  boxShadow: '0 6px 14px rgba(255,107,61,0.32)',
+                  fontFamily: '"Plus Jakarta Sans", system-ui'
+                }}>
+                  ✦ Joya local
+                </span>
+              )}
+            </div>
+          </div>
 
           {fotosCarousel.length === 0 ? (
             <div style={{
@@ -1192,12 +1271,14 @@ export default function DetalleLugar() {
             <div
               style={{
                 position: 'relative',
-                borderRadius: '16px',
+                borderRadius: '18px',
                 overflow: 'hidden',
                 height: '260px',
                 background: '#f3f4f6',
                 cursor: 'pointer',
                 touchAction: 'pan-y',
+                border: '1.5px solid #1F1611',
+                boxShadow: '0 4px 0 #1F1611',
               }}
               onTouchStart={(e) => {
                 touchStartX.current = e.touches[0].clientX
@@ -1240,6 +1321,22 @@ export default function DetalleLugar() {
                   />
                 ))}
               </div>
+
+              {/* FOTO DESTACADA pill (mobile) */}
+              {carouselIdx === 0 && (
+                <div style={{
+                  position: 'absolute', top: 12, left: 12,
+                  padding: '5px 11px', borderRadius: 999,
+                  background: '#FF6B3D', color: '#fff',
+                  fontFamily: '"Plus Jakarta Sans", system-ui',
+                  fontWeight: 800, fontSize: 10.5, letterSpacing: 0.5,
+                  textTransform: 'uppercase',
+                  boxShadow: '0 4px 10px rgba(255,107,61,0.32)',
+                  pointerEvents: 'none', zIndex: 2,
+                }}>
+                  ✦ Foto destacada
+                </div>
+              )}
 
               {/* Badge contador */}
               {fotosCarousel.length > 1 && (
@@ -1286,17 +1383,19 @@ export default function DetalleLugar() {
             </div>
           ) : (
             /* ── Desktop: panel split original ── */
-            <div style={{ display: 'flex', gap: '8px', height: '480px' }}>
+            <div style={{ display: 'flex', gap: '10px', height: '480px' }}>
               <div
                 style={{
                   flex: '0 0 60%',
                   overflow: 'hidden',
                   cursor: 'pointer',
-                  borderRadius: '16px 0 0 16px',
+                  borderRadius: '20px',
                   background: '#f3f4f6',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  border: '1.5px solid #1F1611',
+                  position: 'relative',
                 }}
                 onClick={() => { setLightboxIndex(0); setLightboxOpen(true) }}
               >
@@ -1313,14 +1412,27 @@ export default function DetalleLugar() {
                   onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.04)'; e.currentTarget.style.filter = 'brightness(0.92)' }}
                   onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.filter = 'brightness(1)' }}
                 />
+                <div style={{
+                  position: 'absolute', top: 14, left: 14,
+                  padding: '5px 11px', borderRadius: 999,
+                  background: '#FF6B3D', color: '#fff',
+                  fontFamily: '"Plus Jakarta Sans", system-ui',
+                  fontWeight: 800, fontSize: 10.5, letterSpacing: 0.6,
+                  textTransform: 'uppercase',
+                  boxShadow: '0 4px 10px rgba(255,107,61,0.32)',
+                  pointerEvents: 'none',
+                }}>
+                  ✦ Foto destacada
+                </div>
               </div>
-              <div style={{ flex: '1', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ flex: '1', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div
                   style={{
                     flex: 1,
                     overflow: 'hidden',
                     cursor: fotosCarousel[1] ? 'pointer' : 'default',
-                    borderRadius: '0 16px 0 0',
+                    borderRadius: '20px',
+                    border: '1.5px solid #1F1611',
                     background: '#f3f4f6',
                     display: 'flex',
                     alignItems: 'center',
@@ -1349,7 +1461,8 @@ export default function DetalleLugar() {
                     flex: 1,
                     overflow: 'hidden',
                     cursor: fotosCarousel[2] ? 'pointer' : 'default',
-                    borderRadius: '0 0 16px 0',
+                    borderRadius: '20px',
+                    border: '1.5px solid #1F1611',
                     position: 'relative',
                     background: '#f3f4f6',
                     display: 'flex',
@@ -1379,26 +1492,27 @@ export default function DetalleLugar() {
                     onClick={(e) => { e.stopPropagation(); setLightboxIndex(0); setLightboxOpen(true) }}
                     style={{
                       position: 'absolute',
-                      bottom: '14px',
-                      right: '14px',
-                      backgroundColor: '#ffffff',
-                      color: '#111827',
-                      border: '1.5px solid #d1d5db',
-                      borderRadius: '8px',
-                      padding: '6px 14px',
+                      bottom: '12px',
+                      right: '12px',
+                      backgroundColor: '#1F1611',
+                      color: '#fff',
+                      border: '1.5px solid #1F1611',
+                      borderRadius: 999,
+                      padding: '7px 14px',
                       fontSize: '0.8rem',
-                      fontWeight: 600,
+                      fontWeight: 700,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                      boxShadow: '0 6px 16px rgba(0,0,0,0.28)',
+                      fontFamily: '"Plus Jakarta Sans", system-ui',
                     }}
                   >
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2">
                       <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
                     </svg>
-                    {idioma === 'en' ? 'See all photos' : 'Ver todas las fotos'}
+                    {idioma === 'en' ? `See ${fotosCarousel.length} photos` : `Ver las ${fotosCarousel.length} fotos`}
                   </button>
                 </div>
               </div>
@@ -1406,20 +1520,107 @@ export default function DetalleLugar() {
           )}
 
           <div style={{ padding: '20px 0 24px' }}>
-            {cat && (
-              <div style={{ marginBottom: '10px' }}>
-                <CategoryPill nombre={cat.nombre} />
+            {(cat || dep) && (
+              <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                {cat && (
+                  <span style={{
+                    display: 'inline-block',
+                    padding: '5px 14px',
+                    borderRadius: 999,
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    color: '#1F1611',
+                    background: '#ffffff',
+                    border: '1.5px solid #1F1611',
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    fontFamily: '"Plus Jakarta Sans", system-ui',
+                  }}>{cat.nombre}</span>
+                )}
+                {dep && (
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    padding: '5px 14px',
+                    borderRadius: 999,
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    color: '#1F1611',
+                    background: '#FFE9A6',
+                    border: '1.5px solid #1F1611',
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    fontFamily: '"Plus Jakarta Sans", system-ui',
+                  }}>📍 {dep.nombre}</span>
+                )}
               </div>
             )}
-            <h1 style={{
-              fontSize: 'clamp(1.5rem, 5vw, 2.25rem)',
-              fontWeight: 800,
-              color: '#111827',
-              lineHeight: 1.15,
-              margin: 0,
+            {(() => {
+              const m = (lugar.nombre || '').match(/^(.*?)\s*(\(([^)]+)\))\s*$/)
+              const mainPart = m ? m[1].trim() : (lugar.nombre || '')
+              const parenPart = m ? m[3] : null
+              return (
+                <h1 style={{
+                  fontFamily: '"Bricolage Grotesque", "Plus Jakarta Sans", system-ui',
+                  fontSize: 'clamp(1.6rem, 5vw, 2.4rem)',
+                  fontWeight: 800,
+                  color: '#1F1611',
+                  lineHeight: 1.05,
+                  letterSpacing: '-0.8px',
+                  margin: 0,
+                }}>
+                  {mainPart}
+                  {parenPart && (
+                    <span style={{
+                      fontFamily: '"Caveat", cursive',
+                      fontWeight: 700,
+                      color: '#FF6B3D',
+                      fontSize: '0.78em',
+                      marginLeft: 10,
+                      letterSpacing: '0',
+                      verticalAlign: 'baseline',
+                      fontStyle: 'italic',
+                    }}>({parenPart})</span>
+                  )}
+                </h1>
+              )
+            })()}
+
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 16, marginTop: 14,
+              flexWrap: 'wrap', fontSize: 13.5,
+              fontFamily: '"Plus Jakarta Sans", system-ui'
             }}>
-              {lugar.nombre}
-            </h1>
+              {ratingPromedio != null && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    padding: '5px 11px 5px 9px', borderRadius: 999,
+                    background: '#1F1611', color: '#fff', fontWeight: 700
+                  }}>
+                    <HeartIcon filled size={13} color="#FF6B3D" /> {ratingPromedio.toFixed(1)}
+                  </div>
+                  <span style={{ color: '#7A6A5C', fontWeight: 500 }}>
+                    de {resenas.length} {resenas.length === 1 ? 'reseña' : 'reseñas'}
+                  </span>
+                </div>
+              )}
+              {lugar.horarios?.es24Horas && (
+                <>
+                  <div style={{ width: 1, height: 14, background: '#EFE3CC' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#3B2E22', fontWeight: 600 }}>
+                    ☀️ Abierto 24/7
+                  </div>
+                </>
+              )}
+              {favoritosCount > 0 && (
+                <>
+                  <div style={{ width: 1, height: 14, background: '#EFE3CC' }} />
+                  <div style={{ color: '#3B2E22', fontWeight: 500 }}>
+                    ♥ Guardado por {favoritosCount} {favoritosCount === 1 ? 'viajero' : 'viajeros'}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </section>
@@ -1701,37 +1902,123 @@ export default function DetalleLugar() {
         className="detalle-body-grid"
       >
         {/* LEFT COLUMN */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
           <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+            backgroundColor: '#FFFBF1',
+            borderRadius: '20px',
+            padding: '22px 24px',
+            border: '1.5px solid #1F1611',
+            boxShadow: '0 4px 0 #1F1611',
           }}>
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827', marginBottom: '14px' }}>
-              {t.sobre}
-            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              <span style={{ fontSize: 22 }}>📖</span>
+              <h2 style={{
+                fontFamily: '"Bricolage Grotesque", "Plus Jakarta Sans", system-ui',
+                fontSize: '1.2rem', fontWeight: 800, color: '#1F1611',
+                letterSpacing: '-0.3px', margin: 0
+              }}>
+                {t.sobre}
+              </h2>
+            </div>
             <p style={{
+              fontFamily: '"Plus Jakarta Sans", system-ui',
               fontSize: '0.95rem',
               lineHeight: 1.7,
-              color: '#374151',
+              color: '#3B2E22',
               whiteSpace: 'pre-line',
               margin: 0,
             }}>
               {lugar.descripcion || t.sinDesc}
             </p>
+
+            {lugar.dato_viajero && (
+              <div style={{
+                marginTop: 18, padding: '14px 16px',
+                background: '#FFF3D4', borderRadius: 14,
+                border: '1.5px dashed #F5A623',
+                display: 'flex', gap: 12, alignItems: 'flex-start'
+              }}>
+                <span style={{ fontSize: 22, lineHeight: 1 }}>💡</span>
+                <div>
+                  <div style={{
+                    fontFamily: '"Caveat", cursive', fontSize: 19, fontWeight: 700,
+                    color: '#E0512A', lineHeight: 1, marginBottom: 4
+                  }}>
+                    Dato para viajeros
+                  </div>
+                  <div style={{
+                    fontFamily: '"Plus Jakarta Sans", system-ui',
+                    fontSize: 13.5, color: '#3B2E22', lineHeight: 1.5
+                  }}>
+                    {lugar.dato_viajero}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {(lugar.precio_entrada || lugar.tiene_wifi != null || lugar.apto_familias != null || lugar.tiempo_recomendado) && (() => {
+              const facts = [
+                lugar.precio_entrada ? { label: 'Entrada', value: lugar.precio_entrada, emoji: '🎟️' } : null,
+                lugar.tiene_wifi != null ? { label: 'Wi-Fi', value: lugar.tiene_wifi ? 'Sí' : 'No', emoji: '📶' } : null,
+                lugar.apto_familias != null ? { label: 'Familias', value: lugar.apto_familias ? 'Apto' : 'Adultos', emoji: '👨‍👩‍👧' } : null,
+                lugar.tiempo_recomendado ? { label: 'Tiempo', value: lugar.tiempo_recomendado, emoji: '⏱️' } : null,
+              ].filter(Boolean)
+              if (facts.length === 0) return null
+              return (
+                <div style={{
+                  marginTop: 16, display: 'grid',
+                  gridTemplateColumns: `repeat(auto-fit, minmax(120px, 1fr))`, gap: 10
+                }}>
+                  {facts.map((f) => (
+                    <div key={f.label} style={{
+                      background: '#ffffff', borderRadius: 14, padding: '12px 13px',
+                      border: '1.5px solid #1F1611',
+                      fontFamily: '"Plus Jakarta Sans", system-ui'
+                    }}>
+                      <div style={{ fontSize: 17, lineHeight: 1 }}>{f.emoji}</div>
+                      <div style={{ fontSize: 11, color: '#7A6A5C', marginTop: 6, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.4 }}>{f.label}</div>
+                      <div style={{ fontSize: 14, color: '#1F1611', fontWeight: 700, marginTop: 1 }}>{f.value}</div>
+                    </div>
+                  ))}
+                </div>
+              )
+            })()}
           </div>
 
           {lugar.direccion && (
             <div style={{
-              backgroundColor: '#f9fafb',
-              borderRadius: '12px',
-              padding: '20px 24px',
-              border: '1px solid #f3f4f6',
+              backgroundColor: '#FFFBF1',
+              borderRadius: '20px',
+              padding: '20px 22px',
+              border: '1.5px solid #1F1611',
+              boxShadow: '0 4px 0 #1F1611',
             }}>
-              <p style={{ fontWeight: 600, fontSize: '15px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px', margin: '0 0 10px' }}>
-                🟡 {idioma === 'en' ? 'Location' : 'Ubicación'}
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
+                <h2 style={{
+                  fontFamily: '"Bricolage Grotesque", "Plus Jakarta Sans", system-ui',
+                  fontSize: '1.15rem', fontWeight: 800, color: '#1F1611',
+                  letterSpacing: '-0.3px', margin: 0,
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                }}>
+                  <span style={{ fontSize: 20 }}>📍</span>
+                  {idioma === 'en' ? 'Location' : 'Ubicación'}
+                </h2>
+                {(lugar.latitud && lugar.longitud) && (
+                  <a
+                    href={`https://maps.google.com/?q=${lugar.latitud},${lugar.longitud}`}
+                    target="_blank" rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      padding: '6px 13px', borderRadius: 999,
+                      background: '#ffffff', color: '#1F1611',
+                      border: '1.5px solid #1F1611',
+                      fontSize: '0.78rem', fontWeight: 700,
+                      textDecoration: 'none',
+                      fontFamily: '"Plus Jakarta Sans", system-ui',
+                    }}
+                  >↗ Abrir en Maps</a>
+                )}
+              </div>
               {(() => {
                 const mapSrc = lugar.latitud && lugar.longitud
                   ? `https://www.google.com/maps?q=${lugar.latitud},${lugar.longitud}&output=embed`
@@ -1758,10 +2045,20 @@ export default function DetalleLugar() {
                       href={directionsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '9px 18px', background: '#1a1a1a', color: '#fff', borderRadius: '24px', fontSize: '14px', fontWeight: 600, textDecoration: 'none' }}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        gap: '10px', padding: '14px 18px',
+                        background: '#1F1611', color: '#fff',
+                        borderRadius: '14px',
+                        border: '1.5px solid #1F1611',
+                        boxShadow: '0 4px 0 #FF6B3D',
+                        fontSize: '14.5px', fontWeight: 800, textDecoration: 'none',
+                        fontFamily: '"Plus Jakarta Sans", system-ui',
+                        width: '100%', boxSizing: 'border-box',
+                      }}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
-                      {idioma === 'en' ? 'Get directions' : 'Cómo llegar'}
+                      {idioma === 'en' ? 'Get directions from where you are' : 'Cómo llegar desde donde estás'}
                     </a>
                   </>
                 )
@@ -1769,13 +2066,58 @@ export default function DetalleLugar() {
               {lugar.horarios && (() => {
                 if (lugar.horarios.es24Horas) {
                   return (
-                    <div style={{ marginTop: '20px' }}>
-                      <p style={{ fontWeight: 600, fontSize: '15px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        🕐 Horarios (GMT-6)
-                      </p>
-                      <div style={{ padding: '12px 16px', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '16px' }}>🌟</span>
-                        <span style={{ color: '#065f46', fontWeight: 600, fontSize: '14px' }}>Abierto 24 horas todos los días</span>
+                    <div style={{
+                      marginTop: 18,
+                      background: '#EAF7E8',
+                      border: '1.5px solid #1F1611',
+                      borderRadius: 18,
+                      padding: '16px 18px',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+                        <div style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 8,
+                          fontFamily: '"Bricolage Grotesque", "Plus Jakarta Sans", system-ui',
+                          fontWeight: 800, color: '#1F1611', fontSize: '1.02rem', letterSpacing: '-0.2px',
+                        }}>
+                          <span style={{ fontSize: 18 }}>🕐</span>
+                          Horarios <span style={{ fontSize: 11, color: '#7A6A5C', fontWeight: 700, letterSpacing: 0.4 }}>GMT-6 · EL SALVADOR</span>
+                        </div>
+                        <span style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 6,
+                          padding: '4px 11px', borderRadius: 999,
+                          background: '#1F8F3D', color: '#fff',
+                          fontSize: 11.5, fontWeight: 800, letterSpacing: 0.3,
+                          fontFamily: '"Plus Jakarta Sans", system-ui',
+                        }}>
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', display: 'inline-block' }} />
+                          Abierto ahora
+                        </span>
+                      </div>
+                      <div style={{
+                        marginTop: 12,
+                        background: '#ffffff',
+                        border: '1.5px solid #1F1611',
+                        borderRadius: 14,
+                        padding: '13px 15px',
+                        display: 'flex', alignItems: 'center', gap: 10,
+                      }}>
+                        <span style={{ fontSize: 22 }}>☀️</span>
+                        <div>
+                          <div style={{ fontFamily: '"Plus Jakarta Sans", system-ui', fontWeight: 800, color: '#1F1611', fontSize: 14 }}>24 horas, todos los días</div>
+                          <div style={{ fontFamily: '"Plus Jakarta Sans", system-ui', color: '#7A6A5C', fontSize: 12.5, marginTop: 2 }}>Sin horario de cierre — entrada permitida en todo momento</div>
+                        </div>
+                      </div>
+                      <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
+                        {['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'].map(d => (
+                          <div key={d} style={{
+                            background: '#ffffff', border: '1.5px solid #1F1611', borderRadius: 10,
+                            padding: '8px 4px', textAlign: 'center',
+                            fontFamily: '"Plus Jakarta Sans", system-ui',
+                          }}>
+                            <div style={{ fontSize: 10.5, fontWeight: 800, color: '#1F1611', letterSpacing: 0.4 }}>{d}</div>
+                            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#1F8F3D', margin: '6px auto 0' }} />
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )
@@ -1828,22 +2170,42 @@ export default function DetalleLugar() {
         </div>
 
         {/* RIGHT COLUMN */}
-        <div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+            backgroundColor: '#FFFBF1',
+            borderRadius: '20px',
+            padding: '22px 22px',
+            border: '1.5px solid #1F1611',
+            boxShadow: '0 4px 0 #1F1611',
           }}>
             <div style={{
               display: 'flex',
-              alignItems: 'center',
+              alignItems: 'flex-start',
               justifyContent: 'space-between',
-              marginBottom: '20px',
+              marginBottom: '16px',
+              gap: 12,
+              flexWrap: 'wrap',
             }}>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827', margin: 0 }}>
-                {t.resenas} <span style={{ fontWeight: 400, color: '#9ca3af', fontSize: '0.9rem' }}>({totalResenas})</span>
-              </h2>
+              <div>
+                <h2 style={{
+                  fontFamily: '"Bricolage Grotesque", "Plus Jakarta Sans", system-ui',
+                  fontSize: '1.25rem', fontWeight: 800, color: '#1F1611',
+                  margin: 0, letterSpacing: '-0.3px',
+                }}>
+                  {t.resenas}
+                </h2>
+                <p style={{
+                  margin: '4px 0 0', fontSize: 12.5, color: '#7A6A5C',
+                  fontFamily: '"Plus Jakarta Sans", system-ui', fontWeight: 600,
+                }}>
+                  {totalResenas} {totalResenas === 1 ? t.resena : t.resenas2}
+                  {totalResenas > 0 && (() => {
+                    const positivas = resenas.filter(r => Number(r.estrellas) >= 4).length
+                    const pct = Math.round((positivas / totalResenas) * 100)
+                    return ` · ${pct}% positivas`
+                  })()}
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => {
@@ -1855,20 +2217,23 @@ export default function DetalleLugar() {
                   }
                 }}
                 style={{
-                  backgroundColor: '#0EA5E9',
+                  display: 'inline-flex', alignItems: 'center', gap: 7,
+                  backgroundColor: '#FF6B3D',
                   color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '8px 18px',
+                  border: '1.5px solid #1F1611',
+                  borderRadius: 999,
+                  padding: '10px 18px',
                   fontSize: '0.82rem',
-                  fontWeight: 600,
+                  fontWeight: 800,
                   cursor: 'pointer',
-                  transition: 'background-color 0.2s ease',
+                  fontFamily: '"Plus Jakarta Sans", system-ui',
+                  boxShadow: '0 3px 0 #1F1611',
+                  transition: 'transform 0.18s ease',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#0284c7' }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#0EA5E9' }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none' }}
               >
-                {t.escribir}
+                ✎ {t.escribir}
               </button>
             </div>
 
@@ -1879,30 +2244,39 @@ export default function DetalleLugar() {
                 valor: n,
                 cantidad: resenas.filter(r => Number(r.estrellas) === n).length
               }))
-              const renderCorazones = (val) => [1, 2, 3, 4, 5].map(i => {
-                const diff = val - (i - 1)
-                const color = diff >= 1 ? '#0ea5e9' : '#ddd'
-                return <span key={i} style={{ color, fontSize: '20px' }}>{diff >= 1 ? '♥' : '♡'}</span>
-              })
+              const renderCorazones = (val, size = 16) => [1, 2, 3, 4, 5].map(i => (
+                <HeartIcon key={i} filled={val >= i} size={size} color="#FF6B3D" />
+              ))
               return (
-                <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '12px', padding: '20px 24px', marginBottom: '20px', display: 'flex', gap: '32px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '90px' }}>
-                    <span style={{ fontSize: '40px', fontWeight: 700, color: '#1a1a1a', lineHeight: 1 }}>{promedio.toFixed(1)}</span>
-                    <div style={{ display: 'flex', gap: '2px', margin: '8px 0 4px' }}>{renderCorazones(promedio)}</div>
-                    <span style={{ fontSize: '13px', color: '#888' }}>{total} reseña{total !== 1 ? 's' : ''}</span>
+                <div style={{
+                  padding: '20px 22px', marginBottom: '20px', borderRadius: '18px',
+                  background: 'linear-gradient(135deg, #FDF1D7 0%, #FFF3D4 100%)',
+                  border: '1.5px solid #EFE3CC',
+                  boxShadow: '0 6px 18px rgba(120,85,0,0.08)',
+                  display: 'flex', gap: '22px', alignItems: 'center', flexWrap: 'wrap',
+                  fontFamily: '"Plus Jakarta Sans", system-ui'
+                }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minWidth: '100px' }}>
+                    <span style={{
+                      fontFamily: '"Bricolage Grotesque", "Plus Jakarta Sans", system-ui',
+                      fontSize: '3rem', fontWeight: 800, color: '#1F1611',
+                      lineHeight: 1, letterSpacing: '-1.5px'
+                    }}>{promedio.toFixed(1)}</span>
+                    <div style={{ display: 'flex', gap: '2px', margin: '8px 0 4px' }}>{renderCorazones(promedio, 15)}</div>
+                    <span style={{ fontSize: '12.5px', color: '#7A6A5C', fontWeight: 600 }}>{total} {total !== 1 ? 'reseñas' : 'reseña'}</span>
                   </div>
-                  <div style={{ width: '1px', height: '80px', background: '#e8e8e8', flexShrink: 0 }} />
+                  <div style={{ width: '1px', alignSelf: 'stretch', background: 'rgba(31,22,17,0.10)' }} />
                   <div style={{ flex: 1, minWidth: '180px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {distribucion.map(({ valor, cantidad }) => {
                       const pct = total > 0 ? (cantidad / total) * 100 : 0
                       return (
                         <div key={valor} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontSize: '13px', color: '#555', width: '14px', textAlign: 'right', flexShrink: 0 }}>{valor}</span>
-                          <span style={{ fontSize: '13px', color: '#0ea5e9', flexShrink: 0 }}>♥</span>
-                          <div style={{ flex: 1, height: '8px', background: '#ebebeb', borderRadius: '4px', overflow: 'hidden' }}>
-                            <div style={{ width: `${pct}%`, height: '100%', background: valor >= 4 ? '#0ea5e9' : valor === 3 ? '#38bdf8' : '#bae6fd', borderRadius: '4px', transition: 'width 0.4s ease' }} />
+                          <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#1F1611', width: '10px', textAlign: 'right', flexShrink: 0 }}>{valor}</span>
+                          <HeartIcon filled size={11} color="#FF6B3D" />
+                          <div style={{ flex: 1, height: '7px', background: 'rgba(31,22,17,0.10)', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{ width: `${pct}%`, height: '100%', background: '#FF6B3D', borderRadius: '4px', transition: 'width 0.4s ease' }} />
                           </div>
-                          <span style={{ fontSize: '12px', color: '#aaa', width: '20px', flexShrink: 0 }}>{cantidad}</span>
+                          <span style={{ fontSize: '11.5px', color: '#7A6A5C', width: '14px', textAlign: 'right', fontWeight: 600, flexShrink: 0 }}>{cantidad}</span>
                         </div>
                       )
                     })}
@@ -2337,8 +2711,167 @@ export default function DetalleLugar() {
               </ul>
             )}
           </div>
+
+          {/* Visited CTA */}
+          <div style={{
+            background: '#FFF3D4',
+            border: '1.5px dashed #F5A623',
+            borderRadius: 18,
+            padding: '14px 16px',
+            display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <span style={{ fontSize: 26, lineHeight: 1 }}>✨</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontFamily: '"Caveat", cursive', fontSize: 20, fontWeight: 700,
+                color: '#E0512A', lineHeight: 1.05,
+              }}>
+                ¿Ya lo visitaste?
+              </div>
+              <div style={{
+                fontFamily: '"Plus Jakarta Sans", system-ui',
+                fontSize: 12.5, color: '#3B2E22', lineHeight: 1.45, marginTop: 3,
+              }}>
+                Compartí tu experiencia con otros viajeros.
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (session) {
+                  setModalOpen(true)
+                } else {
+                  setLoginMensaje('Iniciá sesión para compartir tu experiencia en este lugar.')
+                  redirectToLogin()
+                }
+              }}
+              style={{
+                background: '#1F1611', color: '#fff',
+                border: '1.5px solid #1F1611', borderRadius: 999,
+                padding: '8px 14px', fontSize: '0.78rem', fontWeight: 800,
+                fontFamily: '"Plus Jakarta Sans", system-ui',
+                cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
+            >
+              Contar
+            </button>
+          </div>
         </div>
       </div>
+
+      {lugaresCercanos.length > 0 && (
+        <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 20px 60px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+              <h3 style={{
+                fontFamily: '"Bricolage Grotesque", "Plus Jakarta Sans", system-ui',
+                fontSize: 'clamp(1.3rem, 3.5vw, 1.6rem)',
+                fontWeight: 800, margin: 0, color: '#1F1611', letterSpacing: '-0.6px'
+              }}>Cerquita de aquí</h3>
+              <span style={{
+                fontFamily: '"Caveat", cursive', fontSize: 22,
+                color: '#FF6B3D', fontWeight: 700,
+                transform: 'rotate(-3deg)', display: 'inline-block'
+              }}>a pie</span>
+              <span style={{
+                fontFamily: '"Plus Jakarta Sans", system-ui',
+                fontSize: 12.5, color: '#7A6A5C', fontWeight: 600,
+              }}>
+                {lugaresCercanos.length} lugar{lugaresCercanos.length !== 1 ? 'es' : ''} a menos de 10 min caminando
+              </span>
+            </div>
+            <Link to="/" style={{
+              fontFamily: '"Plus Jakarta Sans", system-ui',
+              color: '#1F1611', fontWeight: 800, fontSize: 13,
+              textDecoration: 'none',
+              padding: '6px 13px', borderRadius: 999,
+              background: '#fff', border: '1.5px solid #1F1611',
+            }}>Ver todos →</Link>
+          </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+            gap: 14
+          }}>
+            {lugaresCercanos.map((p) => {
+              const imgUrl = resolveImageUrl(p.cover || p.imagen_principal)
+              const km = typeof p._km === 'number' ? p._km : null
+              const distLabel = km == null ? '' : km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`
+              const catColor = p.categorias?.color || '#F5A623'
+              return (
+                <Link key={p.id} to={`/lugar/${p.id}`} style={{
+                  textDecoration: 'none',
+                  background: '#fff', borderRadius: 18,
+                  border: '1.5px solid #1F1611',
+                  boxShadow: '0 4px 0 #1F1611',
+                  overflow: 'hidden',
+                  transition: 'transform 0.18s ease, box-shadow 0.18s ease',
+                  display: 'block'
+                }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 7px 0 #1F1611' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 0 #1F1611' }}
+                >
+                  <div style={{
+                    height: 120,
+                    background: imgUrl
+                      ? `#f3f4f6`
+                      : `linear-gradient(135deg, ${catColor} 0%, #FFCD45 100%)`,
+                    position: 'relative',
+                    overflow: 'hidden',
+                    borderBottom: '1.5px solid #1F1611',
+                  }}>
+                    {imgUrl ? (
+                      <img
+                        src={imgUrl}
+                        alt={p.nombre}
+                        loading="lazy"
+                        decoding="async"
+                        onError={(e) => { e.currentTarget.style.display = 'none' }}
+                        style={{
+                          width: '100%', height: '100%',
+                          objectFit: 'cover', display: 'block',
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        position: 'absolute', inset: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 40, opacity: 0.55,
+                      }}>🏝️</div>
+                    )}
+                    {p.categorias?.nombre && (
+                      <div style={{
+                        position: 'absolute', bottom: 8, left: 8,
+                        padding: '4px 10px', borderRadius: 999,
+                        background: catColor, color: '#fff',
+                        fontWeight: 800, fontSize: 11,
+                        fontFamily: '"Plus Jakarta Sans", system-ui',
+                        border: '1.5px solid #1F1611',
+                        boxShadow: '0 2px 0 #1F1611',
+                      }}>{p.categorias.nombre}</div>
+                    )}
+                  </div>
+                  <div style={{ padding: '11px 13px 13px' }}>
+                    <div style={{
+                      fontFamily: '"Plus Jakarta Sans", system-ui',
+                      fontWeight: 800, fontSize: 14, color: '#1F1611', lineHeight: 1.25
+                    }}>{p.nombre}</div>
+                    {distLabel && (
+                      <div style={{
+                        marginTop: 6, fontSize: 12, color: '#7A6A5C', fontWeight: 600,
+                        fontFamily: '"Plus Jakarta Sans", system-ui',
+                        display: 'flex', alignItems: 'center', gap: 5
+                      }}>
+                        📍 {distLabel}{p.departamentos?.nombre ? ` · ${p.departamentos.nombre}` : ''}
+                      </div>
+                    )}
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Lightbox for review photos */}
       {resenaLightbox && (
