@@ -64,25 +64,22 @@ function getNotificationMeta(notification) {
 let _splashShownOnce = false
 let _lugaresCache = []
 
-const DESKTOP_CACHE_KEY = 'destino_home_cache_v1'
-const DESKTOP_CACHE_TTL = 5 * 60 * 1000
+const HOME_CACHE_KEY = 'destino_home_cache_v1'
+const HOME_CACHE_TTL = 24 * 60 * 60 * 1000
 
-function writeDesktopCache(data) {
+function writeHomeCache(data) {
   try {
-    if (window.innerWidth < 768) return
-    localStorage.setItem(DESKTOP_CACHE_KEY, JSON.stringify({ ts: Date.now(), data }))
+    localStorage.setItem(HOME_CACHE_KEY, JSON.stringify({ ts: Date.now(), data }))
   } catch {}
 }
 
-;(function initDesktopCache() {
+;(function initHomeCache() {
   try {
-    if (window.innerWidth < 768) return
-    const raw = localStorage.getItem(DESKTOP_CACHE_KEY)
+    const raw = localStorage.getItem(HOME_CACHE_KEY)
     if (!raw) return
     const { ts, data } = JSON.parse(raw)
-    if (!Array.isArray(data) || Date.now() - ts > DESKTOP_CACHE_TTL) return
+    if (!Array.isArray(data) || Date.now() - ts > HOME_CACHE_TTL) return
     _lugaresCache = data
-    _splashShownOnce = true
   } catch {}
 })()
 
@@ -240,8 +237,7 @@ export default function Home() {
   }, [campanaOpen])
 
   const loadLugares = useCallback(async () => {
-    const isDesktop = window.innerWidth >= 768
-    const silent = isDesktop && _lugaresCache.length > 0
+    const silent = _lugaresCache.length > 0
 
     if (!silent) {
       setLoading(true)
@@ -291,7 +287,7 @@ export default function Home() {
 
     _lugaresCache = lugaresConDatos
     setLugares(lugaresConDatos)
-    if (isDesktop) writeDesktopCache(lugaresConDatos)
+    writeHomeCache(lugaresConDatos)
     if (!silent) setLoading(false)
   }, [showToast])
 
@@ -1281,26 +1277,10 @@ export default function Home() {
               }}
               >
                 <div>
-                  <p style={{
-                    fontSize: '0.72rem',
-                    fontWeight: '600',
-                    letterSpacing: '0.18em',
-                    textTransform: 'uppercase',
-                    color: '#0EA5E9',
-                    marginBottom: '0.5rem',
-                  }}
-                  >
+                  <p className="editorial-section-label">
                     {t.sectionLabel}
                   </p>
-                  <h2 style={{
-                    fontSize: 'clamp(1rem, 1.8vw, 1.25rem)',
-                    fontWeight: '700',
-                    color: '#111827',
-                    lineHeight: '1.2',
-                    letterSpacing: '-0.01em',
-                    whiteSpace: 'nowrap',
-                  }}
-                  >
+                  <h2 className="editorial-section-title">
                     {t.sectionTitle}
                   </h2>
                 </div>
@@ -1334,6 +1314,7 @@ export default function Home() {
                 </button>
               </div>
               <p style={{
+                fontFamily: 'var(--font-body)',
                 fontSize: '0.82rem',
                 color: '#9ca3af',
                 marginTop: '0.35rem',
@@ -1428,16 +1409,7 @@ export default function Home() {
               ) : (
                 <ul
                   key={`${categoriaId}-${filtroSubtipo}-${filtroBusquedaNombre}`}
-                  className="animate-fade-in-up grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 pt-[32px] m-0 p-0 list-none grid-flow-row-dense"
-
-
-
-
-
-
-
-
-
+                  className="animate-fade-in-up editorial-masonry"
                 >
                   {filtrados.map((lugar, index) => {
                     const isFeatured = index === 0;

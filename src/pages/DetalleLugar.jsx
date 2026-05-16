@@ -249,7 +249,10 @@ export default function DetalleLugar() {
     initSession()
 
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession)
+      setSession((prev) => {
+        if (prev?.user?.id === nextSession?.user?.id) return prev
+        return nextSession
+      })
     })
     return () => data?.subscription?.unsubscribe()
   }, [])

@@ -1,6 +1,6 @@
 {
   "project": "Destino SV App",
-  "last_updated": "2026-05-15",
+  "last_updated": "2026-05-16",
   "sessions": [
     {
       "id": 1,
@@ -1177,6 +1177,24 @@
         "AdminPage.jsx: la seccion Seguridad ahora muestra estados GPS legibles, tooltip con error tecnico, etiqueta Login exitoso y filtro por estado GPS.",
         "PrivacyPage.jsx: actualizado texto para separar cookies/cache del permiso de ubicacion y aclarar uso de IP/navegador/ubicacion precisa con fines de seguridad.",
         "Verificacion: npm run build -- --outDir node_modules/.cache/codex-build --emptyOutDir paso correctamente; queda solo warning existente de chunk JS mayor a 500 kB."
+      ]
+    },
+    {
+      "id": 64,
+      "date": "2026-05-16",
+      "ai_tool": "Claude Code Opus 4.7",
+      "summary": "Fix de recarga del DetalleLugar al cambiar/minimizar pestaña + ampliacion del cache del Home a movil con TTL de 24h.",
+      "files_modified": [
+        "src/pages/Home.jsx",
+        "src/pages/DetalleLugar.jsx"
+      ],
+      "changes": [
+        "Home.jsx: renombrado DESKTOP_CACHE_KEY/DESKTOP_CACHE_TTL a HOME_CACHE_KEY/HOME_CACHE_TTL y eliminados los dos if (window.innerWidth < 768) return en writeHomeCache e initHomeCache para que el cache de localStorage funcione tambien en movil.",
+        "Home.jsx: TTL del cache subido de 5 minutos a 24 horas (24*60*60*1000) para sobrevivir cierre de pestana/navegador.",
+        "Home.jsx: loadLugares ya no condiciona silent y writeHomeCache al ancho de pantalla; silent depende solo de _lugaresCache.length.",
+        "Home.jsx: revertido el auto-skip del splash (_splashShownOnce = true dentro de initHomeCache) porque el usuario prefiere que el splash siga apareciendo siempre y va a rediseñarlo por su cuenta; el cache hidrata datos en background y la transicion queda suave.",
+        "DetalleLugar.jsx: fix root cause de recarga al volver a la pestana. onAuthStateChange ahora deduplica por user.id (setSession((prev) => prev?.user?.id === nextSession?.user?.id ? prev : nextSession)) para ignorar eventos TOKEN_REFRESHED que generaban una nueva referencia de session, recreaban el useCallback load (deps [id, session]) y disparaban setLoading(true) + refetch completo (lugar, reseñas, likes, imagenes, favoritos).",
+        "Build: npm run build OK, sin errores nuevos; PWA precache regenerado."
       ]
     }
   ]
