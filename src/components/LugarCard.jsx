@@ -329,7 +329,7 @@ function LugarCard({ lugar, isFeatured }) {
       {/* Caption */}
       <Link
         to={`/lugar/${lugar.id}`}
-        style={{ display: 'block', textDecoration: 'none', flex: 1, display: 'flex', flexDirection: 'column' }}
+        style={{ textDecoration: 'none', flex: 1, display: 'flex', flexDirection: 'column' }}
       >
         <div className="editorial-card__caption">
           <h2 className="editorial-card__title">{lugar.nombre}</h2>
