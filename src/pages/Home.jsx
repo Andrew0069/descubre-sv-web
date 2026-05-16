@@ -64,11 +64,33 @@ function getNotificationMeta(notification) {
 let _splashShownOnce = false
 let _lugaresCache = []
 
+const DESKTOP_CACHE_KEY = 'destino_home_cache_v1'
+const DESKTOP_CACHE_TTL = 5 * 60 * 1000
+
+function writeDesktopCache(data) {
+  try {
+    if (window.innerWidth < 768) return
+    localStorage.setItem(DESKTOP_CACHE_KEY, JSON.stringify({ ts: Date.now(), data }))
+  } catch {}
+}
+
+;(function initDesktopCache() {
+  try {
+    if (window.innerWidth < 768) return
+    const raw = localStorage.getItem(DESKTOP_CACHE_KEY)
+    if (!raw) return
+    const { ts, data } = JSON.parse(raw)
+    if (!Array.isArray(data) || Date.now() - ts > DESKTOP_CACHE_TTL) return
+    _lugaresCache = data
+    _splashShownOnce = true
+  } catch {}
+})()
+
 export default function Home() {
   const [lugares, setLugares] = useState(_lugaresCache)
   const [categorias, setCategorias] = useState([])
   const [categoriasOtras, setCategoriasOtras] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(_lugaresCache.length === 0)
   const [error, setError] = useState(null)
   const [categoriaId, setCategoriaId] = useState(null)
   const [filtroSubtipo, setFiltroSubtipo] = useState('Todos')
@@ -218,25 +240,34 @@ export default function Home() {
   }, [campanaOpen])
 
   const loadLugares = useCallback(async () => {
-    setLoading(true)
-    setError(null)
+    const isDesktop = window.innerWidth >= 768
+    const silent = isDesktop && _lugaresCache.length > 0
+
+    if (!silent) {
+      setLoading(true)
+      setError(null)
+    }
 
     const { data: { session } } = await supabase.auth.getSession()
     const identificadorFetch = session?.user?.id ?? 'anonimo'
     const allowedFetch = await checkRateLimit(identificadorFetch, 'fetch_lugares')
     if (allowedFetch === false) {
-      showToast('Demasiadas solicitudes. Espera un momento antes de continuar.')
-      setLugares([])
-      setLoading(false)
+      if (!silent) {
+        showToast('Demasiadas solicitudes. Espera un momento antes de continuar.')
+        setLugares([])
+        setLoading(false)
+      }
       return
     }
 
     const { data, error: err } = await getLugaresHome()
 
     if (err) {
-      setError(err.message)
-      setLugares([])
-      setLoading(false)
+      if (!silent) {
+        setError(err.message)
+        setLugares([])
+        setLoading(false)
+      }
       return
     }
 
@@ -260,7 +291,8 @@ export default function Home() {
 
     _lugaresCache = lugaresConDatos
     setLugares(lugaresConDatos)
-    setLoading(false)
+    if (isDesktop) writeDesktopCache(lugaresConDatos)
+    if (!silent) setLoading(false)
   }, [showToast])
 
   useEffect(() => {

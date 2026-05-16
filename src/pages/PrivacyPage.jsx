@@ -31,6 +31,7 @@ export default function PrivacyPage() {
             <li style={{ marginBottom: '0.5rem' }}><strong>Información de registro:</strong> nombre y correo electrónico al crear una cuenta.</li>
             <li style={{ marginBottom: '0.5rem' }}><strong>Datos de uso:</strong> páginas visitadas, búsquedas y contenido con el que interactúas.</li>
             <li style={{ marginBottom: '0.5rem' }}><strong>Información técnica:</strong> tipo de dispositivo, navegador e IP aproximada, con fines de seguridad.</li>
+            <li style={{ marginBottom: '0.5rem' }}><strong>Ubicación precisa:</strong> únicamente si das permiso explícito desde tu navegador, para reforzar la seguridad de tu cuenta.</li>
             <li style={{ marginBottom: '0.5rem' }}><strong>Contenido generado por el usuario:</strong> comentarios y reseñas publicados voluntariamente.</li>
           </ul>
 
@@ -56,10 +57,10 @@ export default function PrivacyPage() {
           <p style={{ marginBottom: '1.5rem' }}>Utilizamos proveedores de infraestructura técnica (base de datos, hospedaje) que actúan únicamente como procesadores bajo nuestras instrucciones y no acceden a tus datos para propósitos propios.</p>
 
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', marginTop: '2rem', marginBottom: '1rem' }}>5. COOKIES</h2>
-          <p style={{ marginBottom: '1.5rem' }}>Usamos cookies de sesión para mantener tu acceso activo. No usamos cookies publicitarias ni de terceros con fines de marketing.</p>
+          <p style={{ marginBottom: '1.5rem' }}>Usamos cookies de sesión, caché local y almacenamiento técnico para mantener tu acceso activo y mejorar el rendimiento. No usamos cookies publicitarias ni de terceros con fines de marketing. Este consentimiento es independiente del permiso de ubicación del navegador.</p>
 
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', marginTop: '2rem', marginBottom: '1rem' }}>6. SEGURIDAD</h2>
-          <p style={{ marginBottom: '1.5rem' }}>Implementamos medidas técnicas razonables para proteger tu información. En caso de incidente relevante, te notificaremos oportunamente.</p>
+          <p style={{ marginBottom: '1.5rem' }}>Implementamos medidas técnicas razonables para proteger tu información. Al iniciar sesión podemos registrar IP aproximada, navegador, dispositivo y, solo con tu permiso, ubicación precisa para detectar accesos sospechosos. En caso de incidente relevante, te notificaremos oportunamente.</p>
 
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', marginTop: '2rem', marginBottom: '1rem' }}>7. MENORES DE EDAD</h2>
           <p style={{ marginBottom: '1.5rem' }}>No recopilamos datos de menores de 13 años. Si eres tutor y crees que tu hijo proporcionó datos, contáctanos para eliminarlos de inmediato.</p>

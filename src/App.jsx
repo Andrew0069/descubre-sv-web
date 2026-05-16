@@ -1,7 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { supabase } from './lib/supabase'
-import { logSecurityEvent } from './services/securityService'
+import {
+  getBrowserGeolocationPermission,
+  getStoredLocationConsent,
+  logSecurityEvent,
+  setStoredLocationConsent,
+} from './services/securityService'
 import Home from './pages/Home'
 import DetalleLugar from './pages/DetalleLugar'
 import Login from './pages/Login'
@@ -12,6 +17,7 @@ import SugerirLugar from './pages/SugerirLugar'
 import NotFound from './pages/NotFound'
 import AdminPage from './pages/AdminPage'
 import CookieConsent from './components/CookieConsent'
+import LocationConsentModal from './components/LocationConsentModal'
 
 import PrivacyPage from './pages/PrivacyPage'
 import TermsPage from './pages/TermsPage'
@@ -96,6 +102,7 @@ function AnimatedRoutes() {
 
 export default function App() {
   const loggedRef = useRef(new Set())
+  const [locationConsentRequest, setLocationConsentRequest] = useState(null)
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -103,17 +110,56 @@ export default function App() {
         // deduplicate: only log once per user per session load
         if (!loggedRef.current.has(session.user.id)) {
           loggedRef.current.add(session.user.id)
-          logSecurityEvent(session, 'login')
+          ;(async () => {
+            const [permission, storedConsent] = await Promise.all([
+              getBrowserGeolocationPermission(),
+              Promise.resolve(getStoredLocationConsent()),
+            ])
+
+            if ((permission === 'prompt' || permission === 'unknown') && !storedConsent && navigator.geolocation) {
+              setLocationConsentRequest({ session })
+              return
+            }
+
+            logSecurityEvent(session, 'login_exitoso', {
+              locationConsent: storedConsent ?? 'unknown',
+              skipLocation: storedConsent === 'declined' || storedConsent === 'dismissed',
+            })
+          })()
         }
       }
     })
     return () => subscription.unsubscribe()
   }, [])
 
+  const handleLocationAccept = () => {
+    const session = locationConsentRequest?.session
+    if (!session) return
+
+    setStoredLocationConsent('accepted')
+    setLocationConsentRequest(null)
+    logSecurityEvent(session, 'login_exitoso', { locationConsent: 'accepted' })
+  }
+
+  const handleLocationDecline = () => {
+    const session = locationConsentRequest?.session
+    if (!session) return
+
+    setStoredLocationConsent('declined')
+    setLocationConsentRequest(null)
+    logSecurityEvent(session, 'login_exitoso', { locationConsent: 'declined', skipLocation: true })
+  }
+
   return (
     <BrowserRouter>
       <AnimatedRoutes />
       <CookieConsent />
+      {locationConsentRequest && (
+        <LocationConsentModal
+          onAccept={handleLocationAccept}
+          onDecline={handleLocationDecline}
+        />
+      )}
     </BrowserRouter>
   )
 }

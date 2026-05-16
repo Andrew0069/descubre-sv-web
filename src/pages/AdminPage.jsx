@@ -111,6 +111,49 @@ function getPersistedSuggestionState(state) {
   return normalizeSuggestionState(state) === 'denegada' ? 'rechazada' : normalizeSuggestionState(state)
 }
 
+function formatSecurityEvent(eventType) {
+  const labels = {
+    login: 'Login exitoso',
+    login_exitoso: 'Login exitoso',
+    login_fallido: 'Login fallido',
+    logout: 'Cierre de sesión',
+    acceso_admin: 'Acceso admin',
+  }
+  return labels[eventType] ?? eventType
+}
+
+function getGpsStatus(log) {
+  if (log.gps_lat != null && log.gps_lng != null) return 'granted'
+  if (log.gps_status) return log.gps_status
+  if (log.gps_denied) return 'denied'
+  return null
+}
+
+function formatGpsStatus(log) {
+  if (log.gps_lat != null && log.gps_lng != null) {
+    return `${log.gps_lat.toFixed(4)}, ${log.gps_lng.toFixed(4)}`
+  }
+
+  const labels = {
+    denied: 'Denegado',
+    skipped: 'Omitido por usuario',
+    timeout: 'Tiempo agotado',
+    unavailable: 'No disponible',
+    error: 'Error',
+    granted: 'Concedido',
+  }
+
+  return labels[getGpsStatus(log)] ?? '—'
+}
+
+function gpsStatusStyle(log) {
+  const status = getGpsStatus(log)
+  if (status === 'denied' || status === 'error') return { color: '#ef4444', fontWeight: 700 }
+  if (status === 'timeout' || status === 'skipped') return { color: '#d97706', fontWeight: 700 }
+  if (status === 'unavailable') return { color: '#6b7280', fontWeight: 700 }
+  return { color: '#374151' }
+}
+
 
 export default function AdminPage() {
   const navigate = useNavigate()
@@ -151,6 +194,7 @@ export default function AdminPage() {
   const [securityLogs, setSecurityLogs] = useState([])
   const [loadingSecurityLogs, setLoadingSecurityLogs] = useState(false)
   const [securityFilter, setSecurityFilter] = useState('todos')
+  const [securityGpsFilter, setSecurityGpsFilter] = useState('todos')
   const [usuarios, setUsuarios] = useState([])
   const [loadingUsuarios, setLoadingUsuarios] = useState(false)
   const [userActionId, setUserActionId] = useState(null)
@@ -2141,6 +2185,27 @@ export default function AdminPage() {
                         {f === 'todos' ? 'Todos' : f === 'marcados' ? 'Marcados' : 'Con proxy'}
                       </button>
                     ))}
+                    <select
+                      value={securityGpsFilter}
+                      onChange={(e) => setSecurityGpsFilter(e.target.value)}
+                      style={{
+                        border: '1px solid #d1d5db',
+                        borderRadius: '8px',
+                        padding: '6px 10px',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        color: '#374151',
+                        backgroundColor: '#fff',
+                      }}
+                    >
+                      <option value="todos">GPS: todos</option>
+                      <option value="granted">GPS: concedido</option>
+                      <option value="denied">GPS: denegado</option>
+                      <option value="skipped">GPS: omitido</option>
+                      <option value="timeout">GPS: timeout</option>
+                      <option value="unavailable">GPS: no disponible</option>
+                      <option value="error">GPS: error</option>
+                    </select>
                     <button type="button" onClick={cargarSecurityLogs} style={{ ...buttonBase, backgroundColor: '#f3f4f6', color: '#374151' }}>
                       Actualizar
                     </button>
@@ -2165,8 +2230,9 @@ export default function AdminPage() {
                     <tbody>
                       {securityLogs
                         .filter(l => {
-                          if (securityFilter === 'marcados') return l.flagged
-                          if (securityFilter === 'proxy') return l.ip_is_proxy
+                          if (securityFilter === 'marcados' && !l.flagged) return false
+                          if (securityFilter === 'proxy' && !l.ip_is_proxy) return false
+                          if (securityGpsFilter !== 'todos' && getGpsStatus(l) !== securityGpsFilter) return false
                           return true
                         })
                         .map((log) => (
@@ -2174,13 +2240,16 @@ export default function AdminPage() {
                             <td style={{ padding: '10px', fontSize: '0.82rem', color: '#374151', whiteSpace: 'nowrap' }}>{formatDateTime(log.created_at)}</td>
                             <td style={{ padding: '10px', fontSize: '0.82rem', color: '#111827', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{log.email ?? '—'}</td>
                             <td style={{ padding: '10px' }}>
-                              <span style={{ ...actionBadgeStyle(log.event_type === 'login' ? 'INSERT' : 'UPDATE'), fontSize: '0.75rem' }}>{log.event_type}</span>
+                              <span style={{ ...actionBadgeStyle(log.event_type === 'login' || log.event_type === 'login_exitoso' ? 'INSERT' : 'UPDATE'), fontSize: '0.75rem' }}>{formatSecurityEvent(log.event_type)}</span>
                             </td>
                             <td style={{ padding: '10px', fontSize: '0.82rem', color: '#374151', whiteSpace: 'nowrap' }}>{log.ip_address ?? '—'}</td>
                             <td style={{ padding: '10px', fontSize: '0.82rem', color: '#374151' }}>{log.ip_country_code ? `${log.ip_country_name} (${log.ip_country_code})` : '—'}</td>
                             <td style={{ padding: '10px', fontSize: '0.82rem', color: '#374151' }}>{log.ip_city ?? '—'}</td>
-                            <td style={{ padding: '10px', fontSize: '0.82rem', color: '#374151', whiteSpace: 'nowrap' }}>
-                              {log.gps_denied ? <span style={{ color: '#ef4444' }}>Denegado</span> : log.gps_lat ? `${log.gps_lat.toFixed(4)}, ${log.gps_lng.toFixed(4)}` : '—'}
+                            <td
+                              title={log.gps_error_message || undefined}
+                              style={{ padding: '10px', fontSize: '0.82rem', whiteSpace: 'nowrap', ...gpsStatusStyle(log) }}
+                            >
+                              {formatGpsStatus(log)}
                             </td>
                             <td style={{ padding: '10px' }}>
                               {log.ip_is_proxy ? <span style={{ backgroundColor: '#fef2f2', color: '#dc2626', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '999px', fontWeight: 700 }}>SÍ</span> : <span style={{ color: '#9ca3af', fontSize: '0.82rem' }}>No</span>}

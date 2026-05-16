@@ -299,6 +299,7 @@ export default function FotoLightbox({ fotos = [], index = 0, onClose, meta }) {
         style={{
           display: 'flex',
           flexDirection: 'row',
+          height: '90vh',
           maxHeight: '90vh',
           maxWidth: '92vw',
           borderRadius: '10px',
@@ -313,9 +314,10 @@ export default function FotoLightbox({ fotos = [], index = 0, onClose, meta }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          maxHeight: '90vh',
-          maxWidth: meta ? '65vw' : '80vw',
+          flex: '1 1 auto',
           minWidth: '300px',
+          maxWidth: meta ? 'calc(92vw - 280px)' : '92vw',
+          height: '100%',
           overflow: 'hidden',
         }}>
           {/* Volver */}
@@ -373,8 +375,8 @@ export default function FotoLightbox({ fotos = [], index = 0, onClose, meta }) {
             style={{
               display: 'block',
               userSelect: 'none',
-              maxHeight: '90vh',
-              maxWidth: meta ? '65vw' : '80vw',
+              maxHeight: '100%',
+              maxWidth: '100%',
               objectFit: 'contain',
             }}
           />
@@ -445,7 +447,7 @@ export default function FotoLightbox({ fotos = [], index = 0, onClose, meta }) {
         {meta && (
           <div style={{
             width: '280px',
-            flex: 'none',
+            flex: '0 0 280px',
             backgroundColor: '#fff',
             display: 'flex',
             flexDirection: 'column',

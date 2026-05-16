@@ -25,6 +25,7 @@ import { formatRelativeEs } from '../lib/dateUtils'
 
 const REPLY_MIN_LENGTH = 5
 const REPLY_MAX_LENGTH = 300
+const RESENA_TITLE_MIN_LENGTH = 2
 
 
 
@@ -157,7 +158,7 @@ export default function DetalleLugar() {
   const t = {
     volver: idioma === 'en' ? '← Back' : '← Volver',
     sobre: idioma === 'en' ? 'About this place' : 'Sobre este lugar',
-    ubicacion: idioma === 'en' ? '📍 Location' : '📍 Ubicación',
+    ubicacion: idioma === 'en' ? '🟡 Location' : '🟡 Ubicación',
     resenas: idioma === 'en' ? 'Reviews' : 'Reseñas',
     escribir: idioma === 'en' ? 'Write a review' : 'Escribir reseña',
     primero: idioma === 'en' ? 'Be the first to review this place' : 'Sé el primero en reseñar este lugar',
@@ -765,6 +766,10 @@ export default function DetalleLugar() {
       redirectToLogin()
       return
     }
+    if (resenaTitulo.trim().length < RESENA_TITLE_MIN_LENGTH) {
+      setResenaError(idioma === 'en' ? 'The title is required.' : 'El título es obligatorio.')
+      return
+    }
     if (resenaTexto.trim().length < 50) {
       setResenaError(t.errorResena)
       return
@@ -802,11 +807,6 @@ export default function DetalleLugar() {
     if (!usuarioRow) {
       setResenaError('No se encontró tu perfil. Intentá cerrar sesión y volver a entrar.')
       setResenaLoading(false)
-      return
-    }
-
-    if (!resenaTitulo.trim()) {
-      setResenaError(idioma === 'en' ? 'The title is required.' : 'El título es obligatorio.')
       return
     }
 
@@ -999,7 +999,7 @@ export default function DetalleLugar() {
             </div>
 
             <p style={{ fontSize: '0.85rem', color: '#6b7280', marginBottom: '1.25rem' }}>
-              📍 {lugar.nombre}
+              🟡 {lugar.nombre}
             </p>
 
             {/* Campo título */}
@@ -1443,8 +1443,9 @@ export default function DetalleLugar() {
                 display: 'flex',
                 flexDirection: mob ? 'column' : 'row',
                 width: mob ? '100%' : 'auto',
-                height: mob ? '100%' : 'auto',
+                height: mob ? '100%' : '90vh',
                 maxHeight: mob ? '100vh' : '90vh',
+                maxWidth: mob ? '100vw' : '92vw',
                 borderRadius: mob ? 0 : '8px',
                 overflow: 'hidden',
                 boxShadow: mob ? 'none' : '0 24px 64px rgba(0,0,0,0.6)',
@@ -1458,7 +1459,11 @@ export default function DetalleLugar() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                flexShrink: 0,
+                flex: mob ? undefined : '1 1 auto',
+                minWidth: mob ? undefined : '300px',
+                maxWidth: mob ? undefined : 'calc(92vw - 300px)',
+                height: mob ? undefined : '100%',
+                overflow: 'hidden',
               }}>
                 {/* Volver */}
                 <button
@@ -1510,8 +1515,8 @@ export default function DetalleLugar() {
                   src={fotosCarousel[lightboxIndex]}
                   alt=""
                   style={{
-                    maxHeight: mob ? '58vh' : '90vh',
-                    maxWidth: mob ? '100vw' : '65vw',
+                    maxHeight: mob ? '58vh' : '100%',
+                    maxWidth: mob ? '100vw' : '100%',
                     width: mob ? '100%' : 'auto',
                     objectFit: mob ? 'cover' : 'contain',
                     userSelect: 'none',
@@ -1583,7 +1588,7 @@ export default function DetalleLugar() {
               <div
                 style={{
                   width: mob ? '100%' : '300px',
-                  flex: mob ? 1 : 'none',
+                  flex: mob ? 1 : '0 0 300px',
                   backgroundColor: '#fff',
                   display: 'flex',
                   flexDirection: 'column',
@@ -1644,7 +1649,7 @@ export default function DetalleLugar() {
         {dep && (
           <>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}>
-              📍 {dep.nombre}
+              🟡 {dep.nombre}
             </span>
             <span style={{ margin: '0 14px', color: '#d1d5db' }}>|</span>
           </>
@@ -1722,7 +1727,7 @@ export default function DetalleLugar() {
               border: '1px solid #f3f4f6',
             }}>
               <p style={{ fontWeight: 600, fontSize: '15px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px', margin: '0 0 10px' }}>
-                📍 {idioma === 'en' ? 'Location' : 'Ubicación'}
+                🟡 {idioma === 'en' ? 'Location' : 'Ubicación'}
               </p>
               {(() => {
                 const mapSrc = lugar.latitud && lugar.longitud

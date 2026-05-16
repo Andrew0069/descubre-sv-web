@@ -288,7 +288,7 @@ function LugarCard({ lugar, isFeatured }) {
         </h2>
 
         <p style={{ fontSize: '0.78rem', color: '#6b7280', margin: '0 0 10px' }}>
-          📍 {dep?.nombre ?? '—'}
+          🟡 {dep?.nombre ?? '—'}
         </p>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

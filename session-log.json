@@ -1,6 +1,6 @@
 {
   "project": "Destino SV App",
-  "last_updated": "2026-05-14",
+  "last_updated": "2026-05-15",
   "sessions": [
     {
       "id": 1,
@@ -1151,6 +1151,32 @@
         "handleGuardar persiste _guia_fecha y _guia_hora dentro de paradas_config (JSONB, compatible hacia atrás).",
         "CSS: @keyframes guiaDateIn (spring cubic-bezier) + clases .guia-date-picker y .guia-date-input con focus ring amarillo.",
         "UI: panel animado dentro de la sección timeline con inputs de fecha y hora, pills verdes/naranjas de abiertos/cerrados, label legible de fecha+hora, botón Quitar."
+      ]
+    },
+    {
+      "id": 63,
+      "date": "2026-05-15",
+      "ai_tool": "Codex",
+      "summary": "Flujo integral de consentimiento de ubicacion separado de cookies y mejora de logs de seguridad con estados GPS explicitos.",
+      "files_modified": [
+        "src/App.jsx",
+        "src/services/securityService.js",
+        "src/components/LocationConsentModal.jsx",
+        "src/pages/AdminPage.jsx",
+        "src/pages/PrivacyPage.jsx",
+        "supabase/security-location-consent.sql",
+        "session-log.json"
+      ],
+      "changes": [
+        "App.jsx: el login ahora consulta permiso del navegador y preferencia local locationConsent antes de solicitar ubicacion; si el permiso esta en prompt/unknown muestra modal propio y evita prompts inesperados.",
+        "LocationConsentModal.jsx: nuevo dialogo de consentimiento para explicar que la ubicacion se usa solo para seguridad de cuenta y prevenir accesos sospechosos; botones Permitir ubicacion y Ahora no.",
+        "securityService.js: agregado manejo separado de locationConsent en localStorage y estados GPS granted, denied, timeout, unavailable, skipped y error; el login continua aunque GPS o IP fallen.",
+        "securityService.js: nuevos logs usan event_type login_exitoso y envian p_gps_status, p_gps_error_message y p_location_consent a Supabase.",
+        "Supabase: aplicada migracion para agregar gps_status, gps_error_message y location_consent en security_logs; actualizada registrar_security_log y migrados registros historicos login a login_exitoso.",
+        "Supabase: eliminada la sobrecarga antigua de registrar_security_log para evitar ambiguedad en llamadas RPC; verificado que queda una sola firma con los nuevos parametros.",
+        "AdminPage.jsx: la seccion Seguridad ahora muestra estados GPS legibles, tooltip con error tecnico, etiqueta Login exitoso y filtro por estado GPS.",
+        "PrivacyPage.jsx: actualizado texto para separar cookies/cache del permiso de ubicacion y aclarar uso de IP/navegador/ubicacion precisa con fines de seguridad.",
+        "Verificacion: npm run build -- --outDir node_modules/.cache/codex-build --emptyOutDir paso correctamente; queda solo warning existente de chunk JS mayor a 500 kB."
       ]
     }
   ]
