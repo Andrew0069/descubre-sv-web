@@ -3,6 +3,49 @@
   "last_updated": "2026-05-16",
   "sessions": [
     {
+      "id": 71,
+      "date": "2026-05-16",
+      "ai_tool": "Claude Code Opus 4.7 (1M context)",
+      "summary": "Correcciones al tab Historial del Perfil: thumbnails con fallback por categoría (color + emoji), subtítulo cambiado a 'Visitado {tiempoRelativo}' con énfasis tipográfico, y header de día con pill negro (Hoy/Ayer/Esta semana) + fecha muted al lado.",
+      "files_modified": [
+        "src/pages/Perfil.jsx",
+        "src/pages/Perfil.css"
+      ],
+      "changes": [
+        "Perfil.jsx — añadido módulo-level CATEGORY_STYLES + helper categoryStyle(nombre) que mapea Cafetería/Restaurante/Hotel/Naturaleza/Playa/Biblioteca/Museo/Iglesia/Parque/Volcán a {bg, icon}; fallback default crema + 📍.",
+        "Perfil.jsx — TabHistorial.renderGroup ahora recibe (key, pill, fecha, items): el header se renderiza como pill negro #1F1611 (Hoy/Ayer/Esta semana) seguido de fecha muted #7A6A5C 11px. El grupo Anteriores no muestra pill.",
+        "Perfil.jsx — thumbnail de cada entrada: cuando lugar.imagen_principal está vacío usa el bg+icon de su categoría (en lugar del gradient amarillo/naranja anterior).",
+        "Perfil.jsx — subtítulo de cada visita cambiado: 'Visitado {timeAgo}' con peso 600 color #1F1611 + departamento opcional como sufijo 11px muted. Eliminado el formato 'Depto · hace X · Categoría'.",
+        "Perfil.css — .perfil-hist-group-head ahora flex con gap 8px; añadidas reglas .perfil-hist-group-pill (bg #1F1611, white, 10px 700 uppercase, radius 20px) y .perfil-hist-group-date (Jakarta 11px 500 muted).",
+        "Perfil.css — .perfil-hist-thumb fondo cambiado a cream var(--sp-cream) para que el inline-style por categoría pueda anular sin choque visual.",
+        "Build npm run build OK, sin errores."
+      ]
+    },
+    {
+      "id": 70,
+      "date": "2026-05-16",
+      "ai_tool": "Claude Code Opus 4.7 (1M context)",
+      "summary": "Rediseño editorial del Perfil privado siguiendo el Spotter design system (cream/yellow/orange + Bricolage Grotesque + Plus Jakarta Sans + Caveat). Header con stats row de 5 métricas, tabs text-underline, filter chips, timeline de historial agrupada por día, stats panel de solicitudes con badges de estado, empty-state hero para Mis Guías. Cero cambios en lógica: hooks, handlers y queries Supabase preservadas; SELECT de favoritos extendido con categorias(nombre,color) para badges/filtros; SELECT de historial subido a limit 30 con imagen+categoría para timeline.",
+      "files_modified": [
+        "src/pages/Perfil.jsx",
+        "src/pages/Perfil.css"
+      ],
+      "changes": [
+        "Perfil.css reescrito desde cero con design tokens Spotter (--sp-cream, --sp-yellow, --sp-orange, etc). Fuentes Bricolage Grotesque (headings), Plus Jakarta Sans (body), Caveat (accents handwritten).",
+        "Banner: avatar 80px con borde negro + hard-shadow, nombre H1 Bricolage 800 letter-spacing -1.2px, badge '(vos)' en Caveat coral, pill 'Lvl N' amarillo, meta-line con username, fecha de registro.",
+        "Stats row: 5 columnas (Lugares visitados / Favoritos / Guías publicadas / Países / Días viajando) con números Bricolage 800, labels lowercase 11px, divisores verticales 1px #EFE3CC.",
+        "Tabs: estilo text-underline (border-bottom 2px) con counts pill al lado del label; activo en #1F1611, inactivo #7A6A5C.",
+        "TabFavoritos: filter chips por categoría con counts derivados del cliente; cards con badge cat overlay top-left, hover translateY + hard-shadow negro.",
+        "TabHistorial: filter chips temporales (30 días/Mes/Año/Todo), weekly banner amarillo si hay visitas en últimos 7 días, timeline agrupada en Hoy/Ayer/Esta semana/Anteriores con headers Bricolage uppercase + divisor.",
+        "TabSolicitudes: CTA amarillo con borde negro + hard-shadow para '+ Enviar nuevo lugar' (apunta a /sugerir-lugar), stats panel 4 columnas (total/pendiente/aprobada/denegada), filter chips por estado, cards con thumbnail + badges (estado + ubicación) + 'Editar y reenviar' para denegadas.",
+        "TabGuias empty state: hero card con badge 'Tu primera guía', H3 36px Bricolage, copy contextual usando favoritos count, CTAs primario (Caveat coral) y secundario, tip section + FAQ teaser.",
+        "TabGuias con contenido: grid de cards (2 cols mobile / 3 desktop) con thumb 16/9, badge de estado overlay, status pill, botones Ver/Editar/Completar manteniendo handler completarGuia existente.",
+        "Modal de editar perfil/foto: bordes Spotter, focus ring amarillo, btn-primary con hard-shadow.",
+        "loadData: SELECT favoritos ahora incluye lugares.categorias(nombre,color); SELECT historial sube limit de 3 a 30 e incluye imagen_principal + categorias(nombre,color).",
+        "Build npm run build OK, 121 módulos, sin errores."
+      ]
+    },
+    {
       "id": 69,
       "date": "2026-05-16",
       "ai_tool": "Claude Code Sonnet 4.6",
