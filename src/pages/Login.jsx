@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { SpotterLogo } from '../components/SpotterLogo'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getUsuarioBloqueado } from '../services/usuariosService'
@@ -521,41 +522,7 @@ export default function Login() {
             pointerEvents: splashFading ? 'none' : 'all',
           }}
         >
-          <svg viewBox="0 0 200 48" height="52" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M22 2 C13 2, 5 10, 5 20 C5 33, 22 48, 22 48 C22 48, 39 33, 39 20 C39 10 31 2, 22 2 Z"
-              fill="#F5A623"
-            />
-            <circle cx="22" cy="19" r="10" fill="#1a1a2e" />
-            <path
-              d="M10 19 C13 14, 18 14, 22 19 C26 24, 31 24, 34 19"
-              fill="none"
-              stroke="#F5A623"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-            <path
-              d="M11 24 C14 20, 18 20, 22 24 C26 28, 30 28, 33 24"
-              fill="none"
-              stroke="#F5A623"
-              strokeWidth="1.2"
-              strokeLinecap="round"
-              opacity="0.45"
-            />
-            <circle cx="33" cy="8" r="2.5" fill="#F5A623" opacity="0.4" />
-            <text
-              x="46"
-              y="30"
-              fontFamily="Georgia, serif"
-              fontSize="26"
-              fontWeight="700"
-              letterSpacing="-1"
-              fill="#1a1a2e"
-            >
-              <tspan fill="#F5A623">S</tspan>
-              <tspan fill="#1a1a2e">potter</tspan>
-            </text>
-          </svg>
+          <SpotterLogo height={38} />
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             {[0, 1, 2].map((i) => (
               <div

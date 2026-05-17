@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { SpotterLogo } from '../components/SpotterLogo'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getUsuarioId } from '../services/usuariosService'
@@ -189,16 +190,7 @@ export default function MisFavoritos() {
             style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}
             aria-label="Spotter"
           >
-            <svg viewBox="0 0 200 48" height="36" xmlns="http://www.w3.org/2000/svg">
-              <path d="M22 2 C13 2, 5 10, 5 20 C5 33, 22 48, 22 48 C22 48, 39 33, 39 20 C39 10 31 2, 22 2 Z" fill="#F5A623" />
-              <circle cx="22" cy="19" r="10" fill="#1a1a2e" />
-              <path d="M10 19 C13 14, 18 14, 22 19 C26 24, 31 24, 34 19" fill="none" stroke="#F5A623" strokeWidth="2" strokeLinecap="round" />
-              <path d="M11 24 C14 20, 18 20, 22 24 C26 28, 30 28, 33 24" fill="none" stroke="#F5A623" strokeWidth="1.2" strokeLinecap="round" opacity="0.45" />
-              <circle cx="33" cy="8" r="2.5" fill="#F5A623" opacity="0.4" />
-              <text x="46" y="30" fontFamily="Georgia, serif" fontSize="26" fontWeight="700" letterSpacing="-1" fill="#1a1a2e">
-                <tspan fill="#F5A623">S</tspan><tspan fill="#1a1a2e">potter</tspan>
-              </text>
-            </svg>
+            <SpotterLogo height={38} />
           </Link>
         </header>
 
@@ -277,16 +269,7 @@ export default function MisFavoritos() {
           style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}
           aria-label="Spotter"
         >
-          <svg viewBox="0 0 200 48" height="36" xmlns="http://www.w3.org/2000/svg">
-            <path d="M22 2 C13 2, 5 10, 5 20 C5 33, 22 48, 22 48 C22 48, 39 33, 39 20 C39 10 31 2, 22 2 Z" fill="#F5A623" />
-            <circle cx="22" cy="19" r="10" fill="#1a1a2e" />
-            <path d="M10 19 C13 14, 18 14, 22 19 C26 24, 31 24, 34 19" fill="none" stroke="#F5A623" strokeWidth="2" strokeLinecap="round" />
-            <path d="M11 24 C14 20, 18 20, 22 24 C26 28, 30 28, 33 24" fill="none" stroke="#F5A623" strokeWidth="1.2" strokeLinecap="round" opacity="0.45" />
-            <circle cx="33" cy="8" r="2.5" fill="#F5A623" opacity="0.4" />
-            <text x="46" y="30" fontFamily="Georgia, serif" fontSize="26" fontWeight="700" letterSpacing="-1" fill="#1a1a2e">
-              <tspan fill="#F5A623">S</tspan><tspan fill="#1a1a2e">potter</tspan>
-            </text>
-          </svg>
+          <SpotterLogo height={38} />
         </Link>
         <span style={{ color: '#d1d5db' }}>|</span>
         <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#374151' }}>♥ Mis Favoritos</span>

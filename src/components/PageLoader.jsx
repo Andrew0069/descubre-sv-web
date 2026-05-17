@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { SpotterLogo } from './SpotterLogo'
 
 export default function PageLoader({ show }) {
   const [visible, setVisible] = useState(show)
@@ -57,30 +58,11 @@ export default function PageLoader({ show }) {
         <div
           style={{
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
-            gap: '4px',
             animation: 'plLogoBreath 2.4s ease-in-out infinite',
           }}
         >
-          <span style={{ fontSize: '2rem', lineHeight: 1 }}>📍</span>
-          <span style={{
-            fontSize: '1.35rem',
-            fontWeight: 700,
-            color: '#111827',
-            letterSpacing: '-0.01em',
-          }}>
-            Destino SV
-          </span>
-          <span style={{
-            fontSize: '0.72rem',
-            fontWeight: 500,
-            color: '#9ca3af',
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-          }}>
-            El Salvador
-          </span>
+          <SpotterLogo height={48} />
         </div>
 
         {/* Dots */}
